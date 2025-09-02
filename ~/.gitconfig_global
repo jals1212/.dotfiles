@@ -1,0 +1,11 @@
+[init]
+	defaultBranch = main
+[pull]
+  	rebase = false
+[core]
+	editor = code --wait
+[push]
+	default = current
+[diff]
+	algorithm = patience
+	colorMoved = default

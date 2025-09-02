@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+# Changes the current directory of the terminal window to the path of the folder or directory selected in the Finder application on a macOS operating system.
+cdf() {
+    cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"
+}

@@ -1,0 +1,8 @@
+#!/bin/zsh
+
+alias c='clear'
+alias x='exit'
+alias cc='pbcopy </dev/null'
+alias ls='ls --color'
+alias extract='unar'
+alias gci='git commit --allow-empty --no-verify --no-gpg-sign --message "--empty commit-- [skip ci]" && git push && git reset --soft HEAD~ && git push --force'
