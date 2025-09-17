@@ -17,10 +17,11 @@ brew "zoxide"
 # set arguments for all 'brew install --cask' commands
 cask_args appdir: "~/Applications", require_sha: true
 
-cask "azure-data-studio"
 cask "brave-browser"
+cask "figma"
 cask "font-jetbrains-mono-nerd-font"
 cask "ghostty"
 cask "monitorcontrol"
+cask "ollama-app"
 cask "orbstack"
 cask "visual-studio-code"
