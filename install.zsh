@@ -191,7 +191,6 @@ configure_asdf() {
 
             source $(brew --prefix asdf)/libexec/asdf.sh
 
-            asdf plugin add bun
             asdf plugin add dotnet
             asdf plugin add golang
             asdf plugin add java
