@@ -18,20 +18,8 @@ fi
 source ~/.asdf/plugins/golang/set-env.zsh
 # asdf end
 
-# pnpm
-export PNPM_HOME="~/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
-
-# bun
-if [[ ! -z $(command -v bun) ]]; then
-  path=(~/.bun/bin $path)
-fi
-[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
-# bun end
+# Add .NET Core SDK tools
+export PATH="$PATH:~/.dotnet/tools"
 
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.
