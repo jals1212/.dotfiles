@@ -1,27 +1,37 @@
-# 'brew install'
+# Dotfiles — Brewfile
+# Managed by `dots` TUI installer
 
-brew "asdf"
-brew "coreutils"
+# ── Core CLI ─────────────────────────────────────────
+brew "bat"
+brew "eza"
+brew "fd"
 brew "fzf"
 brew "gh"
 brew "git"
-brew "oh-my-posh"
-brew "stow"
-brew "thefuck"
-brew "trash"
-brew "unar"
+brew "mise"
+brew "neovim"
+brew "ripgrep"
+brew "starship"
+brew "tmux"
 brew "zoxide"
 
-# 'brew install --cask'
+# ── Shell enhancements ───────────────────────────────
+brew "atuin"
 
-# set arguments for all 'brew install --cask' commands
-cask_args appdir: "~/Applications", require_sha: true
+# ── Dev tools ────────────────────────────────────────
+brew "lazygit"
+brew "bottom"
+brew "dust"
 
-cask "brave-browser"
-cask "figma"
-cask "font-jetbrains-mono-nerd-font"
+# ── Fonts ────────────────────────────────────────────
+cask "font-iosevka-term-nerd-font"
+
+# ── Terminal ─────────────────────────────────────────
 cask "ghostty"
-cask "monitorcontrol"
-cask "ollama-app"
-cask "orbstack"
-cask "visual-studio-code"
+
+# ── GUI Apps (optional — uncomment as needed) ────────
+# cask "brave-browser"
+# cask "visual-studio-code"
+# cask "orbstack"
+# cask "figma"
+# cask "monitorcontrol"
