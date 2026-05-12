@@ -74,7 +74,7 @@ check_file_contains "$HOME/.config/starship.toml" "catppuccin_mocha" "Starship C
 check_file_contains "$HOME/.config/starship.toml" "mauve" "Starship mauve color"
 
 check_file "$HOME/.config/atuin/config.toml" "Atuin config"
-check_file_contains "$HOME/.config/atuin/config.toml" "catppuccin_mocha" "Atuin Catppuccin theme"
+check_file_contains "$HOME/.config/atuin/config.toml" "catppuccin-mocha" "Atuin Catppuccin theme"
 check_file_contains "$HOME/.config/atuin/config.toml" "auto_sync = false" "Atuin local-only mode"
 
 check_file "$HOME/.zshrc" "ZSH rc"
