@@ -101,7 +101,7 @@ func DetectExistingConfigs(dotfilesDir, homeDir string) []string {
 	existing := []string{}
 
 	// Check .config entries
-	configSource := filepath.Join(dotfilesDir, ".config")
+	configSource := filepath.Join(dotfilesDir, "home", ".config")
 	if entries, err := os.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			target := filepath.Join(homeDir, ".config", entry.Name())
@@ -129,7 +129,7 @@ func DetectExistingConfigs(dotfilesDir, homeDir string) []string {
 // Uninstall removes all deployed configs
 func Uninstall(dotfilesDir, homeDir string) error {
 	// Remove .config entries
-	configSource := filepath.Join(dotfilesDir, ".config")
+	configSource := filepath.Join(dotfilesDir, "home", ".config")
 	if entries, err := os.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			target := filepath.Join(homeDir, ".config", entry.Name())

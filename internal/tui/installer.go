@@ -148,7 +148,7 @@ func stepDeployConfigs(m *Model) error {
 	dotfilesDir := m.SystemInfo.DotfilesDir
 
 	// Deploy .config/* to ~/.config/*
-	configSource := filepath.Join(dotfilesDir, ".config")
+	configSource := filepath.Join(dotfilesDir, "home", ".config")
 	if entries, err := os.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			src := filepath.Join(configSource, entry.Name())
@@ -175,7 +175,7 @@ func stepDeployConfigs(m *Model) error {
 	// Deploy home dotfiles
 	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 	for _, f := range homeFiles {
-		src := filepath.Join(dotfilesDir, f)
+		src := filepath.Join(dotfilesDir, "home", f)
 		if _, err := os.Stat(src); err == nil {
 			dst := filepath.Join(homeDir, f)
 			SendLog(m, stepID, fmt.Sprintf("Deploying %s...", f))

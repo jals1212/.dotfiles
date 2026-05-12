@@ -44,12 +44,7 @@ ENV DOTFILES_DIR=/app
 
 # Only copy what's needed for installation
 COPY --from=builder /build/dots .
-COPY --from=builder /build/.config ./.config
-COPY --from=builder /build/.zshrc ./.zshrc
-COPY --from=builder /build/.zprofile ./.zprofile
-COPY --from=builder /build/.zalias ./.zalias
-COPY --from=builder /build/.zfunc ./.zfunc
-COPY --from=builder /build/.zkey ./.zkey
+COPY --from=builder /build/home ./home
 COPY --from=builder /build/e2e ./e2e
 
 RUN chmod +x e2e/test.sh

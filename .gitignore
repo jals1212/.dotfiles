@@ -6,6 +6,7 @@ backups/
 manifest.json
 dots
 orchestra
+openspec/
 .opencode/
 .orchestra/
 .grit/
