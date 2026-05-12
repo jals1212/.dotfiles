@@ -1,8 +1,8 @@
 # Dotfiles — Atuin
 # Theme: Catppuccin Mocha
 
-## theme
-theme = "catppuccin_mocha"
+[theme]
+name = "catppuccin-mocha"
 
 ## keybindings
 ## ctrl-r to open atuin search
