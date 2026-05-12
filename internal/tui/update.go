@@ -50,6 +50,12 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			return handleEnter(m)
+
+		case "esc":
+			if m.Screen != ScreenWelcome {
+				m.Screen = m.PrevScreen
+				m.Cursor = 0
+			}
 		}
 
 	case spinnerTickMsg:
@@ -70,19 +76,21 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(msg.logs) > 0 {
 				m.LogLines = append(m.LogLines, msg.logs...)
 			}
-			if msg.status == StatusDone || msg.status == StatusFailed || msg.status == StatusSkipped {
-				m.CurrentStep++
-				if m.CurrentStep >= len(m.Steps) {
-					m.Screen = ScreenSummary
-				} else {
-					m.Steps[m.CurrentStep].Status = StatusRunning
-					return m, runInstallStep(m.CurrentStep, m)
-				}
+		if msg.status == StatusDone || msg.status == StatusFailed || msg.status == StatusSkipped {
+			m.CurrentStep++
+			if m.CurrentStep >= len(m.Steps) {
+				m.PrevScreen = m.Screen
+				m.Screen = ScreenSummary
+			} else {
+				m.Steps[m.CurrentStep].Status = StatusRunning
+				return m, runInstallStep(m.CurrentStep, m)
 			}
+		}
 		}
 		return m, nil
 
 	case installCompleteMsg:
+		m.PrevScreen = m.Screen
 		m.Screen = ScreenSummary
 		return m, nil
 	}
@@ -93,6 +101,7 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 func handleEnter(m Model) (tea.Model, tea.Cmd) {
 	switch m.Screen {
 	case ScreenWelcome:
+		m.PrevScreen = m.Screen
 		m.Screen = ScreenFlavorSelect
 		m.Cursor = 0
 
@@ -101,6 +110,7 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 		if m.Cursor < len(flavors) {
 			m.SelectedFlavor = flavors[m.Cursor]
 		} else if m.Cursor == len(flavors) {
+			m.PrevScreen = m.Screen
 			m.Screen = ScreenToolSelect
 			m.Cursor = 0
 		}
@@ -122,6 +132,7 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 		case 1: // Install without backup
 			return startInstalling(m, false)
 		case 2: // Cancel
+			m.PrevScreen = m.Screen
 			m.Screen = ScreenToolSelect
 			m.Cursor = 0
 		}
@@ -136,12 +147,16 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 
 func maxCursor(m Model) int {
 	switch m.Screen {
+	case ScreenWelcome:
+		return 0
 	case ScreenFlavorSelect:
 		return len(defaultFlavors())
 	case ScreenToolSelect:
 		return len(m.Tools)
 	case ScreenBackupConfirm:
 		return 2
+	case ScreenInstalling:
+		return 0
 	case ScreenSummary:
 		return 0
 	default:
@@ -154,6 +169,7 @@ func startInstall(m Model) (tea.Model, tea.Cmd) {
 	hasExisting := len(m.ExistingConfigs) > 0
 
 	if hasExisting {
+		m.PrevScreen = m.Screen
 		m.Screen = ScreenBackupConfirm
 		m.Cursor = 0
 		return m, nil
@@ -163,6 +179,7 @@ func startInstall(m Model) (tea.Model, tea.Cmd) {
 }
 
 func startInstalling(m Model, backup bool) (tea.Model, tea.Cmd) {
+	m.PrevScreen = m.Screen
 	m.Screen = ScreenInstalling
 	m.Steps = buildInstallSteps(m.Tools, backup)
 	m.CurrentStep = 0
@@ -190,7 +207,7 @@ func buildInstallSteps(tools []Tool, backup bool) []InstallStep {
 
 	// Package installation step
 	if selected["ghostty"] || selected["tmux"] || selected["nvim"] || selected["starship"] || selected["atuin"] || selected["zoxide"] || selected["zsh"] {
-		steps = append(steps, InstallStep{ID: "packages", Name: "Install packages"})
+		steps = append(steps, InstallStep{ID: "packages", Name: "Install packages", Interactive: true})
 	}
 
 	// Deploy configs

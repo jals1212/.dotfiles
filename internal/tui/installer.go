@@ -112,27 +112,30 @@ func stepInstallPackages(m *Model) error {
 	SendLog(m, stepID, fmt.Sprintf("Installing: %s", strings.Join(packages, ", ")))
 
 	// Use appropriate package manager
+	logFn := func(line string) {
+		SendLog(m, stepID, line)
+	}
 	if m.SystemInfo.HasBrew {
 		cmd := fmt.Sprintf("brew install %s", strings.Join(packages, " "))
-		result := system.Run(cmd, nil)
+		result := system.RunWithLogs(cmd, nil, logFn)
 		if result.Error != nil {
 			SendLog(m, stepID, fmt.Sprintf("Warning: brew install had issues: %v", result.Error))
 		}
 	} else if m.SystemInfo.OS == system.OSDebian {
-		cmd := fmt.Sprintf("sudo apt-get install -y %s", strings.Join(packages, " "))
-		result := system.Run(cmd, nil)
+		cmd := fmt.Sprintf("apt-get install -y %s", strings.Join(packages, " "))
+		result := system.RunSudoWithLogs(cmd, nil, logFn)
 		if result.Error != nil {
 			SendLog(m, stepID, fmt.Sprintf("Warning: apt install had issues: %v", result.Error))
 		}
 	} else if m.SystemInfo.OS == system.OSFedora {
-		cmd := fmt.Sprintf("sudo dnf install -y %s", strings.Join(packages, " "))
-		result := system.Run(cmd, nil)
+		cmd := fmt.Sprintf("dnf install -y %s", strings.Join(packages, " "))
+		result := system.RunSudoWithLogs(cmd, nil, logFn)
 		if result.Error != nil {
 			SendLog(m, stepID, fmt.Sprintf("Warning: dnf install had issues: %v", result.Error))
 		}
 	} else if m.SystemInfo.OS == system.OSArch {
-		cmd := fmt.Sprintf("sudo pacman -S --noconfirm %s", strings.Join(packages, " "))
-		result := system.Run(cmd, nil)
+		cmd := fmt.Sprintf("pacman -S --noconfirm %s", strings.Join(packages, " "))
+		result := system.RunSudoWithLogs(cmd, nil, logFn)
 		if result.Error != nil {
 			SendLog(m, stepID, fmt.Sprintf("Warning: pacman install had issues: %v", result.Error))
 		}
@@ -240,7 +243,9 @@ func stepDeployConfigs(m *Model) error {
 		SendLog(m, stepID, fmt.Sprintf("⚠ Bat theme failed: %v", err))
 	} else {
 		SendLog(m, stepID, "✓ Bat theme deployed")
-		result := system.Run("bat cache --build", nil)
+		result := system.RunWithLogs("bat cache --build", nil, func(line string) {
+			SendLog(m, stepID, line)
+		})
 		if result.Error != nil {
 			SendLog(m, stepID, fmt.Sprintf("⚠ Bat cache build failed: %v", result.Error))
 		}

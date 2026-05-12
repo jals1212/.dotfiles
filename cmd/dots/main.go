@@ -33,9 +33,17 @@ func main() {
 	}
 }
 
+func newTUIProgram(model tui.Model) *tea.Program {
+	return tea.NewProgram(model, tea.WithAltScreen())
+}
+
 func runTUI() {
-	model := tui.NewModel()
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	model, err := tui.NewModel()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	p := newTUIProgram(model)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -53,8 +61,12 @@ func runInstall(args []string) {
 	}
 
 	// Interactive TUI install
-	model := tui.NewModel()
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	model, err := tui.NewModel()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	p := newTUIProgram(model)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -62,7 +74,17 @@ func runInstall(args []string) {
 }
 
 func runNonInteractiveInstall() {
-	info := system.Detect()
+	info, err := system.Detect()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
+		os.Exit(1)
+	}
+
+	flavor := os.Getenv("DOTS_FLAVOR")
+	if flavor == "" {
+		flavor = "mocha"
+	}
+
 	fmt.Println("Running non-interactive install...")
 	fmt.Printf("OS: %s (%s)\n", info.OSName, info.Arch)
 
@@ -70,6 +92,7 @@ func runNonInteractiveInstall() {
 	model := &tui.Model{
 		SystemInfo:       info,
 		IsNonInteractive: true,
+		SelectedFlavor:   flavor,
 		Tools: []tui.Tool{
 			{Name: "ghostty", Selected: true},
 			{Name: "tmux", Selected: true},
@@ -104,7 +127,11 @@ func runNonInteractiveInstall() {
 }
 
 func runUpdate() {
-	info := system.Detect()
+	info, err := system.Detect()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Println("Updating dotfiles...")
 	fmt.Printf("Dotfiles: %s\n", info.DotfilesDir)
 
@@ -127,7 +154,11 @@ func runUpdate() {
 }
 
 func runUninstall() {
-	info := system.Detect()
+	info, err := system.Detect()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Println("Uninstalling dotfiles...")
 
 	if err := system.Uninstall(info.DotfilesDir, info.HomeDir); err != nil {

@@ -19,38 +19,53 @@ const (
 )
 
 type SystemInfo struct {
-	OS            OS
-	OSName        string
-	Arch          string
-	HasBrew       bool
-	HasXcode      bool
-	IsWSL         bool
-	UserShell     string
-	HomeDir       string
-	DotfilesDir   string
+	OS             OS
+	OSName         string
+	Arch           string
+	HasBrew        bool
+	HasXcode       bool
+	IsWSL          bool
+	Termux         bool
+	ARM            bool
+	UserShell      string
+	HomeDir        string
+	DotfilesDir    string
 	InstalledTools map[string]bool
 }
 
-func Detect() *SystemInfo {
+func Detect() (*SystemInfo, error) {
 	info := &SystemInfo{
-		Arch:        runtime.GOARCH,
-		HomeDir:     homeDir(),
-		UserShell:   os.Getenv("SHELL"),
+		Arch:           runtime.GOARCH,
+		HomeDir:        homeDir(),
+		UserShell:      os.Getenv("SHELL"),
 		InstalledTools: make(map[string]bool),
+		ARM:            runtime.GOARCH == "arm64",
 	}
 
-	switch runtime.GOOS {
-	case "darwin":
-		info.OS = OSMac
-		info.OSName = "macOS"
-		info.HasXcode = commandExists("xcode-select")
-	case "linux":
-		info.OS = detectLinuxDistro()
-		info.OSName = linuxDistroName(info.OS)
-		info.IsWSL = fileExists("/proc/version") && strings.Contains(readFile("/proc/version"), "microsoft")
-	default:
-		info.OS = OSUnknown
-		info.OSName = "unknown"
+	// Check Termux FIRST before standard OS detection
+	if isTermux() {
+		info.Termux = true
+		info.OS = OSLinux
+		info.OSName = "Termux (Android)"
+	} else {
+		switch runtime.GOOS {
+		case "darwin":
+			info.OS = OSMac
+			info.OSName = "macOS"
+			info.HasXcode = commandExists("xcode-select")
+		case "linux":
+			info.OS = detectLinuxDistro()
+			info.OSName = linuxDistroName(info.OS)
+			if fileExists("/proc/version") {
+				data, err := readFile("/proc/version")
+				if err == nil {
+					info.IsWSL = strings.Contains(data, "microsoft")
+				}
+			}
+		default:
+			info.OS = OSUnknown
+			info.OSName = "unknown"
+		}
 	}
 
 	info.HasBrew = commandExists("brew")
@@ -62,7 +77,29 @@ func Detect() *SystemInfo {
 
 	info.DotfilesDir = findDotfilesDir()
 
-	return info
+	return info, nil
+}
+
+func isTermux() bool {
+	if os.Getenv("TERMUX_VERSION") != "" {
+		return true
+	}
+	if fileExists("/data/data/com.termux") {
+		return true
+	}
+	prefix := os.Getenv("PREFIX")
+	if prefix != "" && strings.Contains(prefix, "com.termux") {
+		return true
+	}
+	return false
+}
+
+func (s *SystemInfo) IsTermux() bool {
+	return s.Termux
+}
+
+func (s *SystemInfo) IsARM() bool {
+	return s.ARM
 }
 
 func detectLinuxDistro() OS {
@@ -80,10 +117,10 @@ func detectLinuxDistro() OS {
 
 func linuxDistroName(os OS) string {
 	names := map[OS]string{
-		OSDebian:  "Debian/Ubuntu",
-		OSFedora:  "Fedora/RHEL",
-		OSArch:    "Arch Linux",
-		OSLinux:   "Linux",
+		OSDebian: "Debian/Ubuntu",
+		OSFedora: "Fedora/RHEL",
+		OSArch:   "Arch Linux",
+		OSLinux:  "Linux",
 	}
 	if name, ok := names[os]; ok {
 		return name
@@ -152,10 +189,10 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func readFile(path string) string {
+func readFile(path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return string(data)
+	return string(data), nil
 }

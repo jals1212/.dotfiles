@@ -25,10 +25,11 @@ type Tool struct {
 }
 
 type InstallStep struct {
-	ID     string
-	Name   string
-	Status StepStatus
-	Detail string // Additional info (e.g., which packages)
+	ID          string
+	Name        string
+	Status      StepStatus
+	Detail      string // Additional info (e.g., which packages)
+	Interactive bool   // Step requires user interaction (e.g., sudo)
 }
 
 type StepStatus int
@@ -43,6 +44,7 @@ const (
 
 type Model struct {
 	Screen           Screen
+	PrevScreen       Screen
 	Width            int
 	Height           int
 	Cursor           int
@@ -62,10 +64,14 @@ type Model struct {
 	SelectedAccent   string
 }
 
-func NewModel() Model {
-	info := system.Detect()
+func NewModel() (Model, error) {
+	info, err := system.Detect()
+	if err != nil {
+		return Model{}, err
+	}
 	return Model{
 		Screen:         ScreenWelcome,
+		PrevScreen:     ScreenWelcome,
 		SystemInfo:     info,
 		Tools:          defaultTools(),
 		CurrentStep:    0,
@@ -73,7 +79,7 @@ func NewModel() Model {
 		LogLines:       []string{},
 		SelectedFlavor: "mocha",
 		SelectedAccent: "mauve",
-	}
+	}, nil
 }
 
 func defaultFlavors() []string {

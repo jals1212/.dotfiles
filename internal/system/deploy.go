@@ -64,7 +64,9 @@ func CopyFile(src, dst string) error {
 
 	// If dst exists and is a directory, remove it
 	if dstInfo, err := os.Stat(dst); err == nil && dstInfo.IsDir() {
-		os.RemoveAll(dst)
+		if err := os.RemoveAll(dst); err != nil {
+			return err
+		}
 	}
 
 	data, err := os.ReadFile(src)
@@ -129,9 +131,13 @@ func CreateBackup(configKeys []string) (string, error) {
 		if _, err := os.Stat(src); err == nil {
 			dst := filepath.Join(backupDir, filepath.Base(key))
 			if info, err := os.Stat(src); err == nil && info.IsDir() {
-				CopyDir(src, dst)
+				if err := CopyDir(src, dst); err != nil {
+					return "", err
+				}
 			} else {
-				CopyFile(src, dst)
+				if err := CopyFile(src, dst); err != nil {
+					return "", err
+				}
 			}
 		}
 	}
@@ -176,7 +182,9 @@ func Uninstall(dotfilesDir, homeDir string) error {
 	if entries, err := os.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			target := filepath.Join(homeDir, ".config", entry.Name())
-			os.RemoveAll(target)
+			if err := os.RemoveAll(target); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -184,11 +192,16 @@ func Uninstall(dotfilesDir, homeDir string) error {
 	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 	for _, f := range homeFiles {
 		target := filepath.Join(homeDir, f)
-		os.Remove(target)
+		if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
+			return err
+		}
 	}
 
 	// Remove manifest
-	os.Remove(filepath.Join(dotfilesDir, "manifest.json"))
+	manifestPath := filepath.Join(dotfilesDir, "manifest.json")
+	if err := os.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
 
 	return nil
 }
