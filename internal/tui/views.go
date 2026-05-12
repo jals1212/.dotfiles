@@ -49,6 +49,8 @@ func renderView(m Model) string {
 	switch m.Screen {
 	case ScreenWelcome:
 		return renderWelcome(m)
+	case ScreenFlavorSelect:
+		return renderFlavorSelect(m)
 	case ScreenToolSelect:
 		return renderToolSelect(m)
 	case ScreenBackupConfirm:
@@ -77,6 +79,49 @@ func renderWelcome(m Model) string {
 	b.WriteString(subtitleStyle.Render(fmt.Sprintf("Detected: %s (%s)", m.SystemInfo.OSName, m.SystemInfo.Arch)))
 	b.WriteString("\n\n")
 	b.WriteString(dimStyle.Render("Press enter to continue..."))
+	return b.String()
+}
+
+func renderFlavorSelect(m Model) string {
+	b := strings.Builder{}
+	b.WriteString(titleStyle.Render("Select Catppuccin Flavor"))
+	b.WriteString("\n\n")
+
+	flavors := defaultFlavors()
+	for i, flavor := range flavors {
+		radio := "○"
+		if flavor == m.SelectedFlavor {
+			radio = selectedStyle.Render("●")
+		}
+
+		prefix := "  "
+		nameStyle := normalStyle
+		if i == m.Cursor {
+			prefix = cursorStyle.Render("❯ ")
+			nameStyle = selectedStyle
+		}
+
+		b.WriteString(prefix)
+		b.WriteString(radio)
+		b.WriteString(" ")
+		b.WriteString(nameStyle.Render(flavor))
+		b.WriteString("\n")
+	}
+
+	// Continue button
+	prefix := "  "
+	btnStyle := normalStyle
+	if m.Cursor == len(flavors) {
+		prefix = cursorStyle.Render("❯ ")
+		btnStyle = selectedStyle
+	}
+	b.WriteString("\n")
+	b.WriteString(prefix)
+	b.WriteString(btnStyle.Render("Continue"))
+	b.WriteString("\n")
+
+	b.WriteString("\n")
+	b.WriteString(dimStyle.Render("enter select • j/k navigate • q quit"))
 	return b.String()
 }
 

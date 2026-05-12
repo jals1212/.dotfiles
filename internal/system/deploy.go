@@ -4,8 +4,51 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
+
+// ReplaceInFile reads a file, replaces all occurrences of old with new, and writes it back.
+func ReplaceInFile(path, old, new string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	content := strings.ReplaceAll(string(data), old, new)
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// ReplaceBetweenMarkers replaces content between startMarker and endMarker in a file.
+// If markers don't exist, appends the content with markers at the end of the file.
+func ReplaceBetweenMarkers(path, startMarker, endMarker, content string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			data = []byte{}
+		} else {
+			return err
+		}
+	}
+	text := string(data)
+	startIdx := strings.Index(text, startMarker)
+	endIdx := strings.Index(text, endMarker)
+	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
+		newText := text[:startIdx+len(startMarker)] + "\n" + content + "\n" + text[endIdx:]
+		return os.WriteFile(path, []byte(newText), 0644)
+	}
+	// Append at end
+	var b strings.Builder
+	if len(text) > 0 && !strings.HasSuffix(text, "\n") {
+		b.WriteString("\n")
+	}
+	b.WriteString(startMarker)
+	b.WriteString("\n")
+	b.WriteString(content)
+	b.WriteString("\n")
+	b.WriteString(endMarker)
+	b.WriteString("\n")
+	return os.WriteFile(path, []byte(text+b.String()), 0644)
+}
 
 // CopyFile copies a file from src to dst, preserving permissions
 func CopyFile(src, dst string) error {

@@ -9,6 +9,7 @@ type Screen int
 
 const (
 	ScreenWelcome Screen = iota
+	ScreenFlavorSelect
 	ScreenToolSelect
 	ScreenBackupConfirm
 	ScreenInstalling
@@ -57,18 +58,26 @@ type Model struct {
 	ExistingConfigs  []string
 	BackupDir        string
 	IsNonInteractive bool
+	SelectedFlavor   string
+	SelectedAccent   string
 }
 
 func NewModel() Model {
 	info := system.Detect()
 	return Model{
-		Screen:       ScreenWelcome,
-		SystemInfo:   info,
-		Tools:        defaultTools(),
-		CurrentStep:  0,
-		SpinnerFrame: 0,
-		LogLines:     []string{},
+		Screen:         ScreenWelcome,
+		SystemInfo:     info,
+		Tools:          defaultTools(),
+		CurrentStep:    0,
+		SpinnerFrame:   0,
+		LogLines:       []string{},
+		SelectedFlavor: "mocha",
+		SelectedAccent: "mauve",
 	}
+}
+
+func defaultFlavors() []string {
+	return []string{"latte", "frappe", "macchiato", "mocha"}
 }
 
 func defaultTools() []Tool {

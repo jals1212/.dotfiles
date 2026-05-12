@@ -146,6 +146,7 @@ func stepDeployConfigs(m *Model) error {
 	stepID := "deploy"
 	homeDir := m.SystemInfo.HomeDir
 	dotfilesDir := m.SystemInfo.DotfilesDir
+	flavor := m.SelectedFlavor
 
 	// Deploy .config/* to ~/.config/*
 	configSource := filepath.Join(dotfilesDir, "home", ".config")
@@ -161,12 +162,18 @@ func stepDeployConfigs(m *Model) error {
 					SendLog(m, stepID, fmt.Sprintf("  ✗ Failed: %v", err))
 				} else {
 					SendLog(m, stepID, fmt.Sprintf("  ✓ %s/", entry.Name()))
+					if err := replaceInDir(dst, "CATPPUCCIN_FLAVOR", flavor); err != nil {
+						SendLog(m, stepID, fmt.Sprintf("  ⚠ Replace failed: %v", err))
+					}
 				}
 			} else {
 				if err := system.CopyFile(src, dst); err != nil {
 					SendLog(m, stepID, fmt.Sprintf("  ✗ Failed: %v", err))
 				} else {
 					SendLog(m, stepID, fmt.Sprintf("  ✓ %s", entry.Name()))
+					if err := system.ReplaceInFile(dst, "CATPPUCCIN_FLAVOR", flavor); err != nil {
+						SendLog(m, stepID, fmt.Sprintf("  ⚠ Replace failed: %v", err))
+					}
 				}
 			}
 		}
@@ -183,12 +190,116 @@ func stepDeployConfigs(m *Model) error {
 				SendLog(m, stepID, fmt.Sprintf("  ✗ Failed: %v", err))
 			} else {
 				SendLog(m, stepID, fmt.Sprintf("  ✓ %s", f))
+				if err := system.ReplaceInFile(dst, "CATPPUCCIN_FLAVOR", flavor); err != nil {
+					SendLog(m, stepID, fmt.Sprintf("  ⚠ Replace failed: %v", err))
+				}
 			}
 		}
 	}
 
+	// 4.4 Starship palette
+	starshipSrc := filepath.Join(dotfilesDir, "assets", "themes", "starship", fmt.Sprintf("%s.toml", flavor))
+	starshipDst := filepath.Join(homeDir, ".config", "starship", "themes", fmt.Sprintf("%s.toml", flavor))
+	if err := system.CopyFile(starshipSrc, starshipDst); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Starship theme failed: %v", err))
+	} else {
+		SendLog(m, stepID, "✓ Starship theme deployed")
+	}
+
+	// 4.5 Atuin theme
+	atuinSrc := filepath.Join(dotfilesDir, "assets", "themes", "atuin", fmt.Sprintf("catppuccin-%s-mauve.toml", flavor))
+	atuinDst := filepath.Join(homeDir, ".config", "atuin", "themes", fmt.Sprintf("catppuccin-%s-mauve.toml", flavor))
+	if err := system.CopyFile(atuinSrc, atuinDst); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Atuin theme failed: %v", err))
+	} else {
+		SendLog(m, stepID, "✓ Atuin theme deployed")
+	}
+
+	// 4.6 Bottom theme
+	bottomSrc := filepath.Join(dotfilesDir, "assets", "themes", "bottom", fmt.Sprintf("%s.toml", flavor))
+	bottomDst := filepath.Join(homeDir, ".config", "bottom", "bottom.toml")
+	if err := system.CopyFile(bottomSrc, bottomDst); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Bottom theme failed: %v", err))
+	} else {
+		SendLog(m, stepID, "✓ Bottom theme deployed")
+	}
+
+	// 4.7 Lazygit theme
+	lazygitSrc := filepath.Join(dotfilesDir, "assets", "themes", "lazygit", fmt.Sprintf("%s.yml", flavor))
+	lazygitDst := filepath.Join(homeDir, ".config", "lazygit", "config.yml")
+	if err := system.CopyFile(lazygitSrc, lazygitDst); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Lazygit theme failed: %v", err))
+	} else {
+		SendLog(m, stepID, "✓ Lazygit theme deployed")
+	}
+
+	// 4.8 Bat theme
+	batSrc := filepath.Join(dotfilesDir, "assets", "themes", "bat", fmt.Sprintf("Catppuccin-%s.tmTheme", flavor))
+	batDst := filepath.Join(homeDir, ".config", "bat", "themes", fmt.Sprintf("Catppuccin-%s.tmTheme", flavor))
+	if err := system.CopyFile(batSrc, batDst); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Bat theme failed: %v", err))
+	} else {
+		SendLog(m, stepID, "✓ Bat theme deployed")
+		result := system.Run("bat cache --build", nil)
+		if result.Error != nil {
+			SendLog(m, stepID, fmt.Sprintf("⚠ Bat cache build failed: %v", result.Error))
+		}
+	}
+	batEnv := fmt.Sprintf(`export BAT_THEME="Catppuccin %s"`, flavor)
+	if err := system.ReplaceBetweenMarkers(filepath.Join(homeDir, ".zshrc"), "# CATPPUCCIN_BAT_START", "# CATPPUCCIN_BAT_END", batEnv); err != nil {
+		SendLog(m, stepID, fmt.Sprintf("⚠ BAT_THEME setup failed: %v", err))
+	}
+
+	// 4.9 Eza colors
+	ezaSrc := filepath.Join(dotfilesDir, "assets", "themes", "eza", fmt.Sprintf("%s.txt", flavor))
+	if ezaData, err := os.ReadFile(ezaSrc); err == nil {
+		if err := system.ReplaceBetweenMarkers(filepath.Join(homeDir, ".zshrc"), "# CATPPUCCIN_EZA_START", "# CATPPUCCIN_EZA_END", string(ezaData)); err != nil {
+			SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors setup failed: %v", err))
+		} else {
+			SendLog(m, stepID, "✓ Eza colors deployed")
+		}
+	} else {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors read failed: %v", err))
+	}
+
+	// 4.10 fzf colors
+	fzfSrc := filepath.Join(dotfilesDir, "assets", "themes", "fzf", fmt.Sprintf("%s.sh", flavor))
+	if fzfData, err := os.ReadFile(fzfSrc); err == nil {
+		if err := system.ReplaceBetweenMarkers(filepath.Join(homeDir, ".zshrc"), "# CATPPUCCIN_FZF_START", "# CATPPUCCIN_FZF_END", string(fzfData)); err != nil {
+			SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors setup failed: %v", err))
+		} else {
+			SendLog(m, stepID, "✓ Fzf colors deployed")
+		}
+	} else {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors read failed: %v", err))
+	}
+
+	// 4.11 Ghostty theme
+	ghosttySrc := filepath.Join(dotfilesDir, "assets", "themes", "ghostty", fmt.Sprintf("%s.conf", flavor))
+	if ghosttyData, err := os.ReadFile(ghosttySrc); err == nil {
+		if err := system.ReplaceBetweenMarkers(filepath.Join(homeDir, ".config", "ghostty", "config"), "# CATPPUCCIN_GHOSTTY_THEME_START", "# CATPPUCCIN_GHOSTTY_THEME_END", string(ghosttyData)); err != nil {
+			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme setup failed: %v", err))
+		} else {
+			SendLog(m, stepID, "✓ Ghostty theme deployed")
+		}
+	} else {
+		SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme read failed: %v", err))
+	}
+
 	SendLog(m, stepID, "✓ All configs deployed")
 	return nil
+}
+
+func replaceInDir(dir, old, new string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			return system.ReplaceInFile(path, old, new)
+		}
+		return nil
+	})
 }
 
 func stepSaveManifest(m *Model) error {

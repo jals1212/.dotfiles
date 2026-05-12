@@ -20,12 +20,12 @@ $time\
 
 add_newline = true
 command_timeout = 3600000
-palette = "catppuccin_mocha"
+palette = "catppuccin_CATPPUCCIN_FLAVOR"
 
 [fill]
 symbol = ' '
 
-[palettes.catppuccin_mocha]
+[palettes.catppuccin_CATPPUCCIN_FLAVOR]
 rosewater = "#f5e0dc"
 flamingo = "#f2cdcd"
 pink = "#f5c2e7"

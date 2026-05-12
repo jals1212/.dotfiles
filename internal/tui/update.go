@@ -93,8 +93,17 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 func handleEnter(m Model) (tea.Model, tea.Cmd) {
 	switch m.Screen {
 	case ScreenWelcome:
-		m.Screen = ScreenToolSelect
+		m.Screen = ScreenFlavorSelect
 		m.Cursor = 0
+
+	case ScreenFlavorSelect:
+		flavors := defaultFlavors()
+		if m.Cursor < len(flavors) {
+			m.SelectedFlavor = flavors[m.Cursor]
+		} else if m.Cursor == len(flavors) {
+			m.Screen = ScreenToolSelect
+			m.Cursor = 0
+		}
 
 	case ScreenToolSelect:
 		// Last option is "Install"
@@ -127,6 +136,8 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 
 func maxCursor(m Model) int {
 	switch m.Screen {
+	case ScreenFlavorSelect:
+		return len(defaultFlavors())
 	case ScreenToolSelect:
 		return len(m.Tools)
 	case ScreenBackupConfirm:
