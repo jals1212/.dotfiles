@@ -55,3 +55,11 @@ export FZF_DEFAULT_OPTS="\
 [[ -f ~/.zalias ]] && source ~/.zalias
 [[ -f ~/.zfunc ]] && source ~/.zfunc
 [[ -f ~/.zkey ]]  && source ~/.zkey
+
+# ── Auto-start tmux ──────────────────────────────────
+function start_if_needed() {
+    if [[ $- == *i* ]] && [[ -z "${TMUX}" ]] && [[ -t 1 ]] && [[ -z "${DOTS_NO_TMUX}" ]]; then
+        exec tmux
+    fi
+}
+start_if_needed
