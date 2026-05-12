@@ -23,7 +23,7 @@ func RequiredPackages() []PackageSpec {
 		{Name: "bat"},
 		{Name: "ripgrep"},
 		{Name: "fd", AptName: "fd-find"},
-		{Name: "gh", AptName: "gh", DnfName: "gh"},
+		{Name: "hub"},
 		{Name: "zoxide"},
 		{Name: "mise"},
 		{Name: "eza", AptName: "eza"},

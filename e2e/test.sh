@@ -86,6 +86,9 @@ check_file_contains "$HOME/.zshrc" "starship" "Starship init in zshrc"
 check_file_contains "$HOME/.zshrc" "atuin" "Atuin init in zshrc"
 check_file_contains "$HOME/.zshrc" "zoxide" "Zoxide init in zshrc"
 check_file_contains "$HOME/.zalias" "eza" "eza alias"
+check_file_contains "$HOME/.zalias" "git='hub'" "hub alias"
+check_file_contains "$HOME/.zshrc" "zsh-autosuggestions" "zsh autosuggestions plugin"
+check_file_contains "$HOME/.zshrc" "zsh-syntax-highlighting" "zsh syntax highlighting plugin"
 
 check_file_contains "manifest.json" "deployed_at" "Deploy manifest exists"
 
