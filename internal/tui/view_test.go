@@ -16,6 +16,7 @@ func TestWelcomeView(t *testing.T) {
 		Screen: ScreenWelcome,
 		Width:  80,
 		Height: 24,
+		Palette: flavorPalettes["mocha"],
 		SystemInfo: &system.SystemInfo{
 			OSName: "macOS",
 			Arch:   "arm64",

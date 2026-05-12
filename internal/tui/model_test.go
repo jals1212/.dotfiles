@@ -21,6 +21,9 @@ func TestNewModel(t *testing.T) {
 	if m.SelectedAccent != "mauve" {
 		t.Errorf("SelectedAccent = %q, want %q", m.SelectedAccent, "mauve")
 	}
+	if m.Palette != flavorPalettes["mocha"] {
+		t.Errorf("Palette = %+v, want %+v", m.Palette, flavorPalettes["mocha"])
+	}
 	if len(m.Tools) != len(defaultTools()) {
 		t.Errorf("len(Tools) = %d, want %d", len(m.Tools), len(defaultTools()))
 	}

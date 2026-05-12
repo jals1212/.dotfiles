@@ -210,8 +210,8 @@ func stepDeployConfigs(m *Model) error {
 	}
 
 	// 4.5 Atuin theme
-	atuinSrc := filepath.Join(dotfilesDir, "assets", "themes", "atuin", fmt.Sprintf("catppuccin-%s-mauve.toml", flavor))
-	atuinDst := filepath.Join(homeDir, ".config", "atuin", "themes", fmt.Sprintf("catppuccin-%s-mauve.toml", flavor))
+	atuinSrc := filepath.Join(dotfilesDir, "assets", "themes", "atuin", fmt.Sprintf("catppuccin-%s-%s.toml", flavor, m.SelectedAccent))
+	atuinDst := filepath.Join(homeDir, ".config", "atuin", "themes", fmt.Sprintf("catppuccin-%s-%s.toml", flavor, m.SelectedAccent))
 	if err := system.CopyFile(atuinSrc, atuinDst); err != nil {
 		SendLog(m, stepID, fmt.Sprintf("⚠ Atuin theme failed: %v", err))
 	} else {

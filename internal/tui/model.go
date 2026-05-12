@@ -10,6 +10,7 @@ type Screen int
 const (
 	ScreenWelcome Screen = iota
 	ScreenFlavorSelect
+	ScreenThemePreview
 	ScreenToolSelect
 	ScreenBackupConfirm
 	ScreenInstalling
@@ -42,6 +43,61 @@ const (
 	StatusSkipped
 )
 
+type Palette struct {
+	Title, Subtitle, Selected, Cursor, Normal, Dim, Done, Running, Failed, Pending string
+}
+
+var flavorPalettes = map[string]Palette{
+	"latte": {
+		Title:    "#8839ef",
+		Subtitle: "#6c6f85",
+		Selected: "#40a02b",
+		Cursor:   "#dc8a78",
+		Normal:   "#4c4f69",
+		Dim:      "#9ca0b0",
+		Done:     "#40a02b",
+		Running:  "#df8e1d",
+		Failed:   "#d20f39",
+		Pending:  "#9ca0b0",
+	},
+	"frappe": {
+		Title:    "#ca9ee6",
+		Subtitle: "#a5adce",
+		Selected: "#a6d189",
+		Cursor:   "#f2d5cf",
+		Normal:   "#c6d0f5",
+		Dim:      "#737994",
+		Done:     "#a6d189",
+		Running:  "#e5c890",
+		Failed:   "#e78284",
+		Pending:  "#737994",
+	},
+	"macchiato": {
+		Title:    "#c6a0f6",
+		Subtitle: "#a5adcb",
+		Selected: "#a6da95",
+		Cursor:   "#f4dbd6",
+		Normal:   "#cad3f5",
+		Dim:      "#6e738d",
+		Done:     "#a6da95",
+		Running:  "#eed49f",
+		Failed:   "#ed8796",
+		Pending:  "#6e738d",
+	},
+	"mocha": {
+		Title:    "#cba6f7",
+		Subtitle: "#a6adc8",
+		Selected: "#a6e3a1",
+		Cursor:   "#f5e0dc",
+		Normal:   "#cdd6f4",
+		Dim:      "#6c7086",
+		Done:     "#a6e3a1",
+		Running:  "#f9e2af",
+		Failed:   "#f38ba8",
+		Pending:  "#6c7086",
+	},
+}
+
 type Model struct {
 	Screen           Screen
 	PrevScreen       Screen
@@ -62,6 +118,7 @@ type Model struct {
 	IsNonInteractive bool
 	SelectedFlavor   string
 	SelectedAccent   string
+	Palette          Palette
 }
 
 func NewModel() (Model, error) {
@@ -79,11 +136,20 @@ func NewModel() (Model, error) {
 		LogLines:       []string{},
 		SelectedFlavor: "mocha",
 		SelectedAccent: "mauve",
+		Palette:        flavorPalettes["mocha"],
 	}, nil
 }
 
 func defaultFlavors() []string {
 	return []string{"latte", "frappe", "macchiato", "mocha"}
+}
+
+func defaultAccents() []string {
+	return []string{
+		"blue", "lavender", "sapphire", "sky", "teal", "green",
+		"yellow", "peach", "maroon", "red", "mauve", "pink",
+		"flamingo", "rosewater",
+	}
 }
 
 func defaultTools() []Tool {

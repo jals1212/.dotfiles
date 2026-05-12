@@ -27,9 +27,17 @@ func TestScreenTransitions(t *testing.T) {
 			wantCursor: 0,
 		},
 		{
-			name:       "flavor select to tool select on continue",
+			name:       "flavor select to theme preview on continue",
 			initial:    ScreenFlavorSelect,
 			cursor:     len(defaultFlavors()), // Continue button
+			key:        tea.KeyMsg{Type: tea.KeyEnter},
+			wantScreen: ScreenThemePreview,
+			wantCursor: 0,
+		},
+		{
+			name:       "theme preview to tool select on continue",
+			initial:    ScreenThemePreview,
+			cursor:     0,
 			key:        tea.KeyMsg{Type: tea.KeyEnter},
 			wantScreen: ScreenToolSelect,
 			wantCursor: 0,
@@ -73,17 +81,18 @@ func TestScreenTransitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := Model{
-				Screen:     tt.initial,
-				PrevScreen: ScreenWelcome,
-				Cursor:     tt.cursor,
-				Tools:      defaultTools(),
-				SystemInfo: &system.SystemInfo{
-					OS:        system.OSMac,
-					HomeDir:   t.TempDir(),
-					DotfilesDir: t.TempDir(),
-				},
-			}
+		m := Model{
+			Screen:     tt.initial,
+			PrevScreen: ScreenWelcome,
+			Cursor:     tt.cursor,
+			Tools:      defaultTools(),
+			Palette:    flavorPalettes["mocha"],
+			SystemInfo: &system.SystemInfo{
+				OS:          system.OSMac,
+				HomeDir:     t.TempDir(),
+				DotfilesDir: t.TempDir(),
+			},
+		}
 			if tt.setup != nil {
 				tt.setup(&m)
 			}
@@ -111,6 +120,7 @@ func TestMaxCursor(t *testing.T) {
 	}{
 		{name: "welcome", screen: ScreenWelcome, want: 0},
 		{name: "flavor select", screen: ScreenFlavorSelect, want: len(defaultFlavors())},
+		{name: "theme preview", screen: ScreenThemePreview, want: 0},
 		{name: "tool select", screen: ScreenToolSelect, want: len(defaultTools())},
 		{name: "backup confirm", screen: ScreenBackupConfirm, want: 2},
 		{name: "installing", screen: ScreenInstalling, want: 0},

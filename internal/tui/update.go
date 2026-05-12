@@ -76,16 +76,16 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(msg.logs) > 0 {
 				m.LogLines = append(m.LogLines, msg.logs...)
 			}
-		if msg.status == StatusDone || msg.status == StatusFailed || msg.status == StatusSkipped {
-			m.CurrentStep++
-			if m.CurrentStep >= len(m.Steps) {
-				m.PrevScreen = m.Screen
-				m.Screen = ScreenSummary
-			} else {
-				m.Steps[m.CurrentStep].Status = StatusRunning
-				return m, runInstallStep(m.CurrentStep, m)
+			if msg.status == StatusDone || msg.status == StatusFailed || msg.status == StatusSkipped {
+				m.CurrentStep++
+				if m.CurrentStep >= len(m.Steps) {
+					m.PrevScreen = m.Screen
+					m.Screen = ScreenSummary
+				} else {
+					m.Steps[m.CurrentStep].Status = StatusRunning
+					return m, runInstallStep(m.CurrentStep, m)
+				}
 			}
-		}
 		}
 		return m, nil
 
@@ -109,11 +109,17 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 		flavors := defaultFlavors()
 		if m.Cursor < len(flavors) {
 			m.SelectedFlavor = flavors[m.Cursor]
+			m.Palette = flavorPalettes[m.SelectedFlavor]
 		} else if m.Cursor == len(flavors) {
 			m.PrevScreen = m.Screen
-			m.Screen = ScreenToolSelect
+			m.Screen = ScreenThemePreview
 			m.Cursor = 0
 		}
+
+	case ScreenThemePreview:
+		m.PrevScreen = m.Screen
+		m.Screen = ScreenToolSelect
+		m.Cursor = 0
 
 	case ScreenToolSelect:
 		// Last option is "Install"
@@ -151,6 +157,8 @@ func maxCursor(m Model) int {
 		return 0
 	case ScreenFlavorSelect:
 		return len(defaultFlavors())
+	case ScreenThemePreview:
+		return 0
 	case ScreenToolSelect:
 		return len(m.Tools)
 	case ScreenBackupConfirm:
