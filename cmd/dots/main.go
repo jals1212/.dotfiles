@@ -93,6 +93,7 @@ func runNonInteractiveInstall() {
 		SystemInfo:       info,
 		IsNonInteractive: true,
 		SelectedFlavor:   flavor,
+		SelectedAccent:   "mauve",
 		Tools: []tui.Tool{
 			{Name: "ghostty", Selected: true},
 			{Name: "tmux", Selected: true},

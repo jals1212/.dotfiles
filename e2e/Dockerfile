@@ -7,11 +7,14 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -s /bin/bash testuser && \
     echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-COPY dots /usr/local/bin/dots
-RUN chmod +x /usr/local/bin/dots
-
+# Copy dotfiles repo structure
+COPY dots-binary /usr/local/bin/dots
+COPY home /opt/dotfiles/home
+COPY assets /opt/dotfiles/assets
 COPY e2e/e2e_test.sh /home/testuser/e2e_test.sh
-RUN chmod +x /home/testuser/e2e_test.sh
+RUN chmod +x /usr/local/bin/dots /home/testuser/e2e_test.sh
+
+ENV DOTFILES_DIR=/opt/dotfiles
 
 USER testuser
 WORKDIR /home/testuser
