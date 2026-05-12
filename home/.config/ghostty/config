@@ -68,3 +68,9 @@ palette = 13=#f5c2e7
 palette = 14=#94e2d5
 palette = 15=#a6adc8
 # CATPPUCCIN_GHOSTTY_THEME_END
+
+# Shaders
+# custom-shader = shaders/cursor_smear_gentleman.glsl
+
+# Write screen contents to file
+keybind = alt+s=write_screen_file:paste
