@@ -5,8 +5,15 @@
 backups/
 manifest.json
 dots
-orchestra
-openspec/
+
+# Orchestra
+.grit
+.grit/
 .opencode/
 .orchestra/
-.grit/
+AGENTS.md
+BATON.md
+opencode.json
+openspec/
+orchestra
+STACCATO.md
