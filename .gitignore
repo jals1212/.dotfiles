@@ -4,7 +4,6 @@
 *.lock.*
 backups/
 manifest.json
-dots
 
 # Orchestra
 .grit
