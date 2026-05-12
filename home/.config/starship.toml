@@ -12,6 +12,9 @@ $golang\
 $php\
 $java\
 $c\
+$bun\
+$conda\
+$zig\
 $python\
 $cmd_duration\
 $time\
@@ -104,6 +107,22 @@ format = "[$symbol($version)](fg:red) "
 [c]
 symbol = ""
 format = "[$symbol($version)](fg:blue) "
+
+[bun]
+symbol = ""
+format = "[$symbol($version)](fg:yellow) "
+disabled = false
+
+[conda]
+symbol = ""
+format = "[$symbol$environment](fg:green) "
+disabled = false
+ignore_base = true
+
+[zig]
+symbol = ""
+format = "[$symbol($version)](fg:orange) "
+disabled = false
 
 [time]
 disabled = false
