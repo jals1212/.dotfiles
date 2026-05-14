@@ -15,14 +15,17 @@ func TestNewModel(t *testing.T) {
 	if m.PrevScreen != ScreenWelcome {
 		t.Errorf("PrevScreen = %v, want %v", m.PrevScreen, ScreenWelcome)
 	}
-	if m.SelectedFlavor != "mocha" {
-		t.Errorf("SelectedFlavor = %q, want %q", m.SelectedFlavor, "mocha")
+	if m.SelectedTheme != "kanagawa" {
+		t.Errorf("SelectedTheme = %q, want %q", m.SelectedTheme, "kanagawa")
+	}
+	if m.SelectedFlavor != "dragon" {
+		t.Errorf("SelectedFlavor = %q, want %q", m.SelectedFlavor, "dragon")
 	}
 	if m.SelectedAccent != "mauve" {
 		t.Errorf("SelectedAccent = %q, want %q", m.SelectedAccent, "mauve")
 	}
-	if m.Palette != flavorPalettes["mocha"] {
-		t.Errorf("Palette = %+v, want %+v", m.Palette, flavorPalettes["mocha"])
+	if m.Palette != paletteFor("kanagawa", "dragon") {
+		t.Errorf("Palette = %+v, want %+v", m.Palette, paletteFor("kanagawa", "dragon"))
 	}
 	if len(m.Tools) != len(defaultTools()) {
 		t.Errorf("len(Tools) = %d, want %d", len(m.Tools), len(defaultTools()))
@@ -92,5 +95,18 @@ func TestDefaultFlavors(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDefaultThemes(t *testing.T) {
+	themes := defaultThemes()
+	if len(themes) != 2 {
+		t.Fatalf("len(defaultThemes()) = %d, want 2", len(themes))
+	}
+	if themes[0].Name != "kanagawa" {
+		t.Errorf("default theme = %q, want kanagawa", themes[0].Name)
+	}
+	if got := defaultFlavorsForTheme("kanagawa"); len(got) != 3 || got[0] != "wave" || got[1] != "dragon" || got[2] != "lotus" {
+		t.Errorf("defaultFlavorsForTheme(kanagawa) = %#v", got)
 	}
 }

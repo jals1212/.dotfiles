@@ -1,0 +1,12 @@
+[theme]
+name = "kanagawa-lotus"
+
+[colors]
+AlertInfo = "#6f894e"
+AlertWarn = "#cc6d00"
+AlertError = "#c84053"
+Annotation = "#b35b79"
+Base = "#545464"
+Guidance = "#a09cac"
+Important = "#c84053"
+Title = "#624c83"

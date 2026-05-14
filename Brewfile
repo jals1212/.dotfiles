@@ -22,6 +22,7 @@ brew "atuin"
 brew "lazygit"
 brew "bottom"
 brew "dust"
+brew "jless"
 
 # ── Fonts ────────────────────────────────────────────
 cask "font-iosevka-term-nerd-font"

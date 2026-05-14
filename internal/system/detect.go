@@ -33,17 +33,18 @@ type SystemInfo struct {
 	InstalledTools map[string]bool
 }
 
-func Detect() (*SystemInfo, error) {
+func Detect(fs FileSystem) (*SystemInfo, error) {
+	home := homeDirFS(fs)
 	info := &SystemInfo{
 		Arch:           runtime.GOARCH,
-		HomeDir:        homeDir(),
+		HomeDir:        home,
 		UserShell:      os.Getenv("SHELL"),
 		InstalledTools: make(map[string]bool),
 		ARM:            runtime.GOARCH == "arm64",
 	}
 
 	// Check Termux FIRST before standard OS detection
-	if isTermux() {
+	if isTermuxFS(fs) {
 		info.Termux = true
 		info.OS = OSLinux
 		info.OSName = "Termux (Android)"
@@ -52,12 +53,12 @@ func Detect() (*SystemInfo, error) {
 		case "darwin":
 			info.OS = OSMac
 			info.OSName = "macOS"
-			info.HasXcode = commandExists("xcode-select")
+			info.HasXcode = CommandExists("xcode-select")
 		case "linux":
-			info.OS = detectLinuxDistro()
+			info.OS = detectLinuxDistroFS(fs)
 			info.OSName = linuxDistroName(info.OS)
-			if fileExists("/proc/version") {
-				data, err := readFile("/proc/version")
+			if fileExistsFS(fs, "/proc/version") {
+				data, err := readFileFS(fs, "/proc/version")
 				if err == nil {
 					info.IsWSL = strings.Contains(data, "microsoft")
 				}
@@ -68,23 +69,23 @@ func Detect() (*SystemInfo, error) {
 		}
 	}
 
-	info.HasBrew = commandExists("brew")
+	info.HasBrew = CommandExists("brew")
 
 	tools := []string{"tmux", "nvim", "git", "fzf", "bat", "rg", "fd", "gh", "zoxide", "atuin", "starship", "eza", "lazygit", "mise", "ghostty"}
 	for _, tool := range tools {
-		info.InstalledTools[tool] = commandExists(tool)
+		info.InstalledTools[tool] = CommandExists(tool)
 	}
 
-	info.DotfilesDir = findDotfilesDir()
+	info.DotfilesDir = findDotfilesDirFS(fs)
 
 	return info, nil
 }
 
-func isTermux() bool {
+func isTermuxFS(fs FileSystem) bool {
 	if os.Getenv("TERMUX_VERSION") != "" {
 		return true
 	}
-	if fileExists("/data/data/com.termux") {
+	if fileExistsFS(fs, "/data/data/com.termux") {
 		return true
 	}
 	prefix := os.Getenv("PREFIX")
@@ -102,14 +103,14 @@ func (s *SystemInfo) IsARM() bool {
 	return s.ARM
 }
 
-func detectLinuxDistro() OS {
-	if fileExists("/etc/debian_version") || fileExists("/etc/apt") {
+func detectLinuxDistroFS(fs FileSystem) OS {
+	if fileExistsFS(fs, "/etc/debian_version") || fileExistsFS(fs, "/etc/apt") {
 		return OSDebian
 	}
-	if fileExists("/etc/fedora-release") || fileExists("/etc/dnf") {
+	if fileExistsFS(fs, "/etc/fedora-release") || fileExistsFS(fs, "/etc/dnf") {
 		return OSFedora
 	}
-	if fileExists("/etc/arch-release") || fileExists("/etc/pacman.conf") {
+	if fileExistsFS(fs, "/etc/arch-release") || fileExistsFS(fs, "/etc/pacman.conf") {
 		return OSArch
 	}
 	return OSLinux
@@ -152,45 +153,46 @@ func (s *SystemInfo) PackageManager() string {
 	}
 }
 
-func homeDir() string {
-	if dir, err := os.UserHomeDir(); err == nil {
+func homeDirFS(fs FileSystem) string {
+	if dir, err := fs.UserHomeDir(); err == nil {
 		return dir
 	}
 	return os.Getenv("HOME")
 }
 
-func findDotfilesDir() string {
+func findDotfilesDirFS(fs FileSystem) string {
 	candidates := []string{
-		homeDir() + "/.dotfiles",
+		homeDirFS(fs) + "/.dotfiles",
 		os.Getenv("DOTFILES_DIR"),
 	}
 	if wd, err := os.Getwd(); err == nil {
-		if _, err := os.Stat(wd + "/.config"); err == nil {
+		if _, err := fs.Stat(wd + "/.config"); err == nil {
 			candidates = append([]string{wd}, candidates...)
 		}
 	}
 	for _, dir := range candidates {
 		if dir != "" {
-			if _, err := os.Stat(dir); err == nil {
+			if _, err := fs.Stat(dir); err == nil {
 				return dir
 			}
 		}
 	}
-	return homeDir() + "/.dotfiles"
+	return homeDirFS(fs) + "/.dotfiles"
 }
 
-func commandExists(cmd string) bool {
+// CommandExists checks if a command is available in PATH.
+func CommandExists(cmd string) bool {
 	_, err := exec.LookPath(cmd)
 	return err == nil
 }
 
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
+func fileExistsFS(fs FileSystem, path string) bool {
+	_, err := fs.Stat(path)
 	return err == nil
 }
 
-func readFile(path string) (string, error) {
-	data, err := os.ReadFile(path)
+func readFileFS(fs FileSystem, path string) (string, error) {
+	data, err := fs.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

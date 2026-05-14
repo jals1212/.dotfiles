@@ -55,7 +55,7 @@ func Install(spec PackageSpec, info *SystemInfo) error {
 }
 
 func IsInstalled(name string) bool {
-	return commandExists(name)
+	return CommandExists(name)
 }
 
 func brewInstall(spec PackageSpec) error {

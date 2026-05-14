@@ -74,24 +74,30 @@ func runInstall(args []string) {
 }
 
 func runNonInteractiveInstall() {
-	info, err := system.Detect()
+	info, err := system.Detect(system.OSFileSystem{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
 		os.Exit(1)
 	}
 
 	flavor := os.Getenv("DOTS_FLAVOR")
+	theme := os.Getenv("DOTS_THEME")
+	if theme == "" {
+		theme = "kanagawa"
+	}
 	if flavor == "" {
-		flavor = "mocha"
+		flavor = "dragon"
 	}
 
 	fmt.Println("Running non-interactive install...")
 	fmt.Printf("OS: %s (%s)\n", info.OSName, info.Arch)
+	fmt.Printf("Theme: %s/%s\n", theme, flavor)
 
 	// Build model for step execution
 	model := &tui.Model{
 		SystemInfo:       info,
 		IsNonInteractive: true,
+		SelectedTheme:    theme,
 		SelectedFlavor:   flavor,
 		SelectedAccent:   "mauve",
 		Tools: []tui.Tool{
@@ -106,7 +112,7 @@ func runNonInteractiveInstall() {
 	}
 
 	// Detect existing configs
-	model.ExistingConfigs = system.DetectExistingConfigs(info.DotfilesDir, info.HomeDir)
+	model.ExistingConfigs = system.DetectExistingConfigs(system.OSFileSystem{}, info.DotfilesDir, info.HomeDir)
 
 	steps := []tui.InstallStep{
 		{ID: "backup", Name: "Backup existing configs"},
@@ -128,7 +134,7 @@ func runNonInteractiveInstall() {
 }
 
 func runUpdate() {
-	info, err := system.Detect()
+	info, err := system.Detect(system.OSFileSystem{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
 		os.Exit(1)
@@ -140,6 +146,9 @@ func runUpdate() {
 	model := &tui.Model{
 		SystemInfo:       info,
 		IsNonInteractive: true,
+		SelectedTheme:    envOrDefault("DOTS_THEME", "kanagawa"),
+		SelectedFlavor:   envOrDefault("DOTS_FLAVOR", "dragon"),
+		SelectedAccent:   "mauve",
 	}
 
 	if err := tui.ExecuteStep("deploy", model); err != nil {
@@ -155,14 +164,14 @@ func runUpdate() {
 }
 
 func runUninstall() {
-	info, err := system.Detect()
+	info, err := system.Detect(system.OSFileSystem{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Println("Uninstalling dotfiles...")
 
-	if err := system.Uninstall(info.DotfilesDir, info.HomeDir); err != nil {
+	if err := system.Uninstall(system.OSFileSystem{}, info.DotfilesDir, info.HomeDir); err != nil {
 		fmt.Fprintf(os.Stderr, "Uninstall failed: %v\n", err)
 		os.Exit(1)
 	}
@@ -177,7 +186,16 @@ func printHelp() {
 	fmt.Println("  dots                    Launch interactive TUI installer")
 	fmt.Println("  dots install            Install dotfiles (interactive)")
 	fmt.Println("  dots install --yes      Install dotfiles (non-interactive)")
+	fmt.Println("                          Uses DOTS_THEME/DOTS_FLAVOR, default kanagawa/dragon")
 	fmt.Println("  dots update             Re-deploy configs only")
 	fmt.Println("  dots uninstall          Remove deployed configs")
 	fmt.Println("  dots help               Show this help")
+}
+
+func envOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
 }

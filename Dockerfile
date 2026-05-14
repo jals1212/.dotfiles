@@ -47,6 +47,6 @@ COPY --from=builder /build/dots .
 COPY --from=builder /build/home ./home
 COPY --from=builder /build/e2e ./e2e
 
-RUN chmod +x e2e/test.sh
+RUN chmod +x e2e/e2e_test.sh
 
 CMD ["./dots", "install", "--yes"]

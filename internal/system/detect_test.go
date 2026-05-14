@@ -10,6 +10,7 @@ import (
 func TestDetect(t *testing.T) {
 	tests := []struct {
 		name     string
+		fs       FileSystem
 		envSetup func()
 		cleanup  func()
 		checks   func(t *testing.T, info *SystemInfo)
@@ -17,6 +18,7 @@ func TestDetect(t *testing.T) {
 	}{
 		{
 			name: "basic detection returns info",
+			fs:   OSFileSystem{},
 			checks: func(t *testing.T, info *SystemInfo) {
 				if info == nil {
 					t.Fatal("expected non-nil SystemInfo")
@@ -34,6 +36,7 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "ARM architecture detection",
+			fs:   OSFileSystem{},
 			checks: func(t *testing.T, info *SystemInfo) {
 				expectedARM := runtime.GOARCH == "arm64"
 				if info.ARM != expectedARM {
@@ -46,6 +49,7 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "termux detection via env",
+			fs:   OSFileSystem{},
 			envSetup: func() {
 				os.Setenv("TERMUX_VERSION", "0.118")
 			},
@@ -64,6 +68,25 @@ func TestDetect(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "detect with memfs debian",
+			fs: func() FileSystem {
+				mfs := NewMemFileSystem()
+				mfs.MkdirAll("/etc/apt", 0755)
+				return mfs
+			}(),
+			checks: func(t *testing.T, info *SystemInfo) {
+				if runtime.GOOS != "linux" {
+					t.Skip("skipping on non-linux platform")
+				}
+				if info.OS != OSDebian {
+					t.Errorf("expected OS=OSDebian, got %v", info.OS)
+				}
+				if info.OSName != "Debian/Ubuntu" {
+					t.Errorf("expected OSName='Debian/Ubuntu', got %s", info.OSName)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -72,7 +95,7 @@ func TestDetect(t *testing.T) {
 				tt.envSetup()
 				defer tt.cleanup()
 			}
-			info, err := Detect()
+			info, err := Detect(tt.fs)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Detect() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -81,87 +104,69 @@ func TestDetect(t *testing.T) {
 	}
 }
 
-func TestDetectLinuxDistro(t *testing.T) {
+func TestDetectLinuxDistroFS(t *testing.T) {
 	tests := []struct {
-		name       string
-		setupFiles func(t *testing.T, dir string)
-		expected   OS
+		name     string
+		setupFS  func(fs *MemFileSystem)
+		expected OS
 	}{
 		{
 			name: "debian via apt",
-			setupFiles: func(t *testing.T, dir string) {
-				aptDir := filepath.Join(dir, "etc", "apt")
-				if err := os.MkdirAll(aptDir, 0755); err != nil {
-					t.Fatal(err)
-				}
+			setupFS: func(fs *MemFileSystem) {
+				fs.MkdirAll("/etc/apt", 0755)
 			},
 			expected: OSDebian,
 		},
 		{
 			name: "debian via debian_version",
-			setupFiles: func(t *testing.T, dir string) {
-				debianVersion := filepath.Join(dir, "etc", "debian_version")
-				if err := os.MkdirAll(filepath.Dir(debianVersion), 0755); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.WriteFile(debianVersion, []byte("11.0\n"), 0644); err != nil {
-					t.Fatal(err)
-				}
+			setupFS: func(fs *MemFileSystem) {
+				fs.WriteFile("/etc/debian_version", []byte("11.0\n"), 0644)
 			},
 			expected: OSDebian,
 		},
 		{
 			name: "fedora via dnf",
-			setupFiles: func(t *testing.T, dir string) {
-				dnfDir := filepath.Join(dir, "etc", "dnf")
-				if err := os.MkdirAll(dnfDir, 0755); err != nil {
-					t.Fatal(err)
-				}
+			setupFS: func(fs *MemFileSystem) {
+				fs.MkdirAll("/etc/dnf", 0755)
+			},
+			expected: OSFedora,
+		},
+		{
+			name: "fedora via fedora-release",
+			setupFS: func(fs *MemFileSystem) {
+				fs.WriteFile("/etc/fedora-release", []byte("Fedora 40\n"), 0644)
 			},
 			expected: OSFedora,
 		},
 		{
 			name: "arch via pacman",
-			setupFiles: func(t *testing.T, dir string) {
-				pacmanConf := filepath.Join(dir, "etc", "pacman.conf")
-				if err := os.MkdirAll(filepath.Dir(pacmanConf), 0755); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.WriteFile(pacmanConf, []byte("[options]\n"), 0644); err != nil {
-					t.Fatal(err)
-				}
+			setupFS: func(fs *MemFileSystem) {
+				fs.WriteFile("/etc/pacman.conf", []byte("[options]\n"), 0644)
 			},
 			expected: OSArch,
 		},
 		{
-			name:       "generic linux",
-			setupFiles: func(t *testing.T, dir string) {},
-			expected:   OSLinux,
+			name: "arch via arch-release",
+			setupFS: func(fs *MemFileSystem) {
+				fs.WriteFile("/etc/arch-release", []byte("\n"), 0644)
+			},
+			expected: OSArch,
+		},
+		{
+			name:     "generic linux",
+			setupFS:  func(fs *MemFileSystem) {},
+			expected: OSLinux,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Save and restore current dir
-			origDir, err := os.Getwd()
-			if err != nil {
-				t.Fatal(err)
+			fs := NewMemFileSystem()
+			tt.setupFS(fs)
+			got := detectLinuxDistroFS(fs)
+			if got != tt.expected {
+				t.Errorf("detectLinuxDistroFS() = %v, want %v", got, tt.expected)
 			}
-			defer os.Chdir(origDir)
-
-			tmpDir := t.TempDir()
-			rootDir := filepath.Join(tmpDir, "root")
-			if err := os.MkdirAll(filepath.Join(rootDir, "etc"), 0755); err != nil {
-				t.Fatal(err)
-			}
-			tt.setupFiles(t, rootDir)
-
-			// Change to tmpDir so fileExists uses relative paths... no, fileExists uses absolute paths.
-			// detectLinuxDistro uses absolute paths like /etc/debian_version.
-			// We can't easily mock the root filesystem without changing the function.
-			// For this test, we just verify the function compiles and returns a value.
-			// A more thorough test would require dependency injection or a rootDir parameter.
-			_ = tt.expected
 		})
 	}
 }
@@ -186,15 +191,15 @@ func TestCommandExists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := commandExists(tt.cmd)
+			got := CommandExists(tt.cmd)
 			if got != tt.expected {
-				t.Errorf("commandExists(%q) = %v, want %v", tt.cmd, got, tt.expected)
+				t.Errorf("CommandExists(%q) = %v, want %v", tt.cmd, got, tt.expected)
 			}
 		})
 	}
 }
 
-func TestFindDotfilesDir(t *testing.T) {
+func TestFindDotfilesDirFS(t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func(t *testing.T) (cleanup func())
@@ -234,18 +239,18 @@ func TestFindDotfilesDir(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cleanup := tt.setup(t)
 			defer cleanup()
-			got := findDotfilesDir()
+			got := findDotfilesDirFS(OSFileSystem{})
 			if tt.expected != "" && got != tt.expected {
-				t.Errorf("findDotfilesDir() = %q, want %q", got, tt.expected)
+				t.Errorf("findDotfilesDirFS() = %q, want %q", got, tt.expected)
 			}
 			if got == "" {
-				t.Error("findDotfilesDir() returned empty string")
+				t.Error("findDotfilesDirFS() returned empty string")
 			}
 		})
 	}
 }
 
-func TestReadFile(t *testing.T) {
+func TestReadFileFS(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string
@@ -276,12 +281,12 @@ func TestReadFile(t *testing.T) {
 				}
 			}
 
-			got, err := readFile(path)
+			got, err := readFileFS(OSFileSystem{}, path)
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("readFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("readFileFS() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr && got != tt.expected {
-				t.Errorf("readFile() = %q, want %q", got, tt.expected)
+				t.Errorf("readFileFS() = %q, want %q", got, tt.expected)
 			}
 		})
 	}

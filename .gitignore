@@ -4,6 +4,8 @@
 *.lock.*
 backups/
 manifest.json
+tmp/
+*.log
 
 # Orchestra
 .grit
@@ -17,3 +19,4 @@ opencode.json
 openspec/
 orchestra
 STACCATO.md
+skills/

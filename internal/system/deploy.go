@@ -117,25 +117,65 @@ func EnsureDir(path string) error {
 	return os.MkdirAll(path, 0755)
 }
 
+// copyFileFS copies a file using the provided FileSystem.
+func copyFileFS(fs FileSystem, src, dst string) error {
+	info, err := fs.Stat(src)
+	if err != nil {
+		return err
+	}
+	if err := fs.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+	data, err := fs.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return fs.WriteFile(dst, data, info.Mode())
+}
+
+// copyDirFS recursively copies a directory using the provided FileSystem.
+func copyDirFS(fs FileSystem, src, dst string) error {
+	if err := fs.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+	entries, err := fs.ReadDir(src)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+		if entry.IsDir() {
+			if err := copyDirFS(fs, srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := copyFileFS(fs, srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // CreateBackup backs up existing config files
-func CreateBackup(configKeys []string) (string, error) {
-	homeDir, _ := os.UserHomeDir()
+func CreateBackup(fs FileSystem, homeDir string, configKeys []string) (string, error) {
 	backupDir := filepath.Join(homeDir, ".dotfiles_backups", time.Now().Format("2006-01-02_150405"))
 
-	if err := EnsureDir(backupDir); err != nil {
+	if err := fs.MkdirAll(backupDir, 0755); err != nil {
 		return "", err
 	}
 
 	for _, key := range configKeys {
 		src := filepath.Join(homeDir, key)
-		if _, err := os.Stat(src); err == nil {
+		if _, err := fs.Stat(src); err == nil {
 			dst := filepath.Join(backupDir, filepath.Base(key))
-			if info, err := os.Stat(src); err == nil && info.IsDir() {
-				if err := CopyDir(src, dst); err != nil {
+			if info, err := fs.Stat(src); err == nil && info.IsDir() {
+				if err := copyDirFS(fs, src, dst); err != nil {
 					return "", err
 				}
 			} else {
-				if err := CopyFile(src, dst); err != nil {
+				if err := copyFileFS(fs, src, dst); err != nil {
 					return "", err
 				}
 			}
@@ -146,15 +186,15 @@ func CreateBackup(configKeys []string) (string, error) {
 }
 
 // DetectExistingConfigs checks which configs already exist in the target locations
-func DetectExistingConfigs(dotfilesDir, homeDir string) []string {
+func DetectExistingConfigs(fs FileSystem, dotfilesDir, homeDir string) []string {
 	existing := []string{}
 
 	// Check .config entries
 	configSource := filepath.Join(dotfilesDir, "home", ".config")
-	if entries, err := os.ReadDir(configSource); err == nil {
+	if entries, err := fs.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			target := filepath.Join(homeDir, ".config", entry.Name())
-			if _, err := os.Stat(target); err == nil {
+			if _, err := fs.Stat(target); err == nil {
 				existing = append(existing, filepath.Join(".config", entry.Name()))
 			}
 		}
@@ -164,9 +204,9 @@ func DetectExistingConfigs(dotfilesDir, homeDir string) []string {
 	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 	for _, f := range homeFiles {
 		src := filepath.Join(dotfilesDir, f)
-		if _, err := os.Stat(src); err == nil {
+		if _, err := fs.Stat(src); err == nil {
 			target := filepath.Join(homeDir, f)
-			if _, err := os.Stat(target); err == nil {
+			if _, err := fs.Stat(target); err == nil {
 				existing = append(existing, f)
 			}
 		}
@@ -176,13 +216,13 @@ func DetectExistingConfigs(dotfilesDir, homeDir string) []string {
 }
 
 // Uninstall removes all deployed configs
-func Uninstall(dotfilesDir, homeDir string) error {
+func Uninstall(fs FileSystem, dotfilesDir, homeDir string) error {
 	// Remove .config entries
 	configSource := filepath.Join(dotfilesDir, "home", ".config")
-	if entries, err := os.ReadDir(configSource); err == nil {
+	if entries, err := fs.ReadDir(configSource); err == nil {
 		for _, entry := range entries {
 			target := filepath.Join(homeDir, ".config", entry.Name())
-			if err := os.RemoveAll(target); err != nil {
+			if err := fs.RemoveAll(target); err != nil {
 				return err
 			}
 		}
@@ -192,28 +232,41 @@ func Uninstall(dotfilesDir, homeDir string) error {
 	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 	for _, f := range homeFiles {
 		target := filepath.Join(homeDir, f)
-		if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
+		if err := fs.Remove(target); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
 
 	// Remove manifest
 	manifestPath := filepath.Join(dotfilesDir, "manifest.json")
-	if err := os.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
+	if err := fs.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
 	return nil
 }
 
+// Manifest records deployment metadata.
+type Manifest struct {
+	DeployedAt string `json:"deployed_at"`
+	Version    string `json:"version"`
+	Theme      string `json:"theme"`
+	Flavor     string `json:"flavor"`
+}
+
 // SaveManifest writes a simple deployment manifest
-func SaveManifest(dotfilesDir string) error {
-	manifest := struct {
-		DeployedAt string `json:"deployed_at"`
-		Version    string `json:"version"`
-	}{
+func SaveManifest(fs FileSystem, dotfilesDir, theme, flavor string) error {
+	if theme == "" {
+		theme = "kanagawa"
+	}
+	if flavor == "" {
+		flavor = "dragon"
+	}
+	manifest := Manifest{
 		DeployedAt: time.Now().Format(time.RFC3339),
 		Version:    "1.0.0",
+		Theme:      theme,
+		Flavor:     flavor,
 	}
 
 	data, err := json.MarshalIndent(manifest, "", "  ")
@@ -221,5 +274,5 @@ func SaveManifest(dotfilesDir string) error {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(dotfilesDir, "manifest.json"), data, 0644)
+	return fs.WriteFile(filepath.Join(dotfilesDir, "manifest.json"), data, 0644)
 }

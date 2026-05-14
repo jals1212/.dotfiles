@@ -61,11 +61,11 @@ func TestRun(t *testing.T) {
 
 func TestRunWithLogs(t *testing.T) {
 	tests := []struct {
-		name          string
-		command       string
-		wantLines     int
-		wantErr       bool
-		wantExitCode  int
+		name         string
+		command      string
+		wantLines    int
+		wantErr      bool
+		wantExitCode int
 	}{
 		{
 			name:         "echo with callback",
@@ -138,10 +138,17 @@ func TestRunBrewWithLogs(t *testing.T) {
 }
 
 func TestRunSudo(t *testing.T) {
-	// Use an echo command via sudo to test prefixing
 	result := RunSudo("echo hello", nil)
 	if result == nil {
 		t.Fatal("RunSudo returned nil")
+	}
+	if !isRunningInContainer() {
+		if result.Error == nil {
+			t.Fatal("RunSudo should be refused during local tests outside a container")
+		}
+		if !strings.Contains(result.Error.Error(), "refusing to run sudo during tests outside") {
+			t.Fatalf("RunSudo error = %v, want local sudo refusal", result.Error)
+		}
 	}
 }
 
@@ -153,5 +160,16 @@ func TestRunSudoWithLogs(t *testing.T) {
 	result := RunSudoWithLogs("echo hello", nil, callback)
 	if result == nil {
 		t.Fatal("RunSudoWithLogs returned nil")
+	}
+	if !isRunningInContainer() {
+		if result.Error == nil {
+			t.Fatal("RunSudoWithLogs should be refused during local tests outside a container")
+		}
+		if !strings.Contains(result.Error.Error(), "refusing to run sudo during tests outside") {
+			t.Fatalf("RunSudoWithLogs error = %v, want local sudo refusal", result.Error)
+		}
+		if len(lines) != 1 || !strings.Contains(lines[0], "refusing to run sudo") {
+			t.Fatalf("RunSudoWithLogs callback lines = %#v, want refusal log", lines)
+		}
 	}
 }

@@ -1,5 +1,5 @@
 # Dotfiles — Ghostty Terminal
-# Theme: Catppuccin Mocha
+# Theme: DOTS_THEME/DOTS_FLAVOR
 # Font: IosevkaTerm NF
 
 # ── Font ──────────────────────────────────────────────
@@ -42,7 +42,7 @@ keybind = ctrl+shift+l=resize_split:right,10
 keybind = cmd+k=clear_screen
 keybind = shift+enter=text:\x1b\r
 
-# ── Catppuccin Mocha ─────────────────────────────────
+# ── DOTS_THEME/DOTS_FLAVOR ───────────────────────────────
 # CATPPUCCIN_GHOSTTY_THEME_START
 background = 1e1e2e
 foreground = cdd6f4
@@ -69,8 +69,4 @@ palette = 14=#94e2d5
 palette = 15=#a6adc8
 # CATPPUCCIN_GHOSTTY_THEME_END
 
-# Shaders
-# custom-shader = shaders/cursor_smear_gentleman.glsl
-
-# Write screen contents to file
-keybind = alt+s=write_screen_file:paste
+custom-shader = shaders/cursor_smear.glsl

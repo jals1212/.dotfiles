@@ -7,31 +7,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-
-type paletteStyles struct {
-	title, subtitle, selected, cursor, normal, dim, done, running, failed, pending lipgloss.Style
-}
-
-func getStyles(p Palette) paletteStyles {
-	return paletteStyles{
-		title:    lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(p.Title)).MarginBottom(1),
-		subtitle: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Subtitle)).MarginBottom(1),
-		selected: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Selected)).Bold(true),
-		cursor:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Cursor)),
-		normal:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Normal)),
-		dim:      lipgloss.NewStyle().Foreground(lipgloss.Color(p.Dim)),
-		done:     lipgloss.NewStyle().Foreground(lipgloss.Color(p.Done)),
-		running:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Running)),
-		failed:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Failed)),
-		pending:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Pending)),
-	}
-}
-
 func renderView(m Model) string {
 	switch m.Screen {
 	case ScreenWelcome:
 		return renderWelcome(m)
+	case ScreenThemeSelect:
+		return renderThemeSelect(m)
 	case ScreenFlavorSelect:
 		return renderFlavorSelect(m)
 	case ScreenThemePreview:
@@ -68,16 +49,59 @@ func renderWelcome(m Model) string {
 	return b.String()
 }
 
-func renderFlavorSelect(m Model) string {
+func renderThemeSelect(m Model) string {
 	s := getStyles(m.Palette)
 	b := strings.Builder{}
-	b.WriteString(s.title.Render("Select Catppuccin Flavor"))
+	b.WriteString(s.title.Render("Select Theme"))
 	b.WriteString("\n\n")
 
-	flavors := defaultFlavors()
+	themes := defaultThemes()
+	for i, theme := range themes {
+		radio := "○"
+		if theme.Name == m.SelectedTheme {
+			radio = s.selected.Render("●")
+		}
+
+		prefix := "  "
+		nameStyle := s.normal
+		if i == m.Cursor {
+			prefix = s.cursor.Render("❯ ")
+			nameStyle = s.selected
+		}
+
+		b.WriteString(prefix)
+		b.WriteString(radio)
+		b.WriteString(" ")
+		b.WriteString(nameStyle.Render(theme.DisplayName))
+		b.WriteString(s.dim.Render(" — " + theme.Description))
+		b.WriteString("\n")
+	}
+
+	prefix := "  "
+	btnStyle := s.normal
+	if m.Cursor == len(themes) {
+		prefix = s.cursor.Render("❯ ")
+		btnStyle = s.selected
+	}
+	b.WriteString("\n")
+	b.WriteString(prefix)
+	b.WriteString(btnStyle.Render("Continue"))
+	b.WriteString("\n\n")
+	b.WriteString(s.dim.Render("enter select • j/k navigate • q quit"))
+	return b.String()
+}
+
+func renderFlavorSelect(m Model) string {
+	theme, selectedFlavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
+	s := getStyles(m.Palette)
+	b := strings.Builder{}
+	b.WriteString(s.title.Render(fmt.Sprintf("Select %s Flavor", strings.Title(theme))))
+	b.WriteString("\n\n")
+
+	flavors := defaultFlavorsForTheme(theme)
 	for i, flavor := range flavors {
 		radio := "○"
-		if flavor == m.SelectedFlavor {
+		if flavor == selectedFlavor {
 			radio = s.selected.Render("●")
 		}
 
@@ -113,10 +137,13 @@ func renderFlavorSelect(m Model) string {
 }
 
 func renderThemePreview(m Model) string {
+	theme, flavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
 	s := getStyles(m.Palette)
 	b := strings.Builder{}
 	b.WriteString(s.title.Render("Theme Preview"))
 	b.WriteString("\n\n")
+	b.WriteString(s.subtitle.Render(fmt.Sprintf("Selected: %s/%s", theme, flavor)))
+	b.WriteString("\n")
 
 	// Sample code block with syntax highlighting
 	keywordStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.Palette.Title))
@@ -131,7 +158,7 @@ func renderThemePreview(m Model) string {
 	b.WriteString(keywordStyle.Render("package") + normalCodeStyle.Render(" main\n"))
 	b.WriteString(keywordStyle.Render("import") + normalCodeStyle.Render(" ") + stringStyle.Render("\"fmt\"") + normalCodeStyle.Render("\n"))
 	b.WriteString(keywordStyle.Render("func") + normalCodeStyle.Render(" ") + funcStyle.Render("main") + normalCodeStyle.Render("() {\n"))
-	b.WriteString(normalCodeStyle.Render("    fmt.") + funcStyle.Render("Println") + normalCodeStyle.Render("(") + stringStyle.Render("\"Hello, Catppuccin!\"") + normalCodeStyle.Render(")\n"))
+	b.WriteString(normalCodeStyle.Render("    fmt.") + funcStyle.Render("Println") + normalCodeStyle.Render("(") + stringStyle.Render("\"Hello, Theme!\"") + normalCodeStyle.Render(")\n"))
 	b.WriteString(normalCodeStyle.Render("}\n"))
 	b.WriteString(s.dim.Render("─────────────────────────────"))
 	b.WriteString("\n\n")

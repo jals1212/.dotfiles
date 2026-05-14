@@ -69,9 +69,9 @@ check_file "$HOME/.config/nvim/init.lua" "Neovim init.lua"
 check_file_contains "$HOME/.config/nvim/init.lua" "lazy" "LazyVim bootstrap"
 check_file_contains "$HOME/.config/nvim/lua/plugins/colorschemes.lua" "catppuccin" "Nvim catppuccin theme"
 
-check_file "$HOME/.config/starship.toml" "Starship config"
-check_file_contains "$HOME/.config/starship.toml" "catppuccin_mocha" "Starship Catppuccin palette"
-check_file_contains "$HOME/.config/starship.toml" "mauve" "Starship mauve color"
+check_file "$HOME/.config/starship/starship.toml" "Starship config"
+check_file_contains "$HOME/.config/starship/starship.toml" "catppuccin_mocha" "Starship Catppuccin palette"
+check_file_contains "$HOME/.config/starship/starship.toml" "mauve" "Starship mauve color"
 
 check_file "$HOME/.config/atuin/config.toml" "Atuin config"
 check_file_contains "$HOME/.config/atuin/config.toml" "catppuccin-mocha" "Atuin Catppuccin theme"

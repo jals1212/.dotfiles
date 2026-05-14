@@ -1,8 +1,8 @@
 # Dotfiles — Atuin
-# Theme: Catppuccin Mocha
+# Theme: DOTS_THEME/DOTS_FLAVOR
 
 [theme]
-name = "catppuccin-CATPPUCCIN_FLAVOR-mauve"
+name = "DOTS_ATUIN_THEME"
 
 ## keybindings
 ## ctrl-r to open atuin search

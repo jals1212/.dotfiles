@@ -102,14 +102,27 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 	switch m.Screen {
 	case ScreenWelcome:
 		m.PrevScreen = m.Screen
-		m.Screen = ScreenFlavorSelect
+		m.Screen = ScreenThemeSelect
 		m.Cursor = 0
 
+	case ScreenThemeSelect:
+		themes := defaultThemes()
+		if m.Cursor < len(themes) {
+			m.SelectedTheme = themes[m.Cursor].Name
+			m.SelectedFlavor = themes[m.Cursor].DefaultFlavor
+			m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
+		} else if m.Cursor == len(themes) {
+			m.PrevScreen = m.Screen
+			m.Screen = ScreenFlavorSelect
+			m.Cursor = 0
+		}
+
 	case ScreenFlavorSelect:
-		flavors := defaultFlavors()
+		m.SelectedTheme, m.SelectedFlavor = normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
+		flavors := defaultFlavorsForTheme(m.SelectedTheme)
 		if m.Cursor < len(flavors) {
 			m.SelectedFlavor = flavors[m.Cursor]
-			m.Palette = flavorPalettes[m.SelectedFlavor]
+			m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
 		} else if m.Cursor == len(flavors) {
 			m.PrevScreen = m.Screen
 			m.Screen = ScreenThemePreview
@@ -155,8 +168,10 @@ func maxCursor(m Model) int {
 	switch m.Screen {
 	case ScreenWelcome:
 		return 0
+	case ScreenThemeSelect:
+		return len(defaultThemes())
 	case ScreenFlavorSelect:
-		return len(defaultFlavors())
+		return len(defaultFlavorsForTheme(m.SelectedTheme))
 	case ScreenThemePreview:
 		return 0
 	case ScreenToolSelect:
@@ -173,7 +188,7 @@ func maxCursor(m Model) int {
 }
 
 func startInstall(m Model) (tea.Model, tea.Cmd) {
-	m.ExistingConfigs = system.DetectExistingConfigs(m.SystemInfo.DotfilesDir, m.SystemInfo.HomeDir)
+	m.ExistingConfigs = system.DetectExistingConfigs(system.OSFileSystem{}, m.SystemInfo.DotfilesDir, m.SystemInfo.HomeDir)
 	hasExisting := len(m.ExistingConfigs) > 0
 
 	if hasExisting {

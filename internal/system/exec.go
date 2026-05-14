@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -123,10 +124,55 @@ func RunBrewWithLogs(command string, env []string, logCallback func(string)) *Ex
 
 // RunSudo executes a command prefixed with sudo
 func RunSudo(command string, env []string) *ExecResult {
+	if err := guardSudoForTests(); err != nil {
+		return &ExecResult{Output: err.Error(), Stderr: err.Error(), Error: err, ExitCode: 126}
+	}
 	return Run("sudo "+command, env)
 }
 
 // RunSudoWithLogs executes a sudo command with log streaming
 func RunSudoWithLogs(command string, env []string, logCallback func(string)) *ExecResult {
+	if err := guardSudoForTests(); err != nil {
+		if logCallback != nil {
+			logCallback(err.Error())
+		}
+		return &ExecResult{Output: err.Error(), Stderr: err.Error(), Error: err, ExitCode: 126}
+	}
 	return RunWithLogs("sudo "+command, env, logCallback)
+}
+
+func guardSudoForTests() error {
+	if !isGoTestBinary() {
+		return nil
+	}
+	if isRunningInContainer() {
+		return nil
+	}
+	return fmt.Errorf("refusing to run sudo during tests outside a Docker/container environment")
+}
+
+func isGoTestBinary() bool {
+	name := filepath.Base(os.Args[0])
+	return strings.HasSuffix(name, ".test")
+}
+
+func isRunningInContainer() bool {
+	if os.Getenv("container") != "" || os.Getenv("DOTS_IN_CONTAINER") == "1" {
+		return true
+	}
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	if _, err := os.Stat("/run/.containerenv"); err == nil {
+		return true
+	}
+	data, err := os.ReadFile("/proc/1/cgroup")
+	if err != nil {
+		return false
+	}
+	cgroup := string(data)
+	return strings.Contains(cgroup, "docker") ||
+		strings.Contains(cgroup, "containerd") ||
+		strings.Contains(cgroup, "kubepods") ||
+		strings.Contains(cgroup, "podman")
 }
