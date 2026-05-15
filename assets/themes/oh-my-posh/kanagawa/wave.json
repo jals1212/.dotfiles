@@ -1,0 +1,92 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 3,
+  "final_space": true,
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "path",
+          "style": "plain",
+          "foreground": "#7e9cd8",
+          "template": "{{ .Path }} ",
+          "options": {
+            "style": "agnoster_short",
+            "folder_separator_icon": "/"
+          }
+        },
+        {
+          "type": "git",
+          "style": "plain",
+          "foreground": "#957fb8",
+          "template": "-> {{ .HEAD }}{{ if .Working.Changed }}*{{ end }} ",
+          "options": {
+            "branch_icon": " ",
+            "fetch_status": true,
+            "fetch_upstream_icon": true
+          }
+        },
+        {
+          "type": "node",
+          "style": "plain",
+          "foreground": "#98bb6c",
+          "template": "{{ if .Full }}node {{ .Full }} {{ end }}"
+        },
+        {
+          "type": "go",
+          "style": "plain",
+          "foreground": "#7aa89f",
+          "template": "{{ if .Full }}go {{ .Full }} {{ end }}"
+        },
+        {
+          "type": "python",
+          "style": "plain",
+          "foreground": "#ffa066",
+          "template": "{{ if .Full }}py {{ .Full }} {{ end }}"
+        },
+        {
+          "type": "executiontime",
+          "style": "plain",
+          "foreground": "#e6c384",
+          "template": "{{ if gt .Ms 500 }}took {{ .FormattedMs }} {{ end }}",
+          "options": {
+            "threshold": 500,
+            "style": "round"
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "segments": [
+        {
+          "type": "time",
+          "style": "plain",
+          "foreground": "#727169",
+          "template": "{{ .CurrentDate | date .Format }}",
+          "options": {
+            "time_format": "15:04"
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "type": "text",
+          "style": "plain",
+          "foreground_templates": [
+            "{{ if gt .Code 0 }}#e82424{{ else }}#98bb6c{{ end }}"
+          ],
+          "template": "󱗞 "
+        }
+      ]
+    }
+  ]
+}

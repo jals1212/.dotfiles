@@ -1,5 +1,5 @@
 # Dotfiles — ZSH
-# Theme: Catppuccin Mocha (via Starship)
+# Theme: DOTS_THEME/DOTS_FLAVOR (via Oh My Posh)
 
 # ── Zinit ────────────────────────────────────────────
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -29,19 +29,33 @@ setopt hist_ignore_space
 setopt hist_ignore_all_dups
 setopt hist_save_no_dups
 
-# ── Starship ─────────────────────────────────────────
-eval "$(starship init zsh)"
+# ── Oh My Posh ───────────────────────────────────────
+if command -v oh-my-posh >/dev/null 2>&1; then
+  eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"
+fi
 
 # ── Atuin ────────────────────────────────────────────
-eval "$(atuin init zsh)"
+if command -v atuin >/dev/null 2>&1; then
+  eval "$(atuin init zsh)"
+fi
 
 # ── Zoxide ───────────────────────────────────────────
-eval "$(zoxide init zsh)"
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
 
 # ── Mise ─────────────────────────────────────────────
-eval "$(mise activate zsh)"
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
 
 # ── FZF ──────────────────────────────────────────────
+if command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
+fi
+
 # CATPPUCCIN_FZF_START
 export FZF_DEFAULT_OPTS="\
 --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8\

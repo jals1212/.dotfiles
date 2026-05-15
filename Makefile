@@ -1,9 +1,13 @@
-.PHONY: build install clean run
+.PHONY: build test install clean run docker-test docker-interactive docker-shell docker-clean
 
 BINARY=dots
+GOCACHE ?= /private/tmp/dotfiles-go-build
 
 build:
-	go build -o $(BINARY) ./cmd/dots
+	cd installer && GOCACHE=$(GOCACHE) go build -o ../$(BINARY) ./cmd/dots
+
+test:
+	cd installer && GOCACHE=$(GOCACHE) go test ./...
 
 install: build
 	cp $(BINARY) /usr/local/bin/
@@ -16,15 +20,15 @@ run: build
 
 # Docker testing
 docker-test: build
-	docker build -t dots-test .
-	docker run --rm dots-test ./e2e/test.sh
+	docker build -f installer/Dockerfile -t dots-test .
+	docker run --rm dots-test ./installer/e2e/e2e_test.sh
 
 docker-interactive: build
-	docker build -t dots-test .
+	docker build -f installer/Dockerfile -t dots-test .
 	docker run --rm -it dots-test ./dots
 
 docker-shell: build
-	docker build -t dots-test .
+	docker build -f installer/Dockerfile -t dots-test .
 	docker run --rm -it dots-test /bin/bash
 
 docker-clean:

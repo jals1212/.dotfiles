@@ -1,25 +1,13 @@
 -- Dotfiles — Neovim (LazyVim)
--- Bootstrap lazy.nvim
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=main",
-    lazypath,
-  })
-end
-vim.opt.rtp:prepend(lazypath)
 
--- Leader key (must be set before lazy)
+-- Leader key (must be set before lazy.nvim and LazyVim)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- Load options
+-- Load repo-specific config before plugin setup.
 require("config.options")
 require("config.keymaps")
+require("config.nodejs").setup({ silent = true })
 
--- Load plugins
-require("lazy").setup("plugins")
+-- Bootstrap lazy.nvim, LazyVim, and repo plugins.
+require("config.lazy")

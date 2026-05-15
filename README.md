@@ -12,26 +12,26 @@ make build
 ./dots
 
 # Non-interactive (install everything)
-./dots --yes
+./dots install --yes
 ```
 
 ## What's Included
 
 | Tool | Config | Theme |
 |------|--------|-------|
-| Ghostty | `configs/ghostty/` | Catppuccin Mocha |
-| Tmux | `configs/tmux/` | Catppuccin Mocha (via catppuccin/tmux) |
-| Neovim | `configs/nvim/` | Catppuccin Mocha (LazyVim) |
-| Starship | `configs/starship/` | Catppuccin Mocha palette |
-| ZSH | `configs/zsh/` | Starship prompt |
-| Atuin | `configs/atuin/` | Catppuccin Mocha |
+| Ghostty | `home/.config/ghostty/` | Catppuccin/Kanagawa |
+| Tmux | `home/.config/tmux/` | tmux-ukiyo |
+| Neovim | `home/.config/nvim/` | LazyVim |
+| Oh My Posh | `home/.config/oh-my-posh/` | Catppuccin/Kanagawa |
+| ZSH | `home/.zshrc` | Oh My Posh prompt |
+| Atuin | `home/.config/atuin/` | Catppuccin/Kanagawa |
 
 ## Tools
 
 - **Ghostty** — Terminal emulator with IosevkaTerm NF font
 - **Tmux** — Multiplexer with TPM, vim-tmux-navigator, resurrect
 - **Neovim** — LazyVim with LSP, TreeSitter, autocompletion
-- **Starship** — Fast custom prompt
+- **Oh My Posh** — Fast custom prompt
 - **Atuin** — Enhanced shell history
 - **Zoxide** — Smart directory jumping
 - **Mise** — Language runtime manager (replaces asdf)
@@ -53,20 +53,25 @@ make build
 
 ```
 ~/.dotfiles/
-├── cmd/dots/           # TUI installer entry point
-├── internal/
-│   ├── system/         # OS detect, packages, deploy engine
-│   └── tui/            # Bubbletea TUI screens
-├── configs/            # All managed dotfiles
-│   ├── ghostty/
-│   ├── tmux/
-│   ├── nvim/
-│   ├── starship/
-│   ├── atuin/
-│   └── zsh/
+├── installer/          # Go installer module
+│   ├── cmd/dots/       # TUI installer entry point
+│   ├── internal/
+│   │   ├── system/     # OS detect, packages, deploy engine
+│   │   └── tui/        # Bubbletea TUI screens
+│   ├── e2e/            # Docker E2E harness
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── go.sum
+├── home/               # Managed dotfiles payload
+│   ├── .config/
+│   ├── .zshrc
+│   ├── .zprofile
+│   ├── .zalias
+│   ├── .zfunc
+│   └── .zkey
+├── assets/             # Theme assets
 ├── Makefile
-├── Brewfile
-└── go.mod
+└── Brewfile
 ```
 
 ## License

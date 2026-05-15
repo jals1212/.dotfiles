@@ -8,9 +8,6 @@ elif [[ -d /home/linuxbrew/.linuxbrew ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-# ── Starship ─────────────────────────────────────────
-export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship/starship.toml"
-
 # ── Mise ─────────────────────────────────────────────
 export MISE_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/mise"
 export MISE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/mise"
