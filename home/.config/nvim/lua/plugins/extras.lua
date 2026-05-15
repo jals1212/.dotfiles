@@ -116,45 +116,124 @@ return {
   -- LSP
   {
     "neovim/nvim-lspconfig",
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      local servers = { "gopls", "ts_ls", "lua_ls", "pyright" }
-      for _, server in ipairs(servers) do
-        lspconfig[server].setup({
-          capabilities = capabilities,
-        })
-      end
-
-      -- Lua-specific settings
-      lspconfig.lua_ls.setup({
-        settings = {
-          Lua = {
-            runtime = { version = "LuaJIT" },
-            diagnostics = { globals = { "vim" } },
-            workspace = { library = vim.api.nvim_get_runtime_file("", true) },
-          },
+      vim.diagnostic.config({
+        virtual_text = { prefix = "●" },
+        signs = true,
+        underline = true,
+        update_in_insert = false,
+        severity_sort = true,
+        float = {
+          border = "rounded",
+          source = true,
         },
       })
+
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("dotfiles-lsp-attach", { clear = true }),
+        callback = function(event)
+          local map = function(keys, action, desc)
+            vim.keymap.set("n", keys, action, {
+              buffer = event.buf,
+              silent = true,
+              desc = "LSP: " .. desc,
+            })
+          end
+
+          map("gd", vim.lsp.buf.definition, "Goto Definition")
+          map("gD", vim.lsp.buf.declaration, "Goto Declaration")
+          map("gr", vim.lsp.buf.references, "References")
+          map("gi", vim.lsp.buf.implementation, "Goto Implementation")
+          map("K", vim.lsp.buf.hover, "Hover Documentation")
+          map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
+          map("<leader>cr", vim.lsp.buf.rename, "Rename")
+          map("<leader>cf", function()
+            vim.lsp.buf.format({ bufnr = event.buf, async = true })
+          end, "Format Buffer")
+          map("[d", vim.diagnostic.goto_prev, "Previous Diagnostic")
+          map("]d", vim.diagnostic.goto_next, "Next Diagnostic")
+        end,
+      })
+
+      local servers = {
+        gopls = {},
+        ts_ls = {},
+        pyright = {},
+        lua_ls = {
+          settings = {
+            Lua = {
+              runtime = { version = "LuaJIT" },
+              diagnostics = { globals = { "vim" } },
+              workspace = {
+                checkThirdParty = false,
+                library = vim.api.nvim_get_runtime_file("", true),
+              },
+              telemetry = { enable = false },
+            },
+          },
+        },
+      }
+
+      for server, config in pairs(servers) do
+        config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, config.capabilities or {})
+        vim.lsp.config(server, config)
+        vim.lsp.enable(server)
+      end
     end,
   },
 
   -- TreeSitter
   {
     "nvim-treesitter/nvim-treesitter",
+    lazy = false,
     build = ":TSUpdate",
     config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = {
-          "go", "lua", "python", "typescript", "javascript",
-          "json", "yaml", "toml", "bash", "markdown", "vim",
+      local parsers = {
+        "go",
+        "lua",
+        "python",
+        "typescript",
+        "javascript",
+        "json",
+        "yaml",
+        "toml",
+        "bash",
+        "markdown",
+        "vim",
+      }
+
+      local treesitter = require("nvim-treesitter")
+      treesitter.setup()
+      treesitter.install(parsers)
+
+      vim.treesitter.language.register("bash", "sh")
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("dotfiles-treesitter-start", { clear = true }),
+        pattern = {
+          "go",
+          "lua",
+          "python",
+          "typescript",
+          "javascript",
+          "json",
+          "yaml",
+          "toml",
+          "sh",
+          "bash",
+          "markdown",
+          "vim",
         },
-        highlight = { enable = true },
-        indent = { enable = true },
+        callback = function()
+          pcall(vim.treesitter.start)
+          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
       })
     end,
   },

@@ -212,9 +212,7 @@ func stepDeployConfigs(m *Model) error {
 	} else {
 		SendLog(m, stepID, "✓ Bat theme deployed")
 		if system.CommandExists("bat") {
-			result := system.RunWithLogs("bat cache --build", nil, func(line string) {
-				SendLog(m, stepID, line)
-			})
+			result := system.Run("bat cache --build", nil)
 			if result.Error != nil {
 				SendLog(m, stepID, fmt.Sprintf("⚠ Bat cache build failed: %v", result.Error))
 			}
