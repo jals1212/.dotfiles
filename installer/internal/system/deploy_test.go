@@ -321,11 +321,101 @@ func TestCreateBackupWithMemFileSystem(t *testing.T) {
 
 	for _, path := range []string{
 		filepath.Join(backupDir, ".zshrc"),
-		filepath.Join(backupDir, "nvim", "init.lua"),
+		filepath.Join(backupDir, ".config", "nvim", "init.lua"),
 	} {
 		if _, err := fs.Stat(path); err != nil {
 			t.Fatalf("expected backup file %s: %v", path, err)
 		}
+	}
+}
+
+func TestLatestBackupWithMemFileSystem(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func(fs *MemFileSystem, home string)
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "selects lexicographically latest backup directory",
+			setup: func(fs *MemFileSystem, home string) {
+				for _, name := range []string{"2026-05-15_120000", "2026-05-16_090000", "2026-05-14_235959"} {
+					if err := fs.MkdirAll(filepath.Join(home, ".dotfiles_backups", name), 0755); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if err := fs.WriteFile(filepath.Join(home, ".dotfiles_backups", "README.txt"), []byte("not a dir"), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want: filepath.Join("/home/testuser", ".dotfiles_backups", "2026-05-16_090000"),
+		},
+		{
+			name:    "no backups returns error",
+			setup:   func(fs *MemFileSystem, home string) {},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := NewMemFileSystem()
+			home := "/home/testuser"
+			tt.setup(fs, home)
+
+			got, err := LatestBackup(fs, home)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("LatestBackup() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if got != tt.want {
+				t.Fatalf("LatestBackup() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRestoreBackupWithMemFileSystem(t *testing.T) {
+	fs := NewMemFileSystem()
+	home := "/home/testuser"
+	backupDir := filepath.Join(home, ".dotfiles_backups", "2026-05-16_090000")
+
+	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("current zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".config", "nvim", "init.lua"), []byte("current nvim"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(backupDir, ".zshrc"), []byte("backup zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(backupDir, ".config", "nvim", "init.lua"), []byte("backup nvim"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := RestoreBackup(fs, backupDir, home); err != nil {
+		t.Fatalf("RestoreBackup() error = %v", err)
+	}
+
+	assertFileContent(t, fs, filepath.Join(home, ".zshrc"), "backup zsh")
+	assertFileContent(t, fs, filepath.Join(home, ".config", "nvim", "init.lua"), "backup nvim")
+}
+
+func TestRestoreBackupMissingDirectory(t *testing.T) {
+	fs := NewMemFileSystem()
+	err := RestoreBackup(fs, "/home/testuser/.dotfiles_backups/missing", "/home/testuser")
+	if err == nil {
+		t.Fatal("RestoreBackup() expected error for missing backup")
+	}
+}
+
+func assertFileContent(t *testing.T, fs FileSystem, path, want string) {
+	t.Helper()
+	data, err := fs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", path, err)
+	}
+	if string(data) != want {
+		t.Fatalf("ReadFile(%q) = %q, want %q", path, data, want)
 	}
 }
 

@@ -2,8 +2,10 @@ package system
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -169,7 +171,7 @@ func CreateBackup(fs FileSystem, homeDir string, configKeys []string) (string, e
 	for _, key := range configKeys {
 		src := filepath.Join(homeDir, key)
 		if _, err := fs.Stat(src); err == nil {
-			dst := filepath.Join(backupDir, filepath.Base(key))
+			dst := filepath.Join(backupDir, key)
 			if info, err := fs.Stat(src); err == nil && info.IsDir() {
 				if err := copyDirFS(fs, src, dst); err != nil {
 					return "", err
@@ -183,6 +185,66 @@ func CreateBackup(fs FileSystem, homeDir string, configKeys []string) (string, e
 	}
 
 	return backupDir, nil
+}
+
+// ListBackups returns backup directories under $HOME/.dotfiles_backups sorted by name.
+func ListBackups(fs FileSystem, homeDir string) ([]string, error) {
+	backupRoot := filepath.Join(homeDir, ".dotfiles_backups")
+	entries, err := fs.ReadDir(backupRoot)
+	if err != nil {
+		return nil, fmt.Errorf("list backups: %w", err)
+	}
+
+	backups := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			backups = append(backups, filepath.Join(backupRoot, entry.Name()))
+		}
+	}
+	sort.Strings(backups)
+	return backups, nil
+}
+
+// LatestBackup returns the most recent backup directory by lexicographic timestamp order.
+func LatestBackup(fs FileSystem, homeDir string) (string, error) {
+	backups, err := ListBackups(fs, homeDir)
+	if err != nil {
+		return "", err
+	}
+	if len(backups) == 0 {
+		return "", fmt.Errorf("no backups found in %s", filepath.Join(homeDir, ".dotfiles_backups"))
+	}
+	return backups[len(backups)-1], nil
+}
+
+// RestoreBackup copies every entry from backupDir back into homeDir.
+func RestoreBackup(fs FileSystem, backupDir, homeDir string) error {
+	info, err := fs.Stat(backupDir)
+	if err != nil {
+		return fmt.Errorf("restore backup: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("restore backup: %s is not a directory", backupDir)
+	}
+
+	entries, err := fs.ReadDir(backupDir)
+	if err != nil {
+		return fmt.Errorf("restore backup: %w", err)
+	}
+	for _, entry := range entries {
+		src := filepath.Join(backupDir, entry.Name())
+		dst := filepath.Join(homeDir, entry.Name())
+		if entry.IsDir() {
+			if err := copyDirFS(fs, src, dst); err != nil {
+				return fmt.Errorf("restore %s: %w", entry.Name(), err)
+			}
+			continue
+		}
+		if err := copyFileFS(fs, src, dst); err != nil {
+			return fmt.Errorf("restore %s: %w", entry.Name(), err)
+		}
+	}
+	return nil
 }
 
 // DetectExistingConfigs checks which configs already exist in the target locations

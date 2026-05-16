@@ -90,6 +90,9 @@ test_non_interactive_install() {
     log_test "Non-interactive install deploys configs"
 
     setup_fake_bat
+    mkdir -p "$HOME/.config/nvim"
+    printf '%s\n' "original zsh before dots install" > "$HOME/.zshrc"
+    printf '%s\n' "original nvim before dots install" > "$HOME/.config/nvim/init.lua"
 
     if INSTALL_OUTPUT="$(DOTS_VERBOSE=1 DOTS_THEME=kanagawa DOTS_FLAVOR=dragon dots install --yes 2>&1)"; then
         log_pass "install completed"
@@ -184,6 +187,20 @@ test_update_idempotency() {
     assert_marker_once "$HOME/.config/ghostty/config" "# CATPPUCCIN_GHOSTTY_THEME_START"
 }
 
+test_restore_latest_backup() {
+    log_test "Restore latest backup"
+
+    if dots restore --latest >/tmp/dots-restore.log 2>&1; then
+        log_pass "dots restore --latest completed"
+    else
+        cat /tmp/dots-restore.log
+        log_fail "dots restore --latest failed"
+    fi
+
+    assert_contains "$HOME/.zshrc" "original zsh before dots install"
+    assert_contains "$HOME/.config/nvim/init.lua" "original nvim before dots install"
+}
+
 test_binary_runs
 test_non_interactive_install
 test_deployed_files
@@ -191,5 +208,6 @@ test_prompt_and_theme_outputs
 test_nvim_config_smoke
 test_terminal_window_manager_configs
 test_update_idempotency
+test_restore_latest_backup
 
 printf "\n${GREEN}All E2E checks passed${NC} (${PASSED} passed, ${SKIPPED} skipped)\n"

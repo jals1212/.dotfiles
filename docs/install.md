@@ -66,7 +66,16 @@ If the variables are empty, the installer defaults to `kanagawa/dragon`.
 ./dots uninstall
 ```
 
-`uninstall` removes managed payload entries that correspond to files/directories under `home/` and removes the repo-local `manifest.json`. Restore backups manually if needed.
+`uninstall` removes managed payload entries that correspond to files/directories under `home/` and removes the repo-local `manifest.json`. Use `dots restore` if you want to restore a backup afterward.
+
+## Restore
+
+```bash
+./dots restore --latest
+./dots restore "$HOME/.dotfiles_backups/YYYY-MM-DD_HHMMSS"
+```
+
+`restore --latest` selects the lexicographically newest backup directory under `$HOME/.dotfiles_backups`. A specific backup path restores that directory instead. Restore overwrites matching files in `$HOME`.
 
 ## Backups and manifest
 
@@ -105,6 +114,7 @@ make docker-test
 3. runs `installer/e2e/e2e_test.sh` inside the container.
 
 The E2E suite checks CLI help, non-interactive install, deployed config files, quiet bat cache output, JSON validity for Oh My Posh, key shortcut policy, Ghostty shader policy, and update idempotency.
+It also verifies that `dots restore --latest` restores backed-up files.
 
 ## Post-install checks
 

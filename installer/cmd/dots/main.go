@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -24,6 +25,8 @@ func main() {
 		runUpdate()
 	case "uninstall":
 		runUninstall()
+	case "restore":
+		runRestore(os.Args[2:])
 	case "help", "-h", "--help":
 		printHelp()
 	default:
@@ -179,6 +182,54 @@ func runUninstall() {
 	fmt.Println("Uninstalled. Configs removed. Restore from backup manually if needed.")
 }
 
+func runRestore(args []string) {
+	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
+		printRestoreHelp()
+		return
+	}
+
+	info, err := system.Detect(system.OSFileSystem{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
+		os.Exit(1)
+	}
+
+	backupDir, err := resolveRestoreBackupPath(system.OSFileSystem{}, info.HomeDir, args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Restore failed: %v\n\n", err)
+		printRestoreHelp()
+		os.Exit(1)
+	}
+
+	fmt.Printf("Restoring dotfiles from %s...\n", backupDir)
+	if err := system.RestoreBackup(system.OSFileSystem{}, backupDir, info.HomeDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Restore failed: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("✓ Restore complete")
+}
+
+func resolveRestoreBackupPath(fs system.FileSystem, homeDir string, args []string) (string, error) {
+	flags := flag.NewFlagSet("restore", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	latest := flags.Bool("latest", false, "Restore latest backup")
+	if err := flags.Parse(args); err != nil {
+		return "", err
+	}
+
+	remaining := flags.Args()
+	if *latest && len(remaining) > 0 {
+		return "", errors.New("use either --latest or a backup directory path, not both")
+	}
+	if *latest {
+		return system.LatestBackup(fs, homeDir)
+	}
+	if len(remaining) != 1 {
+		return "", errors.New("expected --latest or exactly one backup directory path")
+	}
+	return remaining[0], nil
+}
+
 func printHelp() {
 	fmt.Println("dots - Dotfiles Manager")
 	fmt.Println()
@@ -189,7 +240,17 @@ func printHelp() {
 	fmt.Println("                          Uses DOTS_THEME/DOTS_FLAVOR, default kanagawa/dragon")
 	fmt.Println("  dots update             Re-deploy configs only")
 	fmt.Println("  dots uninstall          Remove deployed configs")
+	fmt.Println("  dots restore --latest   Restore latest backup")
+	fmt.Println("  dots restore <dir>      Restore a specific backup directory")
 	fmt.Println("  dots help               Show this help")
+}
+
+func printRestoreHelp() {
+	fmt.Println("dots restore - Restore dotfiles from backup")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  dots restore --latest")
+	fmt.Println("  dots restore <backup-dir>")
 }
 
 func envOrDefault(key, fallback string) string {

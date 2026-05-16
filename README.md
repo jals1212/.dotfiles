@@ -17,6 +17,7 @@ Useful follow-up commands:
 ```bash
 ./dots update      # re-deploy configs only
 ./dots uninstall   # remove deployed configs
+./dots restore --latest # restore newest backup
 make test          # Go unit tests
 make docker-test   # build the Docker E2E image and run the smoke suite
 ```
