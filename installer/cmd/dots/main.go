@@ -30,6 +30,8 @@ func main() {
 		runRestore(os.Args[2:])
 	case "reload":
 		runReload(os.Args[2:])
+	case "doctor":
+		runDoctor(os.Args[2:])
 	case "help", "-h", "--help":
 		printHelp()
 	default:
@@ -338,6 +340,7 @@ func printHelp() {
 	fmt.Println("  dots update             Re-deploy configs only")
 	fmt.Println("  dots reload             Re-deploy only when source configs changed")
 	fmt.Println("  dots reload --force     Re-deploy configs regardless of source hash")
+	fmt.Println("  dots doctor             Validate deployed dotfiles")
 	fmt.Println("  dots uninstall          Remove deployed configs")
 	fmt.Println("  dots restore --latest   Restore latest backup")
 	fmt.Println("  dots restore <dir>      Restore a specific backup directory")

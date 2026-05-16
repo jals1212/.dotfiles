@@ -105,6 +105,13 @@ test_binary_runs() {
         cat /tmp/dots-uninstall-help.log
         log_fail "dots uninstall --help failed"
     fi
+
+    if dots doctor --help >/tmp/dots-doctor-help.log 2>&1 && grep -Fq "dots doctor" /tmp/dots-doctor-help.log; then
+        log_pass "dots doctor --help is side-effect free"
+    else
+        cat /tmp/dots-doctor-help.log
+        log_fail "dots doctor --help failed"
+    fi
 }
 
 test_non_interactive_install() {
@@ -232,6 +239,25 @@ test_reload_noop_when_current() {
     fi
 }
 
+test_doctor() {
+    log_test "Doctor validates deployed configs"
+
+    local output
+    if output="$(dots doctor 2>&1)"; then
+        log_pass "dots doctor completed"
+    else
+        printf '%s\n' "$output"
+        log_fail "dots doctor failed"
+    fi
+
+    if printf '%s\n' "$output" | grep -Fq "All doctor checks passed"; then
+        log_pass "dots doctor reports healthy configs"
+    else
+        printf '%s\n' "$output"
+        log_fail "dots doctor did not report healthy configs"
+    fi
+}
+
 test_restore_latest_backup() {
     log_test "Restore latest backup"
 
@@ -254,6 +280,7 @@ test_nvim_config_smoke
 test_terminal_window_manager_configs
 test_update_idempotency
 test_reload_noop_when_current
+test_doctor
 test_restore_latest_backup
 
 printf "\n${GREEN}All E2E checks passed${NC} (${PASSED} passed, ${SKIPPED} skipped)\n"
