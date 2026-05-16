@@ -1,8 +1,10 @@
 package system
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -314,6 +316,92 @@ type Manifest struct {
 	Version    string `json:"version"`
 	Theme      string `json:"theme"`
 	Flavor     string `json:"flavor"`
+	SourceHash string `json:"source_hash"`
+}
+
+// DeploymentSourceHash computes a stable hash of deploy source inputs.
+func DeploymentSourceHash(fs FileSystem, dotfilesDir string) (string, error) {
+	hasher := sha256.New()
+	for _, rel := range []string{"home", filepath.Join("assets", "themes")} {
+		if err := hashSourcePath(fs, hasher, dotfilesDir, rel); err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
+}
+
+func hashSourcePath(fs FileSystem, w io.Writer, dotfilesDir, rel string) error {
+	fullPath := filepath.Join(dotfilesDir, rel)
+	info, err := fs.Stat(fullPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			_, _ = fmt.Fprintf(w, "missing:%s\n", filepath.ToSlash(rel))
+			return nil
+		}
+		return fmt.Errorf("hash source %s: %w", rel, err)
+	}
+
+	normalizedRel := filepath.ToSlash(rel)
+	if info.IsDir() {
+		_, _ = fmt.Fprintf(w, "dir:%s\n", normalizedRel)
+		entries, err := fs.ReadDir(fullPath)
+		if err != nil {
+			return fmt.Errorf("hash source %s: %w", rel, err)
+		}
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].Name() < entries[j].Name()
+		})
+		for _, entry := range entries {
+			if err := hashSourcePath(fs, w, dotfilesDir, filepath.Join(rel, entry.Name())); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	data, err := fs.ReadFile(fullPath)
+	if err != nil {
+		return fmt.Errorf("hash source %s: %w", rel, err)
+	}
+	_, _ = fmt.Fprintf(w, "file:%s:%d\n", normalizedRel, len(data))
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("hash source %s: %w", rel, err)
+	}
+	_, _ = fmt.Fprint(w, "\n")
+	return nil
+}
+
+// LoadManifest reads manifest.json from the dotfiles directory.
+func LoadManifest(fs FileSystem, dotfilesDir string) (Manifest, error) {
+	data, err := fs.ReadFile(filepath.Join(dotfilesDir, "manifest.json"))
+	if err != nil {
+		return Manifest{}, err
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return Manifest{}, err
+	}
+	return manifest, nil
+}
+
+// NeedsReload reports whether deploy source inputs differ from the stored manifest hash.
+func NeedsReload(fs FileSystem, dotfilesDir string) (bool, string, string, error) {
+	currentHash, err := DeploymentSourceHash(fs, dotfilesDir)
+	if err != nil {
+		return false, "", "", err
+	}
+
+	manifest, err := LoadManifest(fs, dotfilesDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, currentHash, "", nil
+		}
+		return false, currentHash, "", err
+	}
+	if manifest.SourceHash == "" {
+		return true, currentHash, "", nil
+	}
+	return manifest.SourceHash != currentHash, currentHash, manifest.SourceHash, nil
 }
 
 // SaveManifest writes a simple deployment manifest
@@ -324,11 +412,16 @@ func SaveManifest(fs FileSystem, dotfilesDir, theme, flavor string) error {
 	if flavor == "" {
 		flavor = "dragon"
 	}
+	sourceHash, err := DeploymentSourceHash(fs, dotfilesDir)
+	if err != nil {
+		return err
+	}
 	manifest := Manifest{
 		DeployedAt: time.Now().Format(time.RFC3339),
 		Version:    "1.0.0",
 		Theme:      theme,
 		Flavor:     flavor,
+		SourceHash: sourceHash,
 	}
 
 	data, err := json.MarshalIndent(manifest, "", "  ")

@@ -533,6 +533,115 @@ func TestSaveManifestWithFlavor(t *testing.T) {
 			if manifest.Version == "" {
 				t.Fatal("manifest version should be populated")
 			}
+			if manifest.SourceHash == "" {
+				t.Fatal("manifest source_hash should be populated")
+			}
+		})
+	}
+}
+
+func TestDeploymentSourceHashWithMemFileSystem(t *testing.T) {
+	fs := NewMemFileSystem()
+	dotfilesDir := "/repo"
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "assets", "themes", "oh-my-posh", "kanagawa", "dragon.json"), []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	first, err := DeploymentSourceHash(fs, dotfilesDir)
+	if err != nil {
+		t.Fatalf("DeploymentSourceHash() error = %v", err)
+	}
+	second, err := DeploymentSourceHash(fs, dotfilesDir)
+	if err != nil {
+		t.Fatalf("DeploymentSourceHash() second error = %v", err)
+	}
+	if first == "" {
+		t.Fatal("DeploymentSourceHash() should not be empty")
+	}
+	if first != second {
+		t.Fatalf("DeploymentSourceHash() = %q then %q, want stable hash", first, second)
+	}
+
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("changed"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	changed, err := DeploymentSourceHash(fs, dotfilesDir)
+	if err != nil {
+		t.Fatalf("DeploymentSourceHash() changed error = %v", err)
+	}
+	if changed == first {
+		t.Fatalf("DeploymentSourceHash() did not change after content update: %q", changed)
+	}
+}
+
+func TestNeedsReloadWithMemFileSystem(t *testing.T) {
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T, fs *MemFileSystem, dotfilesDir string)
+		wantReload bool
+	}{
+		{
+			name:       "missing manifest needs reload",
+			setup:      func(t *testing.T, fs *MemFileSystem, dotfilesDir string) {},
+			wantReload: true,
+		},
+		{
+			name: "matching source hash does not need reload",
+			setup: func(t *testing.T, fs *MemFileSystem, dotfilesDir string) {
+				if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("zsh"), 0644); err != nil {
+					t.Fatal(err)
+				}
+				if err := SaveManifest(fs, dotfilesDir, "kanagawa", "dragon"); err != nil {
+					t.Fatal(err)
+				}
+			},
+			wantReload: false,
+		},
+		{
+			name: "stale source hash needs reload",
+			setup: func(t *testing.T, fs *MemFileSystem, dotfilesDir string) {
+				if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("zsh"), 0644); err != nil {
+					t.Fatal(err)
+				}
+				if err := SaveManifest(fs, dotfilesDir, "kanagawa", "dragon"); err != nil {
+					t.Fatal(err)
+				}
+				if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("changed"), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+			wantReload: true,
+		},
+		{
+			name: "legacy manifest without source hash needs reload",
+			setup: func(t *testing.T, fs *MemFileSystem, dotfilesDir string) {
+				if err := fs.WriteFile(filepath.Join(dotfilesDir, "manifest.json"), []byte(`{"theme":"kanagawa","flavor":"dragon"}`), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+			wantReload: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := NewMemFileSystem()
+			dotfilesDir := "/repo"
+			tt.setup(t, fs, dotfilesDir)
+
+			got, current, _, err := NeedsReload(fs, dotfilesDir)
+			if err != nil {
+				t.Fatalf("NeedsReload() error = %v", err)
+			}
+			if current == "" {
+				t.Fatal("NeedsReload() current hash should be populated")
+			}
+			if got != tt.wantReload {
+				t.Fatalf("NeedsReload() = %v, want %v", got, tt.wantReload)
+			}
 		})
 	}
 }

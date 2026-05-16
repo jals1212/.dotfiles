@@ -60,6 +60,17 @@ If the variables are empty, the installer defaults to `kanagawa/dragon`.
 
 `update` re-deploys managed configs and theme blocks from the current repository without running the full selection flow. It uses `DOTS_THEME` and `DOTS_FLAVOR`, defaulting to `kanagawa/dragon`.
 
+## Reload when source changed
+
+```bash
+./dots reload
+./dots reload --force
+```
+
+`reload` compares the current source hash for `home/` and `assets/themes/` with the `source_hash` stored in `manifest.json`. If the hash matches, it reports that configs are already current and skips deploy. If the hash is missing or changed, it re-deploys configs and saves a new manifest. Use `--force` to re-deploy regardless of the stored hash.
+
+Use `update` when you want unconditional target repair; use `reload` when you only want to apply repo source drift.
+
 ## Uninstall
 
 ```bash
@@ -91,6 +102,7 @@ The installer writes a repo-local `manifest.json` with deployment metadata:
 - `version`
 - `theme`
 - `flavor`
+- `source_hash`
 
 ## Validation
 
@@ -113,7 +125,7 @@ make docker-test
 2. builds `installer/Dockerfile` as `dots-test`,
 3. runs `installer/e2e/e2e_test.sh` inside the container.
 
-The E2E suite checks CLI help, non-interactive install, deployed config files, quiet bat cache output, JSON validity for Oh My Posh, key shortcut policy, Ghostty shader policy, and update idempotency.
+The E2E suite checks CLI help, non-interactive install, deployed config files, quiet bat cache output, JSON validity for Oh My Posh, key shortcut policy, Ghostty shader policy, update idempotency, and reload no-op behavior.
 It also verifies that `dots restore --latest` restores backed-up files.
 
 ## Post-install checks

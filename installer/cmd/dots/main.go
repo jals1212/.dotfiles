@@ -27,6 +27,8 @@ func main() {
 		runUninstall()
 	case "restore":
 		runRestore(os.Args[2:])
+	case "reload":
+		runReload(os.Args[2:])
 	case "help", "-h", "--help":
 		printHelp()
 	default:
@@ -145,25 +147,30 @@ func runUpdate() {
 	fmt.Println("Updating dotfiles...")
 	fmt.Printf("Dotfiles: %s\n", info.DotfilesDir)
 
-	// Re-deploy configs using the same step function
-	model := &tui.Model{
-		SystemInfo:       info,
-		IsNonInteractive: true,
-		SelectedTheme:    envOrDefault("DOTS_THEME", "kanagawa"),
-		SelectedFlavor:   envOrDefault("DOTS_FLAVOR", "dragon"),
-		SelectedAccent:   "mauve",
-	}
-
-	if err := tui.ExecuteStep("deploy", model); err != nil {
-		fmt.Fprintf(os.Stderr, "Deploy failed: %v\n", err)
-		os.Exit(1)
-	}
-	if err := tui.ExecuteStep("manifest", model); err != nil {
-		fmt.Fprintf(os.Stderr, "Manifest failed: %v\n", err)
+	if err := deployAndSaveManifest(info, envOrDefault("DOTS_THEME", "kanagawa"), envOrDefault("DOTS_FLAVOR", "dragon")); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("\n✓ Configs updated")
+}
+
+func deployAndSaveManifest(info *system.SystemInfo, theme, flavor string) error {
+	model := &tui.Model{
+		SystemInfo:       info,
+		IsNonInteractive: true,
+		SelectedTheme:    theme,
+		SelectedFlavor:   flavor,
+		SelectedAccent:   "mauve",
+	}
+
+	if err := tui.ExecuteStep("deploy", model); err != nil {
+		return fmt.Errorf("Deploy failed: %v", err)
+	}
+	if err := tui.ExecuteStep("manifest", model); err != nil {
+		return fmt.Errorf("Manifest failed: %v", err)
+	}
+	return nil
 }
 
 func runUninstall() {
@@ -209,6 +216,63 @@ func runRestore(args []string) {
 	fmt.Println("✓ Restore complete")
 }
 
+func runReload(args []string) {
+	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
+		printReloadHelp()
+		return
+	}
+
+	info, err := system.Detect(system.OSFileSystem{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
+		os.Exit(1)
+	}
+
+	force, err := resolveReloadOptions(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Reload failed: %v\n\n", err)
+		printReloadHelp()
+		os.Exit(1)
+	}
+
+	if !force {
+		needsReload, currentHash, storedHash, err := system.NeedsReload(system.OSFileSystem{}, info.DotfilesDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Reload failed: %v\n", err)
+			os.Exit(1)
+		}
+		if !needsReload {
+			fmt.Printf("Configs already current (source hash %s)\n", currentHash)
+			return
+		}
+		if storedHash == "" {
+			fmt.Println("Reload needed: manifest has no source hash")
+		} else {
+			fmt.Printf("Reload needed: source hash changed (%s -> %s)\n", storedHash, currentHash)
+		}
+	} else {
+		fmt.Println("Force reloading configs...")
+	}
+
+	if err := deployAndSaveManifest(info, envOrDefault("DOTS_THEME", "kanagawa"), envOrDefault("DOTS_FLAVOR", "dragon")); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("\n✓ Configs reloaded")
+}
+
+func resolveReloadOptions(args []string) (bool, error) {
+	flags := flag.NewFlagSet("reload", flag.ContinueOnError)
+	force := flags.Bool("force", false, "Re-deploy even when source hash is unchanged")
+	if err := flags.Parse(args); err != nil {
+		return false, err
+	}
+	if len(flags.Args()) > 0 {
+		return false, errors.New("reload does not accept positional arguments")
+	}
+	return *force, nil
+}
+
 func resolveRestoreBackupPath(fs system.FileSystem, homeDir string, args []string) (string, error) {
 	flags := flag.NewFlagSet("restore", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -239,10 +303,20 @@ func printHelp() {
 	fmt.Println("  dots install --yes      Install dotfiles (non-interactive)")
 	fmt.Println("                          Uses DOTS_THEME/DOTS_FLAVOR, default kanagawa/dragon")
 	fmt.Println("  dots update             Re-deploy configs only")
+	fmt.Println("  dots reload             Re-deploy only when source configs changed")
+	fmt.Println("  dots reload --force     Re-deploy configs regardless of source hash")
 	fmt.Println("  dots uninstall          Remove deployed configs")
 	fmt.Println("  dots restore --latest   Restore latest backup")
 	fmt.Println("  dots restore <dir>      Restore a specific backup directory")
 	fmt.Println("  dots help               Show this help")
+}
+
+func printReloadHelp() {
+	fmt.Println("dots reload - Conditionally re-deploy configs when source files changed")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  dots reload")
+	fmt.Println("  dots reload --force")
 }
 
 func printRestoreHelp() {

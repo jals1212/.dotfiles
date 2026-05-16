@@ -57,3 +57,43 @@ func TestResolveRestoreBackupPath(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveReloadOptions(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		wantForce bool
+		wantErr   bool
+	}{
+		{
+			name: "default conditional reload",
+		},
+		{
+			name:      "force reload",
+			args:      []string{"--force"},
+			wantForce: true,
+		},
+		{
+			name:    "unexpected positional argument",
+			args:    []string{"extra"},
+			wantErr: true,
+		},
+		{
+			name:    "unknown flag",
+			args:    []string{"--wat"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resolveReloadOptions(tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("resolveReloadOptions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if got != tt.wantForce {
+				t.Fatalf("resolveReloadOptions() = %v, want %v", got, tt.wantForce)
+			}
+		})
+	}
+}

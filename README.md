@@ -16,6 +16,7 @@ Useful follow-up commands:
 
 ```bash
 ./dots update      # re-deploy configs only
+./dots reload      # re-deploy only when source configs changed
 ./dots uninstall   # remove deployed configs
 ./dots restore --latest # restore newest backup
 make test          # Go unit tests

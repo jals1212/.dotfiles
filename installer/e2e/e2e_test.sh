@@ -187,6 +187,25 @@ test_update_idempotency() {
     assert_marker_once "$HOME/.config/ghostty/config" "# CATPPUCCIN_GHOSTTY_THEME_START"
 }
 
+test_reload_noop_when_current() {
+    log_test "Reload skips when source is current"
+
+    local output
+    if output="$(DOTS_THEME=kanagawa DOTS_FLAVOR=dragon dots reload 2>&1)"; then
+        log_pass "dots reload completed"
+    else
+        printf '%s\n' "$output"
+        log_fail "dots reload failed"
+    fi
+
+    if printf '%s\n' "$output" | grep -Fq "Configs already current"; then
+        log_pass "dots reload reports configs already current"
+    else
+        printf '%s\n' "$output"
+        log_fail "dots reload did not report already current"
+    fi
+}
+
 test_restore_latest_backup() {
     log_test "Restore latest backup"
 
@@ -208,6 +227,7 @@ test_prompt_and_theme_outputs
 test_nvim_config_smoke
 test_terminal_window_manager_configs
 test_update_idempotency
+test_reload_noop_when_current
 test_restore_latest_backup
 
 printf "\n${GREEN}All E2E checks passed${NC} (${PASSED} passed, ${SKIPPED} skipped)\n"
