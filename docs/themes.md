@@ -106,8 +106,11 @@ Do not add extra Ghostty shaders unless the policy changes.
 
 ```bash
 make test
+./dots doctor
 make docker-test
 openspec validate --all --strict
 ```
+
+Run `./dots doctor` after deploying a changed theme locally so the generated marker blocks, required config files, Oh My Posh JSON, Ghostty theme block, and related smoke checks are verified against `$HOME`.
 
 For behavior changes to theme selection or deploy rules, create/update an OpenSpec change before editing implementation.

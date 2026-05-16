@@ -17,6 +17,7 @@ Useful follow-up commands:
 ```bash
 ./dots update      # re-deploy configs only
 ./dots reload      # re-deploy only when source configs changed
+./dots doctor      # validate deployed dotfiles locally
 ./dots uninstall   # remove deployed configs
 ./dots restore --latest # restore newest backup
 make test          # Go unit tests
@@ -72,7 +73,8 @@ make docker-test   # build the Docker E2E image and run the smoke suite
 1. Restart the shell: `exec zsh`.
 2. Open tmux and install/update plugins if needed: `tmux new -s main`, then `prefix + I` (`prefix` is `Ctrl-a`).
 3. Open Neovim; LazyVim plugins install on first launch.
-4. Run `make docker-test` before changing installer behavior or deploy assets.
+4. Run `./dots doctor` to validate deployed config files and local smoke checks.
+5. Run `make docker-test` before changing installer behavior or deploy assets.
 
 ## License
 

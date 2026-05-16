@@ -71,6 +71,17 @@ If the variables are empty, the installer defaults to `kanagawa/dragon`.
 
 Use `update` when you want unconditional target repair; use `reload` when you only want to apply repo source drift.
 
+## Doctor
+
+```bash
+./dots doctor
+./dots doctor --help
+```
+
+`doctor` runs local, non-mutating health checks against deployed dotfiles. It checks required deployed paths, Oh My Posh JSON syntax, generated marker uniqueness, and essential config-content smoke checks for the managed shell, Neovim, tmux, Ghostty, bat, and AeroSpace files.
+
+Doctor intentionally does not install dependencies, repair files, call package managers, or perform network checks. Use it after install/update/reload to catch local config drift before opening the tools.
+
 ## Uninstall
 
 ```bash
@@ -113,6 +124,12 @@ make test
 openspec validate --all --strict
 ```
 
+After deploying configs locally, run:
+
+```bash
+./dots doctor
+```
+
 Full E2E validation:
 
 ```bash
@@ -132,9 +149,12 @@ It also verifies that `dots restore --latest` restores backed-up files.
 
 ```bash
 exec zsh
+./dots doctor
 which oh-my-posh
 bat --config-dir
 nvim
 ```
+
+`dots doctor` is the repo-owned smoke check for deployed dotfiles. It validates local files and config content only; it does not replace opening tmux/Neovim/Ghostty or installing tmux/LazyVim plugins on first launch.
 
 Tmux uses `Ctrl-a` as prefix. Install/update tmux plugins with `Ctrl-a I` after opening a session.
