@@ -9,7 +9,7 @@ import (
 	"github.com/jals/dotfiles/internal/system"
 )
 
-func TestBuildDeployPlanIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
+func TestBuildDeployTargetsIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
 	dotfilesDir := t.TempDir()
 	homeDir := t.TempDir()
 
@@ -18,34 +18,34 @@ func TestBuildDeployPlanIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", ".DS_Store"), "metadata")
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshrc"), "source ~/.zalias")
 
-	plan, err := buildDeployPlan(dotfilesDir, homeDir)
+	targets, err := buildDeployTargets(dotfilesDir, homeDir)
 	if err != nil {
-		t.Fatalf("buildDeployPlan() error = %v", err)
+		t.Fatalf("buildDeployTargets() error = %v", err)
 	}
 
 	wantNames := []string{".config/nvim", ".config/starship.toml", ".zshrc"}
-	if got := planTargetNames(plan); !equalStrings(got, wantNames) {
-		t.Fatalf("plan target names = %#v, want %#v", got, wantNames)
+	if got := targetNames(targets); !equalStrings(got, wantNames) {
+		t.Fatalf("deploy target names = %#v, want %#v", got, wantNames)
 	}
 
-	assertDeployTarget(t, plan.Targets[0], ".config/nvim", filepath.Join(dotfilesDir, "home", ".config", "nvim"), filepath.Join(homeDir, ".config", "nvim"), true)
-	assertDeployTarget(t, plan.Targets[1], ".config/starship.toml", filepath.Join(dotfilesDir, "home", ".config", "starship.toml"), filepath.Join(homeDir, ".config", "starship.toml"), false)
-	assertDeployTarget(t, plan.Targets[2], ".zshrc", filepath.Join(dotfilesDir, "home", ".zshrc"), filepath.Join(homeDir, ".zshrc"), false)
+	assertDeployTarget(t, targets[0], ".config/nvim", filepath.Join(dotfilesDir, "home", ".config", "nvim"), filepath.Join(homeDir, ".config", "nvim"), true)
+	assertDeployTarget(t, targets[1], ".config/starship.toml", filepath.Join(dotfilesDir, "home", ".config", "starship.toml"), filepath.Join(homeDir, ".config", "starship.toml"), false)
+	assertDeployTarget(t, targets[2], ".zshrc", filepath.Join(dotfilesDir, "home", ".zshrc"), filepath.Join(homeDir, ".zshrc"), false)
 }
 
-func TestBuildDeployPlanHandlesMissingConfigDirectory(t *testing.T) {
+func TestBuildDeployTargetsHandlesMissingConfigDirectory(t *testing.T) {
 	dotfilesDir := t.TempDir()
 	homeDir := t.TempDir()
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zprofile"), "export ZDOTDIR=$HOME")
 
-	plan, err := buildDeployPlan(dotfilesDir, homeDir)
+	targets, err := buildDeployTargets(dotfilesDir, homeDir)
 	if err != nil {
-		t.Fatalf("buildDeployPlan() error = %v", err)
+		t.Fatalf("buildDeployTargets() error = %v", err)
 	}
 
 	wantNames := []string{".zprofile"}
-	if got := planTargetNames(plan); !equalStrings(got, wantNames) {
-		t.Fatalf("plan target names = %#v, want %#v", got, wantNames)
+	if got := targetNames(targets); !equalStrings(got, wantNames) {
+		t.Fatalf("deploy target names = %#v, want %#v", got, wantNames)
 	}
 }
 
@@ -111,9 +111,9 @@ func TestDeployReportSummaryCountsOutcomes(t *testing.T) {
 	}
 }
 
-func planTargetNames(plan deployPlan) []string {
-	names := make([]string, 0, len(plan.Targets))
-	for _, target := range plan.Targets {
+func targetNames(targets []deployTarget) []string {
+	names := make([]string, 0, len(targets))
+	for _, target := range targets {
 		names = append(names, target.Name)
 	}
 	return names

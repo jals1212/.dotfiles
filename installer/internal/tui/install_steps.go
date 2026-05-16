@@ -109,15 +109,15 @@ func stepDeployConfigs(m *Model) error {
 	m.SelectedTheme, m.SelectedFlavor = theme, flavor
 	report := deployReport{}
 
-	plan, err := buildDeployPlan(dotfilesDir, homeDir)
+	targets, err := buildDeployTargets(dotfilesDir, homeDir)
 	if err != nil {
-		report.recordFailed("deploy plan", err)
-		SendLog(m, stepID, fmt.Sprintf("✗ Deploy plan failed: %v", err))
+		report.recordFailed("deploy targets", err)
+		SendLog(m, stepID, fmt.Sprintf("✗ Deploy target discovery failed: %v", err))
 		SendLog(m, stepID, report.summary())
 		return err
 	}
 
-	for _, target := range plan.Targets {
+	for _, target := range targets {
 		SendLog(m, stepID, fmt.Sprintf("Deploying %s...", target.Name))
 
 		if target.IsDir {

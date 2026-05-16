@@ -8,10 +8,6 @@ import (
 
 var deployHomeFiles = []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 
-type deployPlan struct {
-	Targets []deployTarget
-}
-
 type deployTarget struct {
 	Name        string
 	Source      string
@@ -26,20 +22,20 @@ type deployReport struct {
 	Failed   int
 }
 
-func buildDeployPlan(dotfilesDir, homeDir string) (deployPlan, error) {
-	plan := deployPlan{}
+func buildDeployTargets(dotfilesDir, homeDir string) ([]deployTarget, error) {
+	targets := []deployTarget{}
 
 	configSource := filepath.Join(dotfilesDir, "home", ".config")
 	entries, err := os.ReadDir(configSource)
 	if err != nil && !os.IsNotExist(err) {
-		return plan, fmt.Errorf("read config source: %w", err)
+		return targets, fmt.Errorf("read config source: %w", err)
 	}
 	if err == nil {
 		for _, entry := range entries {
 			if shouldSkipConfigEntry(entry.Name()) {
 				continue
 			}
-			plan.Targets = append(plan.Targets, deployTarget{
+			targets = append(targets, deployTarget{
 				Name:        filepath.Join(".config", entry.Name()),
 				Source:      filepath.Join(configSource, entry.Name()),
 				Destination: filepath.Join(homeDir, ".config", entry.Name()),
@@ -55,9 +51,9 @@ func buildDeployPlan(dotfilesDir, homeDir string) (deployPlan, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return plan, fmt.Errorf("stat home file %s: %w", name, err)
+			return targets, fmt.Errorf("stat home file %s: %w", name, err)
 		}
-		plan.Targets = append(plan.Targets, deployTarget{
+		targets = append(targets, deployTarget{
 			Name:        name,
 			Source:      source,
 			Destination: filepath.Join(homeDir, name),
@@ -65,7 +61,7 @@ func buildDeployPlan(dotfilesDir, homeDir string) (deployPlan, error) {
 		})
 	}
 
-	return plan, nil
+	return targets, nil
 }
 
 func (r *deployReport) recordChanged(_ string) {
