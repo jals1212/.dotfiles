@@ -1,8 +1,10 @@
 package system
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -297,6 +299,149 @@ func TestReplaceBetweenMarkers(t *testing.T) {
 				if string(data) != tt.expected {
 					t.Errorf("ReplaceBetweenMarkers() = %q, want %q", string(data), tt.expected)
 				}
+			}
+		})
+	}
+}
+
+func TestCreateBackupWithMemFileSystem(t *testing.T) {
+	fs := NewMemFileSystem()
+	home := "/home/testuser"
+	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("zsh config"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".config", "nvim", "init.lua"), []byte("nvim config"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	backupDir, err := CreateBackup(fs, home, []string{".zshrc", ".config/nvim", ".missing"})
+	if err != nil {
+		t.Fatalf("CreateBackup() error = %v", err)
+	}
+
+	for _, path := range []string{
+		filepath.Join(backupDir, ".zshrc"),
+		filepath.Join(backupDir, "nvim", "init.lua"),
+	} {
+		if _, err := fs.Stat(path); err != nil {
+			t.Fatalf("expected backup file %s: %v", path, err)
+		}
+	}
+}
+
+func TestDetectExistingConfigsWithMemFileSystem(t *testing.T) {
+	fs := NewMemFileSystem()
+	dotfilesDir := "/repo"
+	home := "/home/testuser"
+
+	if err := fs.MkdirAll(filepath.Join(dotfilesDir, "home", ".config", "nvim"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("managed zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.MkdirAll(filepath.Join(home, ".config", "nvim"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("user zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := DetectExistingConfigs(fs, dotfilesDir, home)
+	for _, want := range []string{".config/nvim", ".zshrc"} {
+		if !slices.Contains(got, want) {
+			t.Fatalf("DetectExistingConfigs() = %#v, want %q", got, want)
+		}
+	}
+}
+
+func TestUninstallWithMemFileSystem(t *testing.T) {
+	fs := NewMemFileSystem()
+	dotfilesDir := "/repo"
+	home := "/home/testuser"
+
+	if err := fs.MkdirAll(filepath.Join(dotfilesDir, "home", ".config", "nvim"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".config", "nvim", "init.lua"), []byte("nvim"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("zsh"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(home, ".dotfiles_backups", "keep", ".zshrc"), []byte("backup"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "manifest.json"), []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Uninstall(fs, dotfilesDir, home); err != nil {
+		t.Fatalf("Uninstall() error = %v", err)
+	}
+	for _, removed := range []string{
+		filepath.Join(home, ".config", "nvim", "init.lua"),
+		filepath.Join(home, ".zshrc"),
+		filepath.Join(dotfilesDir, "manifest.json"),
+	} {
+		if _, err := fs.Stat(removed); err == nil {
+			t.Fatalf("expected %s to be removed", removed)
+		}
+	}
+	if _, err := fs.Stat(filepath.Join(home, ".dotfiles_backups", "keep", ".zshrc")); err != nil {
+		t.Fatalf("backup should remain: %v", err)
+	}
+}
+
+func TestSaveManifestWithFlavor(t *testing.T) {
+	tests := []struct {
+		name       string
+		theme      string
+		flavor     string
+		wantTheme  string
+		wantFlavor string
+	}{
+		{
+			name:       "explicit theme and flavor",
+			theme:      "catppuccin",
+			flavor:     "macchiato",
+			wantTheme:  "catppuccin",
+			wantFlavor: "macchiato",
+		},
+		{
+			name:       "defaults to kanagawa dragon",
+			wantTheme:  "kanagawa",
+			wantFlavor: "dragon",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := NewMemFileSystem()
+			dotfilesDir := "/repo"
+			if err := SaveManifest(fs, dotfilesDir, tt.theme, tt.flavor); err != nil {
+				t.Fatalf("SaveManifest() error = %v", err)
+			}
+
+			data, err := fs.ReadFile(filepath.Join(dotfilesDir, "manifest.json"))
+			if err != nil {
+				t.Fatalf("manifest not written: %v", err)
+			}
+			var manifest Manifest
+			if err := json.Unmarshal(data, &manifest); err != nil {
+				t.Fatalf("manifest JSON invalid: %v", err)
+			}
+			if manifest.Theme != tt.wantTheme {
+				t.Fatalf("manifest theme = %q, want %q", manifest.Theme, tt.wantTheme)
+			}
+			if manifest.Flavor != tt.wantFlavor {
+				t.Fatalf("manifest flavor = %q, want %q", manifest.Flavor, tt.wantFlavor)
+			}
+			if manifest.DeployedAt == "" {
+				t.Fatal("manifest deployed_at should be populated")
+			}
+			if manifest.Version == "" {
+				t.Fatal("manifest version should be populated")
 			}
 		})
 	}

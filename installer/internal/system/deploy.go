@@ -203,7 +203,7 @@ func DetectExistingConfigs(fs FileSystem, dotfilesDir, homeDir string) []string 
 	// Check home dotfiles
 	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
 	for _, f := range homeFiles {
-		src := filepath.Join(dotfilesDir, f)
+		src := filepath.Join(dotfilesDir, "home", f)
 		if _, err := fs.Stat(src); err == nil {
 			target := filepath.Join(homeDir, f)
 			if _, err := fs.Stat(target); err == nil {
