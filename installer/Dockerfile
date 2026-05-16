@@ -42,6 +42,7 @@ ENV LC_ALL=en_US.UTF-8
 
 WORKDIR /app
 ENV DOTFILES_DIR=/app
+ENV PATH="/app:${PATH}"
 
 # Only copy what's needed for installation
 COPY --from=builder /build/dots .
