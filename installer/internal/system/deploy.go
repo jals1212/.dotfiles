@@ -1,6 +1,7 @@
 package system
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -18,7 +19,11 @@ func ReplaceInFile(path, old, new string) error {
 	if err != nil {
 		return err
 	}
-	content := strings.ReplaceAll(string(data), old, new)
+	original := string(data)
+	content := strings.ReplaceAll(original, old, new)
+	if content == original {
+		return nil
+	}
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
@@ -38,6 +43,9 @@ func ReplaceBetweenMarkers(path, startMarker, endMarker, content string) error {
 	endIdx := strings.Index(text, endMarker)
 	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
 		newText := text[:startIdx+len(startMarker)] + "\n" + content + "\n" + text[endIdx:]
+		if newText == text {
+			return nil
+		}
 		return os.WriteFile(path, []byte(newText), 0644)
 	}
 	// Append at end
@@ -51,34 +59,48 @@ func ReplaceBetweenMarkers(path, startMarker, endMarker, content string) error {
 	b.WriteString("\n")
 	b.WriteString(endMarker)
 	b.WriteString("\n")
-	return os.WriteFile(path, []byte(text+b.String()), 0644)
+	newText := text + b.String()
+	if newText == text {
+		return nil
+	}
+	return os.WriteFile(path, []byte(newText), 0644)
 }
 
 // CopyFile copies a file from src to dst, preserving permissions
 func CopyFile(src, dst string) error {
+	_, err := CopyFileIfChanged(src, dst)
+	return err
+}
+
+// CopyFileIfChanged copies a file from src to dst only when content differs.
+func CopyFileIfChanged(src, dst string) (bool, error) {
 	info, err := os.Stat(src)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Create parent directory
 	if err := EnsureDir(filepath.Dir(dst)); err != nil {
-		return err
+		return false, err
 	}
 
 	// If dst exists and is a directory, remove it
 	if dstInfo, err := os.Stat(dst); err == nil && dstInfo.IsDir() {
 		if err := os.RemoveAll(dst); err != nil {
-			return err
+			return false, err
 		}
 	}
 
 	data, err := os.ReadFile(src)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return os.WriteFile(dst, data, info.Mode())
+	if existing, err := os.ReadFile(dst); err == nil && bytes.Equal(existing, data) {
+		return false, nil
+	}
+
+	return true, os.WriteFile(dst, data, info.Mode())
 }
 
 // CopyDir recursively copies a directory from src to dst

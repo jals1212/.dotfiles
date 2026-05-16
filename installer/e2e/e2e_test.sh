@@ -67,6 +67,13 @@ setup_fake_bat() {
     cat > "$HOME/bin/bat" <<'EOF'
 #!/bin/sh
 if [ "$1" = "cache" ] && [ "$2" = "--build" ]; then
+  count_file="$HOME/bat-cache-count"
+  count=0
+  if [ -f "$count_file" ]; then
+    count=$(cat "$count_file")
+  fi
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$count_file"
   echo "Writing theme set to /tmp/bat/themes.bin ... okay"
   echo "Writing syntax set to /tmp/bat/syntaxes.bin ... okay"
   exit 0
@@ -185,6 +192,11 @@ test_update_idempotency() {
     assert_marker_once "$HOME/.zshrc" "# CATPPUCCIN_EZA_START"
     assert_marker_once "$HOME/.zshrc" "# CATPPUCCIN_FZF_START"
     assert_marker_once "$HOME/.config/ghostty/config" "# CATPPUCCIN_GHOSTTY_THEME_START"
+
+    local bat_cache_count
+    bat_cache_count=$(cat "$HOME/bat-cache-count")
+    [ "$bat_cache_count" = "1" ] || log_fail "bat cache build count=$bat_cache_count, want 1 after unchanged update"
+    log_pass "unchanged update skips bat cache rebuild"
 }
 
 test_reload_noop_when_current() {

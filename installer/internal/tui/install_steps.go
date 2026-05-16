@@ -201,17 +201,25 @@ func stepDeployConfigs(m *Model) error {
 	batFile := batThemeFile(theme, flavor)
 	batSrc := themeAssetPath(dotfilesDir, "bat", theme, batFile, fmt.Sprintf("Catppuccin-%s.tmTheme", flavor))
 	batDst := filepath.Join(homeDir, ".config", "bat", "themes", batFile)
-	if err := system.CopyFile(batSrc, batDst); err != nil {
+	batChanged, err := system.CopyFileIfChanged(batSrc, batDst)
+	if err != nil {
 		SendLog(m, stepID, fmt.Sprintf("⚠ Bat theme failed: %v", err))
 	} else {
-		SendLog(m, stepID, "✓ Bat theme deployed")
-		if system.CommandExists("bat") {
+		if batChanged {
+			SendLog(m, stepID, "✓ Bat theme deployed")
+		} else {
+			SendLog(m, stepID, "✓ Bat theme unchanged")
+		}
+		batInstalled := system.CommandExists("bat")
+		if batChanged && batInstalled {
 			result := system.Run("bat cache --build", nil)
 			if result.Error != nil {
 				SendLog(m, stepID, fmt.Sprintf("⚠ Bat cache build failed: %v", result.Error))
 			}
-		} else {
+		} else if !batInstalled {
 			SendLog(m, stepID, "ℹ bat not installed, skipping cache build")
+		} else {
+			SendLog(m, stepID, "ℹ Bat theme unchanged, skipping cache build")
 		}
 	}
 	batEnv := fmt.Sprintf(`export BAT_THEME="%s"`, batThemeName(theme, flavor))

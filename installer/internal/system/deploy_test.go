@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 )
 
 func TestEnsureDir(t *testing.T) {
@@ -96,6 +97,85 @@ func TestCopyFile(t *testing.T) {
 	}
 }
 
+func TestCopyFileIfChanged(t *testing.T) {
+	tests := []struct {
+		name        string
+		srcContent  string
+		dstContent  *string
+		wantChanged bool
+		wantContent string
+	}{
+		{
+			name:        "missing destination is written",
+			srcContent:  "hello",
+			wantChanged: true,
+			wantContent: "hello",
+		},
+		{
+			name:        "different destination is updated",
+			srcContent:  "new",
+			dstContent:  stringPtr("old"),
+			wantChanged: true,
+			wantContent: "new",
+		},
+		{
+			name:        "identical destination is skipped",
+			srcContent:  "same",
+			dstContent:  stringPtr("same"),
+			wantChanged: false,
+			wantContent: "same",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			src := filepath.Join(tmpDir, "src.txt")
+			dst := filepath.Join(tmpDir, "dst.txt")
+
+			if err := os.WriteFile(src, []byte(tt.srcContent), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			var before time.Time
+			if tt.dstContent != nil {
+				if err := os.WriteFile(dst, []byte(*tt.dstContent), 0644); err != nil {
+					t.Fatal(err)
+				}
+				before = time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+				if err := os.Chtimes(dst, before, before); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			changed, err := CopyFileIfChanged(src, dst)
+			if err != nil {
+				t.Fatalf("CopyFileIfChanged() error = %v", err)
+			}
+			if changed != tt.wantChanged {
+				t.Fatalf("CopyFileIfChanged() changed = %v, want %v", changed, tt.wantChanged)
+			}
+
+			data, err := os.ReadFile(dst)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.wantContent {
+				t.Fatalf("destination content = %q, want %q", string(data), tt.wantContent)
+			}
+			if tt.dstContent != nil && !tt.wantChanged {
+				info, err := os.Stat(dst)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !info.ModTime().Equal(before) {
+					t.Fatalf("unchanged destination mtime = %s, want %s", info.ModTime(), before)
+				}
+			}
+		})
+	}
+}
+
 func TestCopyDir(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -167,6 +247,10 @@ func TestCopyDir(t *testing.T) {
 	}
 }
 
+func stringPtr(value string) *string {
+	return &value
+}
+
 func TestReplaceInFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -227,6 +311,29 @@ func TestReplaceInFile(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestReplaceInFileSkipsUnchangedWrite(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "test.txt")
+	if err := os.WriteFile(path, []byte("hello"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	before := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+	if err := os.Chtimes(path, before, before); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ReplaceInFile(path, "missing", "value"); err != nil {
+		t.Fatalf("ReplaceInFile() error = %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.ModTime().Equal(before) {
+		t.Fatalf("unchanged file mtime = %s, want %s", info.ModTime(), before)
 	}
 }
 
@@ -301,6 +408,30 @@ func TestReplaceBetweenMarkers(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestReplaceBetweenMarkersSkipsUnchangedWrite(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "test.txt")
+	content := "before\n# BEGIN\ncurrent\n# END\nafter"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	before := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+	if err := os.Chtimes(path, before, before); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ReplaceBetweenMarkers(path, "# BEGIN", "# END", "current"); err != nil {
+		t.Fatalf("ReplaceBetweenMarkers() error = %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.ModTime().Equal(before) {
+		t.Fatalf("unchanged marker file mtime = %s, want %s", info.ModTime(), before)
 	}
 }
 
