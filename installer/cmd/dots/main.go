@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jals/dotfiles/internal/system"
@@ -22,9 +23,9 @@ func main() {
 	case "install":
 		runInstall(os.Args[2:])
 	case "update":
-		runUpdate()
+		runUpdate(os.Args[2:])
 	case "uninstall":
-		runUninstall()
+		runUninstall(os.Args[2:])
 	case "restore":
 		runRestore(os.Args[2:])
 	case "reload":
@@ -138,7 +139,16 @@ func runNonInteractiveInstall() {
 	fmt.Println("Restart your shell: exec zsh")
 }
 
-func runUpdate() {
+func runUpdate(args []string) {
+	if help, err := validateNoArgCommand("update", args); err != nil {
+		fmt.Fprintf(os.Stderr, "Update failed: %v\n\n", err)
+		printUpdateHelp()
+		os.Exit(1)
+	} else if help {
+		printUpdateHelp()
+		return
+	}
+
 	info, err := system.Detect(system.OSFileSystem{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
@@ -173,7 +183,16 @@ func deployAndSaveManifest(info *system.SystemInfo, theme, flavor string) error 
 	return nil
 }
 
-func runUninstall() {
+func runUninstall(args []string) {
+	if help, err := validateNoArgCommand("uninstall", args); err != nil {
+		fmt.Fprintf(os.Stderr, "Uninstall failed: %v\n\n", err)
+		printUninstallHelp()
+		os.Exit(1)
+	} else if help {
+		printUninstallHelp()
+		return
+	}
+
 	info, err := system.Detect(system.OSFileSystem{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
@@ -273,6 +292,20 @@ func resolveReloadOptions(args []string) (bool, error) {
 	return *force, nil
 }
 
+func isHelpArg(arg string) bool {
+	return arg == "help" || arg == "-h" || arg == "--help"
+}
+
+func validateNoArgCommand(command string, args []string) (bool, error) {
+	if len(args) == 0 {
+		return false, nil
+	}
+	if len(args) == 1 && isHelpArg(args[0]) {
+		return true, nil
+	}
+	return false, fmt.Errorf("%s does not accept arguments: %s", command, strings.Join(args, " "))
+}
+
 func resolveRestoreBackupPath(fs system.FileSystem, homeDir string, args []string) (string, error) {
 	flags := flag.NewFlagSet("restore", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -317,6 +350,20 @@ func printReloadHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  dots reload")
 	fmt.Println("  dots reload --force")
+}
+
+func printUpdateHelp() {
+	fmt.Println("dots update - Re-deploy configs unconditionally")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  dots update")
+}
+
+func printUninstallHelp() {
+	fmt.Println("dots uninstall - Remove deployed configs")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  dots uninstall")
 }
 
 func printRestoreHelp() {

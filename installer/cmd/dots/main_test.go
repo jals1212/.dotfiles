@@ -97,3 +97,69 @@ func TestResolveReloadOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestIsHelpArg(t *testing.T) {
+	tests := []struct {
+		arg  string
+		want bool
+	}{
+		{arg: "help", want: true},
+		{arg: "-h", want: true},
+		{arg: "--help", want: true},
+		{arg: "extra", want: false},
+		{arg: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.arg, func(t *testing.T) {
+			if got := isHelpArg(tt.arg); got != tt.want {
+				t.Fatalf("isHelpArg(%q) = %v, want %v", tt.arg, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestValidateNoArgCommand(t *testing.T) {
+	tests := []struct {
+		name     string
+		command  string
+		args     []string
+		wantHelp bool
+		wantErr  bool
+	}{
+		{
+			name:    "no args allowed",
+			command: "update",
+		},
+		{
+			name:     "help arg is detected",
+			command:  "update",
+			args:     []string{"--help"},
+			wantHelp: true,
+		},
+		{
+			name:    "unexpected arg errors",
+			command: "update",
+			args:    []string{"extra"},
+			wantErr: true,
+		},
+		{
+			name:    "multiple args errors even with help",
+			command: "uninstall",
+			args:    []string{"--help", "extra"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHelp, err := validateNoArgCommand(tt.command, tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validateNoArgCommand() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if gotHelp != tt.wantHelp {
+				t.Fatalf("validateNoArgCommand() help = %v, want %v", gotHelp, tt.wantHelp)
+			}
+		})
+	}
+}

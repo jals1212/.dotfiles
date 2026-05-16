@@ -91,6 +91,20 @@ test_binary_runs() {
     else
         log_fail "dots help failed"
     fi
+
+    if dots update --help >/tmp/dots-update-help.log 2>&1 && grep -Fq "dots update" /tmp/dots-update-help.log; then
+        log_pass "dots update --help is side-effect free"
+    else
+        cat /tmp/dots-update-help.log
+        log_fail "dots update --help failed"
+    fi
+
+    if dots uninstall --help >/tmp/dots-uninstall-help.log 2>&1 && grep -Fq "dots uninstall" /tmp/dots-uninstall-help.log; then
+        log_pass "dots uninstall --help is side-effect free"
+    else
+        cat /tmp/dots-uninstall-help.log
+        log_fail "dots uninstall --help failed"
+    fi
 }
 
 test_non_interactive_install() {
