@@ -1,11 +1,24 @@
 -- Custom keymaps
 local map = vim.keymap.set
 
--- Better window navigation
-map("n", "<C-h>", "<C-w>h", { desc = "Go to left window" })
-map("n", "<C-j>", "<C-w>j", { desc = "Go to lower window" })
-map("n", "<C-k>", "<C-w>k", { desc = "Go to upper window" })
-map("n", "<C-l>", "<C-w>l", { desc = "Go to right window" })
+local function tmux_nav(method, fallback)
+  return function()
+    local ok, nav = pcall(require, "nvim-tmux-navigation")
+    if ok and nav[method] then
+      nav[method]()
+      return
+    end
+    vim.cmd(fallback)
+  end
+end
+
+-- Better window navigation, with tmux-pane awareness when available.
+map("n", "<C-h>", tmux_nav("NvimTmuxNavigateLeft", "wincmd h"), { desc = "Go to left window/pane" })
+map("n", "<C-j>", tmux_nav("NvimTmuxNavigateDown", "wincmd j"), { desc = "Go to lower window/pane" })
+map("n", "<C-k>", tmux_nav("NvimTmuxNavigateUp", "wincmd k"), { desc = "Go to upper window/pane" })
+map("n", "<C-l>", tmux_nav("NvimTmuxNavigateRight", "wincmd l"), { desc = "Go to right window/pane" })
+map("n", "<C-\\>", tmux_nav("NvimTmuxNavigateLastActive", "wincmd p"), { desc = "Go to last active window/pane" })
+map("n", "<C-Space>", tmux_nav("NvimTmuxNavigateNext", "wincmd w"), { desc = "Go to next window/pane" })
 
 -- Resize windows
 map("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
@@ -152,3 +165,5 @@ vim.api.nvim_set_keymap("n", "<A-j>", "<Nop>", { noremap = true, silent = true }
 vim.api.nvim_set_keymap("n", "<A-k>", "<Nop>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("x", "<A-j>", "<Nop>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("x", "<A-k>", "<Nop>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("x", "J", "<Nop>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("x", "K", "<Nop>", { noremap = true, silent = true })

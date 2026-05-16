@@ -19,8 +19,17 @@ end
 vim.opt.rtp:prepend(vim.env.LAZY or lazypath)
 
 local spec = {}
-if not (no_install and not fs_stat(lazyvimpath)) then
+local include_lazyvim = not (no_install and not fs_stat(lazyvimpath))
+
+if include_lazyvim then
   table.insert(spec, { "LazyVim/LazyVim", import = "lazyvim.plugins" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.editor.snacks_picker" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.editor.mini-diff" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.coding.mini-surround" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.util.mini-hipatterns" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.lang.json" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.lang.markdown" })
+  table.insert(spec, { import = "lazyvim.plugins.extras.dap.core" })
 end
 table.insert(spec, { import = "plugins" })
 

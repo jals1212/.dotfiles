@@ -18,7 +18,9 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 
 | Key | Mode | Action |
 | --- | --- | --- |
-| `Ctrl-h/j/k/l` | normal | Move between windows |
+| `Ctrl-h/j/k/l` | normal | Move between Neovim windows or tmux panes when available |
+| `Ctrl-\` | normal | Move to last active Neovim window or tmux pane |
+| `Ctrl-Space` | normal | Move to next Neovim window or tmux pane |
 | `Ctrl-Up/Down` | normal | Increase/decrease window height |
 | `Ctrl-Left/Right` | normal | Decrease/increase window width |
 | `Shift-h/l` | normal | Previous/next buffer |
@@ -40,6 +42,7 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 | `<leader>fb` | normal | Telescope buffers |
 | `<leader>fh` | normal | Telescope help tags |
 | `<leader>fr` | normal | Telescope recent files |
+| `<leader>fs` | normal/visual | Rip substitute |
 | `<leader>sg` | visual | Grep selected text |
 | `<leader>sG` | visual | Grep selected text from project root |
 | `<leader>gg` | normal | LazyGit |
@@ -49,6 +52,20 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 | `<leader>bd` | normal | Delete buffer |
 | `<leader>bq` | normal | Delete other buffers |
 | `<leader>md` | normal | Delete all marks |
+
+### Editor utilities
+
+Source: `home/.config/nvim/lua/plugins/editor-tools.lua`.
+
+| Key | Mode | Action |
+| --- | --- | --- |
+| `gpd` | normal | Preview definition |
+| `gpD` | normal | Preview declaration |
+| `gpi` | normal | Preview implementation |
+| `gpy` | normal | Preview type definition |
+| `gpr` | normal | Preview references |
+| `gP` | normal | Close preview windows |
+| `<leader>cs` | normal | Symbols outline |
 
 ### OpenCode
 
@@ -92,8 +109,13 @@ Source: `home/.config/nvim/lua/plugins/nvim-dap.lua`.
 
 ### UI utilities
 
+Source: `home/.config/nvim/lua/plugins/ui-tools.lua` plus individual plugin files.
+
 | Key | Action |
 | --- | --- |
+| `<leader>?` | Show buffer-local keymaps |
+| `<leader>ud` | Toggle docs view |
+| `<leader>z` | Toggle Zen Mode |
 | `<leader>ut` | Toggle Twilight |
 | `<leader>uk` | Toggle Screenkey |
 
