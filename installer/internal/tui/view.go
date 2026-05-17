@@ -17,12 +17,8 @@ func renderView(m Model) string {
 	switch m.Screen {
 	case ScreenWelcome:
 		return renderWelcome(m)
-	case ScreenThemeSelect:
-		return renderThemeSelect(m)
-	case ScreenFlavorSelect:
-		return renderFlavorSelect(m)
-	case ScreenThemePreview:
-		return renderThemePreview(m)
+	case ScreenThemeFlavor:
+		return renderThemeFlavor(m)
 	case ScreenToolSelect:
 		return renderToolSelect(m)
 	case ScreenBackupConfirm:
@@ -71,125 +67,190 @@ func renderWelcome(m Model) string {
 	return CenterBoth(content, m.Width, m.Height)
 }
 
-func renderThemeSelect(m Model) string {
-	stepIdx := currentStepIndex(ScreenThemeSelect)
-	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
-
+// renderThemeFlavor renders the merged theme+flavor+preview screen.
+// Layout: step indicator → title → two-column list (Themes | Flavors) →
+// preview block → Continue button → help footer.
+func renderThemeFlavor(m Model) string {
+	stepLine := RenderSteps(installFunnelSteps(), currentStepIndex(ScreenThemeFlavor), m.Palette, m.Width)
 	s := getStyles(m.Palette)
-	var bodyB strings.Builder
-	bodyB.WriteString(s.title.Render("Select Theme"))
-	bodyB.WriteString("\n")
 
 	themes := defaultThemes()
-	for i, theme := range themes {
-		if i == m.Cursor {
-			bodyB.WriteString(s.selectedItem.Render("▸ " + theme.DisplayName))
-		} else {
-			bodyB.WriteString(s.unselectedItem.Render(theme.DisplayName))
+
+	// Determine hovered theme/flavor for live preview (no state mutation).
+	hoveredTheme := m.SelectedTheme
+	hoveredFlavor := m.SelectedFlavor
+	if m.Panel == 0 && m.Cursor < len(themes) {
+		hoveredTheme = themes[m.Cursor].Name
+		hoveredFlavor = defaultFlavorForTheme(hoveredTheme)
+		// If the hovered theme matches the selected theme, use the committed flavor.
+		if hoveredTheme == m.SelectedTheme {
+			hoveredFlavor = m.SelectedFlavor
 		}
-		bodyB.WriteString(s.dim.Render(" — " + theme.Description))
-		bodyB.WriteString("\n")
-	}
-
-	if m.Cursor == len(themes) {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.selectedItem.Render("▸ Continue"))
-	} else {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.unselectedItem.Render("Continue"))
-	}
-
-	footer := RenderHelp([]HelpEntry{
-		{Key: "enter", Action: "select"},
-		{Key: "j/k", Action: "navigate"},
-		{Key: "Esc", Action: "back"},
-		{Key: "q", Action: "quit"},
-	}, m.Palette, m.Width)
-
-	return renderChrome(m, stepLine, bodyB.String(), footer)
-}
-
-func renderFlavorSelect(m Model) string {
-	theme, selectedFlavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
-	stepIdx := currentStepIndex(ScreenFlavorSelect)
-	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
-
-	s := getStyles(m.Palette)
-	var bodyB strings.Builder
-	bodyB.WriteString(s.title.Render(fmt.Sprintf("Select %s Flavor", strings.Title(theme))))
-	bodyB.WriteString("\n")
-
-	flavors := defaultFlavorsForTheme(theme)
-	for i, flavor := range flavors {
-		_ = selectedFlavor // flavor selection tracked via cursor; selectedFlavor used by normalizeThemeFlavor
-		if i == m.Cursor {
-			bodyB.WriteString(s.selectedItem.Render("▸ " + flavor))
-		} else {
-			bodyB.WriteString(s.unselectedItem.Render(flavor))
+	} else if m.Panel == 1 {
+		hoveredTheme = m.SelectedTheme
+		flavors := defaultFlavorsForTheme(hoveredTheme)
+		if m.Cursor < len(flavors) {
+			hoveredFlavor = flavors[m.Cursor]
 		}
-		bodyB.WriteString("\n")
 	}
 
-	if m.Cursor == len(flavors) {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.selectedItem.Render("▸ Continue"))
-	} else {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.unselectedItem.Render("Continue"))
+	// Build theme rows (left column, width 28).
+	// Row format: <cursor(2)><marker(2)><label>  padded to colWidth visible cells.
+	// We use s.selected (bold, no padding) and s.normal (no padding) for labels
+	// to avoid lipgloss PaddingLeft interfering with column alignment.
+	const colWidth = 28
+	themeRows := make([]string, len(themes))
+	for i, th := range themes {
+		cursorStr := "  "
+		if m.Panel == 0 && i == m.Cursor {
+			cursorStr = "▸ "
+		}
+		markerPlain := "  "
+		var markerStyled string
+		if th.Name == m.SelectedTheme {
+			markerPlain = "● "
+			markerStyled = s.selected.Render("● ")
+		} else {
+			markerStyled = "  "
+		}
+		label := th.DisplayName
+		var styledLabel string
+		if m.Panel == 0 && i == m.Cursor {
+			styledLabel = s.selected.Render(label)
+		} else {
+			styledLabel = s.normal.Render(label)
+		}
+		row := cursorStr + markerStyled + styledLabel
+		// Pad row to colWidth visible cells so the right column aligns.
+		plainRow := cursorStr + markerPlain + label
+		if pad := colWidth - len([]rune(plainRow)); pad > 0 {
+			row = row + strings.Repeat(" ", pad)
+		}
+		themeRows[i] = row
 	}
 
-	footer := RenderHelp([]HelpEntry{
-		{Key: "enter", Action: "select"},
-		{Key: "j/k", Action: "navigate"},
-		{Key: "Esc", Action: "back"},
-		{Key: "q", Action: "quit"},
-	}, m.Palette, m.Width)
+	// Build flavor rows (right column).
+	var flavorRows []string
+	if m.SelectedTheme != "" {
+		flavors := defaultFlavorsForTheme(m.SelectedTheme)
+		flavorRows = make([]string, len(flavors))
+		for i, fl := range flavors {
+			cursorStr := "  "
+			if m.Panel == 1 && i == m.Cursor {
+				cursorStr = "▸ "
+			}
+			var markerStyled string
+			if fl == m.SelectedFlavor {
+				markerStyled = s.selected.Render("● ")
+			} else {
+				markerStyled = "  "
+			}
+			var styledLabel string
+			if m.Panel == 1 && i == m.Cursor {
+				styledLabel = s.selected.Render(fl)
+			} else {
+				styledLabel = s.normal.Render(fl)
+			}
+			flavorRows[i] = cursorStr + markerStyled + styledLabel
+		}
+	}
 
-	return renderChrome(m, stepLine, bodyB.String(), footer)
-}
+	// Two-column header.
+	themeHeader := s.dim.Render("Themes")
+	themeHeaderPlain := "Themes"
+	if pad := colWidth - len([]rune(themeHeaderPlain)); pad > 0 {
+		themeHeader = themeHeader + strings.Repeat(" ", pad)
+	}
+	flavorHeader := s.dim.Render("Flavors")
 
-func renderThemePreview(m Model) string {
-	theme, flavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
-	stepIdx := currentStepIndex(ScreenThemePreview)
-	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
-
-	s := getStyles(m.Palette)
 	var bodyB strings.Builder
-	bodyB.WriteString(s.title.Render("Theme Preview"))
-	bodyB.WriteString("\n")
-	bodyB.WriteString(s.subtitle.Render(fmt.Sprintf("Selected: %s/%s", theme, flavor)))
-
-	// Sample code block with syntax highlighting using palette colors (no hardcoded literals)
-	keywordStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.Palette.Title))
-	stringStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.Palette.Selected))
-	normalCodeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.Palette.Normal))
-	funcStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.Palette.Done))
-
-	bodyB.WriteString(s.dim.Render("Sample Go code:"))
-	bodyB.WriteString("\n")
-	bodyB.WriteString(s.dim.Render("─────────────────────────────"))
-	bodyB.WriteString("\n")
-	bodyB.WriteString(keywordStyle.Render("package") + normalCodeStyle.Render(" main\n"))
-	bodyB.WriteString(keywordStyle.Render("import") + normalCodeStyle.Render(" ") + stringStyle.Render("\"fmt\"") + normalCodeStyle.Render("\n"))
-	bodyB.WriteString(keywordStyle.Render("func") + normalCodeStyle.Render(" ") + funcStyle.Render("main") + normalCodeStyle.Render("() {\n"))
-	bodyB.WriteString(normalCodeStyle.Render("    fmt.") + funcStyle.Render("Println") + normalCodeStyle.Render("(") + stringStyle.Render("\"Hello, Theme!\"") + normalCodeStyle.Render(")\n"))
-	bodyB.WriteString(normalCodeStyle.Render("}\n"))
-	bodyB.WriteString(s.dim.Render("─────────────────────────────"))
+	bodyB.WriteString(s.title.Render("Select Theme & Flavor"))
 	bodyB.WriteString("\n\n")
 
-	if m.Cursor == 0 {
-		bodyB.WriteString(s.selectedItem.Render("▸ Continue (Enter)"))
-	} else {
-		bodyB.WriteString(s.unselectedItem.Render("Continue (Enter)"))
+	// Column headers.
+	bodyB.WriteString("  " + themeHeader + "  " + flavorHeader)
+	bodyB.WriteString("\n")
+
+	// Interleave rows; pad shorter list with blank lines.
+	maxRows := len(themeRows)
+	if len(flavorRows) > maxRows {
+		maxRows = len(flavorRows)
+	}
+	for i := 0; i < maxRows; i++ {
+		left := ""
+		if i < len(themeRows) {
+			left = themeRows[i]
+		} else {
+			left = strings.Repeat(" ", colWidth)
+		}
+		right := ""
+		if i < len(flavorRows) {
+			right = flavorRows[i]
+		}
+		bodyB.WriteString("  " + left + "  " + right)
+		bodyB.WriteString("\n")
 	}
 
+	// Preview block using hovered palette.
+	previewPalette := paletteFor(hoveredTheme, hoveredFlavor)
+	keywordStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Title))
+	stringStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Selected))
+	normalCodeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Normal))
+	funcStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Done))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Dim))
+
+	bodyB.WriteString("\n")
+	bodyB.WriteString(dimStyle.Render("  Preview"))
+	bodyB.WriteString("\n")
+	bodyB.WriteString(dimStyle.Render("  ─────────────────────────────"))
+	bodyB.WriteString("\n")
+	bodyB.WriteString("  " + keywordStyle.Render("package") + normalCodeStyle.Render(" main\n"))
+	bodyB.WriteString("  " + keywordStyle.Render("import") + normalCodeStyle.Render(" ") + stringStyle.Render("\"fmt\"") + normalCodeStyle.Render("\n"))
+	bodyB.WriteString("  " + keywordStyle.Render("func") + normalCodeStyle.Render(" ") + funcStyle.Render("main") + normalCodeStyle.Render("() {\n"))
+	bodyB.WriteString("  " + normalCodeStyle.Render("    fmt.") + funcStyle.Render("Println") + normalCodeStyle.Render("(") + stringStyle.Render("\"Hello, Theme!\"") + normalCodeStyle.Render(")\n"))
+	bodyB.WriteString("  " + normalCodeStyle.Render("}\n"))
+	bodyB.WriteString(dimStyle.Render("  ─────────────────────────────"))
+	bodyB.WriteString("\n\n")
+
+	// Continue button.
+	if m.Panel == 2 {
+		bodyB.WriteString(s.selected.Render("  ▸ Continue"))
+	} else {
+		bodyB.WriteString(s.normal.Render("  Continue"))
+	}
+	bodyB.WriteString("\n")
+
 	footer := RenderHelp([]HelpEntry{
+		{Key: "↑/k", Action: "up"},
+		{Key: "↓/j", Action: "down"},
+		{Key: "Tab", Action: "switch panel"},
 		{Key: "enter", Action: "continue"},
 		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
 	return renderChrome(m, stepLine, bodyB.String(), footer)
+}
+
+// stripANSIView is a local ANSI-strip helper for view padding calculations.
+// Keeps only printable runes (filters escape sequences).
+func stripANSIView(s string) string {
+	var b strings.Builder
+	inEsc := false
+	for _, r := range s {
+		if r == '\x1b' {
+			inEsc = true
+			continue
+		}
+		if inEsc {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				inEsc = false
+			}
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 func renderToolSelect(m Model) string {

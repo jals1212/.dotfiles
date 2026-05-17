@@ -9,9 +9,7 @@ type Screen int
 
 const (
 	ScreenWelcome Screen = iota
-	ScreenThemeSelect
-	ScreenFlavorSelect
-	ScreenThemePreview
+	ScreenThemeFlavor
 	ScreenToolSelect
 	ScreenBackupConfirm
 	ScreenInstalling
@@ -50,6 +48,12 @@ type Model struct {
 	Width            int
 	Height           int
 	Cursor           int
+	// Panel tracks focus on ScreenThemeFlavor: 0=Themes, 1=Flavors, 2=Continue.
+	Panel            int
+	// PrevCursor and PrevPanel store cursor/panel before a forward screen transition
+	// so Esc can restore them.
+	PrevCursor       int
+	PrevPanel        int
 	SystemInfo       *system.SystemInfo
 	Tools            []Tool
 	Steps            []InstallStep

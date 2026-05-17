@@ -35,14 +35,25 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "k":
-			if m.Cursor > 0 {
+			if m.Screen == ScreenThemeFlavor {
+				m = handleThemeFlavorUp(m)
+			} else if m.Cursor > 0 {
 				m.Cursor--
 			}
 
 		case "down", "j":
-			max := maxCursor(m)
-			if m.Cursor < max {
-				m.Cursor++
+			if m.Screen == ScreenThemeFlavor {
+				m = handleThemeFlavorDown(m)
+			} else {
+				max := maxCursor(m)
+				if m.Cursor < max {
+					m.Cursor++
+				}
+			}
+
+		case "tab":
+			if m.Screen == ScreenThemeFlavor {
+				m = handleThemeFlavorTab(m)
 			}
 
 		case " ":
@@ -54,9 +65,23 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			return handleEnter(m)
 
 		case "esc":
-			if m.Screen != ScreenWelcome {
-				m.Screen = m.PrevScreen
+			switch m.Screen {
+			case ScreenThemeFlavor:
+				// Save current state so returning from ToolSelect restores it.
+				m.PrevCursor = m.Cursor
+				m.PrevPanel = m.Panel
+				m.Screen = ScreenWelcome
 				m.Cursor = 0
+				m.Panel = 0
+			case ScreenToolSelect:
+				m.Screen = ScreenThemeFlavor
+				m.Cursor = m.PrevCursor
+				m.Panel = m.PrevPanel
+			default:
+				if m.Screen != ScreenWelcome {
+					m.Screen = m.PrevScreen
+					m.Cursor = 0
+				}
 			}
 		}
 
@@ -104,37 +129,53 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 	switch m.Screen {
 	case ScreenWelcome:
 		m.PrevScreen = m.Screen
-		m.Screen = ScreenThemeSelect
-		m.Cursor = 0
-
-	case ScreenThemeSelect:
+		m.Screen = ScreenThemeFlavor
+		m.Panel = 0
+		// Position cursor on the currently selected theme.
 		themes := defaultThemes()
-		if m.Cursor < len(themes) {
-			m.SelectedTheme = themes[m.Cursor].Name
-			m.SelectedFlavor = themes[m.Cursor].DefaultFlavor
-			m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
-		} else if m.Cursor == len(themes) {
-			m.PrevScreen = m.Screen
-			m.Screen = ScreenFlavorSelect
-			m.Cursor = 0
-		}
-
-	case ScreenFlavorSelect:
-		m.SelectedTheme, m.SelectedFlavor = normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
-		flavors := defaultFlavorsForTheme(m.SelectedTheme)
-		if m.Cursor < len(flavors) {
-			m.SelectedFlavor = flavors[m.Cursor]
-			m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
-		} else if m.Cursor == len(flavors) {
-			m.PrevScreen = m.Screen
-			m.Screen = ScreenThemePreview
-			m.Cursor = 0
-		}
-
-	case ScreenThemePreview:
-		m.PrevScreen = m.Screen
-		m.Screen = ScreenToolSelect
 		m.Cursor = 0
+		for i, th := range themes {
+			if th.Name == m.SelectedTheme {
+				m.Cursor = i
+				break
+			}
+		}
+
+	case ScreenThemeFlavor:
+		themes := defaultThemes()
+		switch m.Panel {
+		case 0: // Themes panel — commit selected theme, move to Flavors.
+			if m.Cursor < len(themes) {
+				m.SelectedTheme = themes[m.Cursor].Name
+				m.SelectedFlavor = defaultFlavorForTheme(m.SelectedTheme)
+				m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
+				m.Panel = 1
+				// Position cursor on the committed flavor.
+				flavors := defaultFlavorsForTheme(m.SelectedTheme)
+				m.Cursor = 0
+				for i, fl := range flavors {
+					if fl == m.SelectedFlavor {
+						m.Cursor = i
+						break
+					}
+				}
+			}
+		case 1: // Flavors panel — commit selected flavor, move to Continue.
+			flavors := defaultFlavorsForTheme(m.SelectedTheme)
+			if m.Cursor < len(flavors) {
+				m.SelectedFlavor = flavors[m.Cursor]
+				m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
+			}
+			m.Panel = 2
+			m.Cursor = 0
+		case 2: // Continue — advance to ToolSelect, save cursor/panel for Esc restore.
+			m.PrevCursor = m.Cursor
+			m.PrevPanel = m.Panel
+			m.PrevScreen = m.Screen
+			m.Screen = ScreenToolSelect
+			m.Cursor = 0
+			m.Panel = 0
+		}
 
 	case ScreenToolSelect:
 		// Last option is "Install"
@@ -170,11 +211,9 @@ func maxCursor(m Model) int {
 	switch m.Screen {
 	case ScreenWelcome:
 		return 0
-	case ScreenThemeSelect:
-		return len(defaultThemes())
-	case ScreenFlavorSelect:
-		return len(defaultFlavorsForTheme(m.SelectedTheme))
-	case ScreenThemePreview:
+	case ScreenThemeFlavor:
+		// ScreenThemeFlavor navigation is handled by handleThemeFlavorUp/Down;
+		// maxCursor is only consulted for the generic down handler (which is bypassed).
 		return 0
 	case ScreenToolSelect:
 		return len(m.Tools)
@@ -187,5 +226,77 @@ func maxCursor(m Model) int {
 	default:
 		return 0
 	}
+}
+
+// handleThemeFlavorUp moves the cursor up within the focused panel of ScreenThemeFlavor.
+// Up past the first item of a panel does not wrap and does not change panel.
+func handleThemeFlavorUp(m Model) Model {
+	if m.Cursor > 0 {
+		m.Cursor--
+	}
+	return m
+}
+
+// handleThemeFlavorDown moves the cursor down within the focused panel of ScreenThemeFlavor.
+// Reaching past the last item of a panel advances focus to the next panel.
+func handleThemeFlavorDown(m Model) Model {
+	switch m.Panel {
+	case 0: // Themes
+		themes := defaultThemes()
+		if m.Cursor < len(themes)-1 {
+			m.Cursor++
+		} else {
+			// Advance to Flavors panel.
+			m.Panel = 1
+			flavors := defaultFlavorsForTheme(m.SelectedTheme)
+			m.Cursor = 0
+			for i, fl := range flavors {
+				if fl == m.SelectedFlavor {
+					m.Cursor = i
+					break
+				}
+			}
+		}
+	case 1: // Flavors
+		flavors := defaultFlavorsForTheme(m.SelectedTheme)
+		if m.Cursor < len(flavors)-1 {
+			m.Cursor++
+		} else {
+			// Advance to Continue.
+			m.Panel = 2
+			m.Cursor = 0
+		}
+	case 2: // Continue — already at bottom; no-op.
+	}
+	return m
+}
+
+// handleThemeFlavorTab cycles panel focus: Themes → Flavors → Continue → Themes.
+// Cursor is positioned on the matching selected item when entering a panel.
+func handleThemeFlavorTab(m Model) Model {
+	m.Panel = (m.Panel + 1) % 3
+	switch m.Panel {
+	case 0: // Themes
+		themes := defaultThemes()
+		m.Cursor = 0
+		for i, th := range themes {
+			if th.Name == m.SelectedTheme {
+				m.Cursor = i
+				break
+			}
+		}
+	case 1: // Flavors
+		flavors := defaultFlavorsForTheme(m.SelectedTheme)
+		m.Cursor = 0
+		for i, fl := range flavors {
+			if fl == m.SelectedFlavor {
+				m.Cursor = i
+				break
+			}
+		}
+	case 2: // Continue
+		m.Cursor = 0
+	}
+	return m
 }
 
