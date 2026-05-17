@@ -26,7 +26,13 @@ func wrapStepError(stepID, stepName, description string, cause error) error {
 
 // SendLog logs a message for the given step.
 // In non-interactive mode it prints to stdout; in TUI mode it appends to model logs.
+// When QuietLogs is set the message is appended to LogLines silently so callers
+// can decide whether and how to surface them.
 func SendLog(m *Model, stepID, message string) {
+	if m.QuietLogs {
+		m.LogLines = append(m.LogLines, fmt.Sprintf("[%s] %s", stepID, message))
+		return
+	}
 	if m.IsNonInteractive {
 		fmt.Printf("[%s] %s\n", stepID, message)
 		return

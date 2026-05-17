@@ -62,6 +62,7 @@ type Model struct {
 	ExistingConfigs  []string
 	BackupDir        string
 	IsNonInteractive bool
+	QuietLogs        bool
 	SelectedTheme    string
 	SelectedFlavor   string
 	SelectedAccent   string

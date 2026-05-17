@@ -106,6 +106,7 @@ func deployAndSaveManifest(info *system.SystemInfo, theme, flavor string) error 
 	model := &tui.Model{
 		SystemInfo:       info,
 		IsNonInteractive: true,
+		QuietLogs:        true,
 		SelectedTheme:    theme,
 		SelectedFlavor:   flavor,
 		SelectedAccent:   "mauve",
