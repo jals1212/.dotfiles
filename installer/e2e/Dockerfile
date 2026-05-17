@@ -12,7 +12,7 @@ RUN useradd -m -s /bin/bash testuser && \
     echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Copy dotfiles repo structure
-COPY dots-binary /usr/local/bin/dots
+COPY dots /usr/local/bin/dots
 COPY home /opt/dotfiles/home
 COPY assets /opt/dotfiles/assets
 COPY installer/e2e/e2e_test.sh /home/testuser/e2e_test.sh

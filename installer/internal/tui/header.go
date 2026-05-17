@@ -2,7 +2,8 @@ package tui
 
 // skullHeader is the 14-line braille skull from home/.config/nvim/lua/plugins/snacks.lua
 // (lines 29–42, byte-identical to the snacks dashboard preset header).
-const skullHeader = `⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄
+const skullHeader = `
+⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄
 ⠄⠄⠄⠄⠄⣠⣤⢶⣻⣿⣻⣿⣿⣿⣿⣿⣿⣦⣤⣀⠄⠄⠄⠄⠄
 ⠄⠄⠄⠄⣼⣺⢷⣻⣽⣾⣿⢿⣿⣷⣿⣿⢿⣿⣿⣿⣇⠄⠄⠄⠄
 ⠄⠄⠠⡍⢾⣺⢽⡳⣻⡺⣽⢝⢗⢯⣻⢽⣻⣿⣿⣿⣿⢿⡄⠄⠄

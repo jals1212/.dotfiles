@@ -14,6 +14,7 @@ type paletteStyles struct {
 	stepActive, stepDone, stepPending                                               lipgloss.Style
 	help, key                                                                       lipgloss.Style
 	success, error, warning, info                                                   lipgloss.Style
+	selectedItem, unselectedItem                                                    lipgloss.Style
 }
 
 func getStyles(p Palette) paletteStyles {
@@ -45,6 +46,9 @@ func getStyles(p Palette) paletteStyles {
 		error:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Failed)),
 		warning: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Running)),
 		info:    lipgloss.NewStyle().Foreground(lipgloss.Color(p.Subtitle)),
+
+		selectedItem:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Selected)).Bold(true).PaddingLeft(2),
+		unselectedItem: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Normal)).PaddingLeft(4),
 	}
 }
 

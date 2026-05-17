@@ -9,7 +9,8 @@ import (
 
 // View implements the tea.Model interface by routing to the per-screen renderer.
 func (m Model) View() string {
-	return renderView(m)
+	out := renderView(m)
+	return lipgloss.NewStyle().Padding(1, 2, 0, 2).Render(out)
 }
 
 func renderView(m Model) string {
@@ -38,18 +39,15 @@ func renderView(m Model) string {
 }
 
 // renderChrome composes the full layered chrome around content.
-// header and footer are rendered outside the box.
 // stepLine may be empty for off-funnel screens.
-func renderChrome(m Model, header, stepLine, content, footer string) string {
-	s := getStyles(m.Palette)
+// No box is applied; header and stepLine are joined with newlines only.
+func renderChrome(m Model, stepLine, content, footer string) string {
 	b := strings.Builder{}
-	b.WriteString(header)
-	b.WriteString("\n")
 	if stepLine != "" {
 		b.WriteString(stepLine)
 		b.WriteString("\n\n")
 	}
-	b.WriteString(s.box.Render(content))
+	b.WriteString(content)
 	b.WriteString("\n")
 	b.WriteString(footer)
 	return b.String()
@@ -69,11 +67,11 @@ func renderWelcome(m Model) string {
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, "", bodyB.String(), footer)
+	content := header + "\n" + bodyB.String() + "\n" + footer
+	return CenterBoth(content, m.Width, m.Height)
 }
 
 func renderThemeSelect(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenThemeSelect)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -84,49 +82,35 @@ func renderThemeSelect(m Model) string {
 
 	themes := defaultThemes()
 	for i, theme := range themes {
-		radio := "○"
-		if theme.Name == m.SelectedTheme {
-			radio = s.selected.Render("●")
-		}
-
-		prefix := "  "
-		nameStyle := s.normal
 		if i == m.Cursor {
-			prefix = s.cursor.Render("❯ ")
-			nameStyle = s.selected
+			bodyB.WriteString(s.selectedItem.Render("▸ " + theme.DisplayName))
+		} else {
+			bodyB.WriteString(s.unselectedItem.Render(theme.DisplayName))
 		}
-
-		bodyB.WriteString(prefix)
-		bodyB.WriteString(radio)
-		bodyB.WriteString(" ")
-		bodyB.WriteString(nameStyle.Render(theme.DisplayName))
 		bodyB.WriteString(s.dim.Render(" — " + theme.Description))
 		bodyB.WriteString("\n")
 	}
 
-	prefix := "  "
-	btnStyle := s.normal
 	if m.Cursor == len(themes) {
-		prefix = s.cursor.Render("❯ ")
-		btnStyle = s.selected
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.selectedItem.Render("▸ Continue"))
+	} else {
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.unselectedItem.Render("Continue"))
 	}
-	bodyB.WriteString("\n")
-	bodyB.WriteString(prefix)
-	bodyB.WriteString(btnStyle.Render("Continue"))
 
 	footer := RenderHelp([]HelpEntry{
 		{Key: "enter", Action: "select"},
 		{Key: "j/k", Action: "navigate"},
-		{Key: "esc", Action: "back"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderFlavorSelect(m Model) string {
 	theme, selectedFlavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenFlavorSelect)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -137,48 +121,35 @@ func renderFlavorSelect(m Model) string {
 
 	flavors := defaultFlavorsForTheme(theme)
 	for i, flavor := range flavors {
-		radio := "○"
-		if flavor == selectedFlavor {
-			radio = s.selected.Render("●")
-		}
-
-		prefix := "  "
-		nameStyle := s.normal
+		_ = selectedFlavor // flavor selection tracked via cursor; selectedFlavor used by normalizeThemeFlavor
 		if i == m.Cursor {
-			prefix = s.cursor.Render("❯ ")
-			nameStyle = s.selected
+			bodyB.WriteString(s.selectedItem.Render("▸ " + flavor))
+		} else {
+			bodyB.WriteString(s.unselectedItem.Render(flavor))
 		}
-
-		bodyB.WriteString(prefix)
-		bodyB.WriteString(radio)
-		bodyB.WriteString(" ")
-		bodyB.WriteString(nameStyle.Render(flavor))
 		bodyB.WriteString("\n")
 	}
 
-	prefix := "  "
-	btnStyle := s.normal
 	if m.Cursor == len(flavors) {
-		prefix = s.cursor.Render("❯ ")
-		btnStyle = s.selected
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.selectedItem.Render("▸ Continue"))
+	} else {
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.unselectedItem.Render("Continue"))
 	}
-	bodyB.WriteString("\n")
-	bodyB.WriteString(prefix)
-	bodyB.WriteString(btnStyle.Render("Continue"))
 
 	footer := RenderHelp([]HelpEntry{
 		{Key: "enter", Action: "select"},
 		{Key: "j/k", Action: "navigate"},
-		{Key: "esc", Action: "back"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderThemePreview(m Model) string {
 	theme, flavor := normalizeThemeFlavor(m.SelectedTheme, m.SelectedFlavor)
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenThemePreview)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -206,26 +177,22 @@ func renderThemePreview(m Model) string {
 	bodyB.WriteString(s.dim.Render("─────────────────────────────"))
 	bodyB.WriteString("\n\n")
 
-	prefix := "  "
-	btnStyle := s.normal
 	if m.Cursor == 0 {
-		prefix = s.cursor.Render("❯ ")
-		btnStyle = s.selected
+		bodyB.WriteString(s.selectedItem.Render("▸ Continue (Enter)"))
+	} else {
+		bodyB.WriteString(s.unselectedItem.Render("Continue (Enter)"))
 	}
-	bodyB.WriteString(prefix)
-	bodyB.WriteString(btnStyle.Render("Continue (Enter)"))
 
 	footer := RenderHelp([]HelpEntry{
 		{Key: "enter", Action: "continue"},
-		{Key: "esc", Action: "back"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderToolSelect(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenToolSelect)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -240,43 +207,34 @@ func renderToolSelect(m Model) string {
 			checkbox = s.selected.Render("[✓]")
 		}
 
-		prefix := "  "
-		nameStyle := s.normal
 		if i == m.Cursor {
-			prefix = s.cursor.Render("❯ ")
-			nameStyle = s.selected
+			bodyB.WriteString(s.selectedItem.Render("▸ " + checkbox + " " + tool.Name))
+		} else {
+			bodyB.WriteString(s.unselectedItem.Render(checkbox + " " + tool.Name))
 		}
-
-		bodyB.WriteString(prefix)
-		bodyB.WriteString(checkbox)
-		bodyB.WriteString(" ")
-		bodyB.WriteString(nameStyle.Render(tool.Name))
 		bodyB.WriteString(s.dim.Render(" — " + tool.Description))
 		bodyB.WriteString("\n")
 	}
 
-	prefix := "  "
-	btnStyle := s.normal
 	if m.Cursor == len(m.Tools) {
-		prefix = s.cursor.Render("❯ ")
-		btnStyle = s.selected
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.selectedItem.Render("▸ 🚀  Install Selected"))
+	} else {
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.unselectedItem.Render("🚀  Install Selected"))
 	}
-	bodyB.WriteString("\n")
-	bodyB.WriteString(prefix)
-	bodyB.WriteString(btnStyle.Render("🚀  Install Selected"))
 
 	footer := RenderHelp([]HelpEntry{
-		{Key: "space", Action: "toggle"},
+		{Key: "Space", Action: "toggle"},
 		{Key: "enter", Action: "continue"},
 		{Key: "j/k", Action: "navigate"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderBackupConfirm(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenBackupConfirm)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -293,14 +251,11 @@ func renderBackupConfirm(m Model) string {
 		"❌  Cancel and go back",
 	}
 	for i, opt := range options {
-		prefix := "  "
-		style := s.normal
 		if i == m.Cursor {
-			prefix = s.cursor.Render("❯ ")
-			style = s.selected
+			bodyB.WriteString(s.selectedItem.Render("▸ " + opt))
+		} else {
+			bodyB.WriteString(s.unselectedItem.Render(opt))
 		}
-		bodyB.WriteString(prefix)
-		bodyB.WriteString(style.Render(opt))
 		bodyB.WriteString("\n")
 	}
 
@@ -310,11 +265,10 @@ func renderBackupConfirm(m Model) string {
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderInstalling(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
 	stepIdx := currentStepIndex(ScreenInstalling)
 	stepLine := RenderSteps(installFunnelSteps(), stepIdx, m.Palette, m.Width)
 
@@ -350,7 +304,21 @@ func renderInstalling(m Model) string {
 		bodyB.WriteString("\n")
 	}
 
-	if len(m.LogLines) > 0 {
+	if m.ShowDetails && len(m.LogLines) > 0 {
+		var logB strings.Builder
+		logB.WriteString(s.dim.Render("─ Logs ─"))
+		logB.WriteString("\n")
+		start := 0
+		if len(m.LogLines) > 8 {
+			start = len(m.LogLines) - 8
+		}
+		for _, line := range m.LogLines[start:] {
+			logB.WriteString(s.dim.Render("  " + line))
+			logB.WriteString("\n")
+		}
+		bodyB.WriteString("\n")
+		bodyB.WriteString(s.box.Render(logB.String()))
+	} else if !m.ShowDetails && len(m.LogLines) > 0 {
 		bodyB.WriteString("\n")
 		bodyB.WriteString(s.dim.Render("─ Logs ─"))
 		bodyB.WriteString("\n")
@@ -368,12 +336,10 @@ func renderInstalling(m Model) string {
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, stepLine, bodyB.String(), footer)
+	return renderChrome(m, stepLine, bodyB.String(), footer)
 }
 
 func renderSummary(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
-
 	s := getStyles(m.Palette)
 	var bodyB strings.Builder
 	bodyB.WriteString(s.title.Render("✅ Installation Complete!"))
@@ -410,12 +376,10 @@ func renderSummary(m Model) string {
 		{Key: "enter", Action: "exit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, "", bodyB.String(), footer)
+	return renderChrome(m, "", bodyB.String(), footer)
 }
 
 func renderError(m Model) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
-
 	s := getStyles(m.Palette)
 	var bodyB strings.Builder
 	bodyB.WriteString(s.failed.Render("❌ Error"))
@@ -426,14 +390,12 @@ func renderError(m Model) string {
 		{Key: "enter", Action: "exit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, "", bodyB.String(), footer)
+	return renderChrome(m, "", bodyB.String(), footer)
 }
 
 // renderKeymapScreen renders a generic keymap/alias help screen for a given tool.
 // It is called by the per-tool keymaps_<tool>.go screen renderers.
 func renderKeymapScreen(m Model, title string, entries []KeymapEntry) string {
-	header := RenderHeader(m.Palette, "Dotfiles Manager", m.Width)
-
 	s := getStyles(m.Palette)
 	var bodyB strings.Builder
 	bodyB.WriteString(s.title.Render(title))
@@ -445,9 +407,9 @@ func renderKeymapScreen(m Model, title string, entries []KeymapEntry) string {
 	}
 
 	footer := RenderHelp([]HelpEntry{
-		{Key: "esc", Action: "back"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	return renderChrome(m, header, "", bodyB.String(), footer)
+	return renderChrome(m, "", bodyB.String(), footer)
 }

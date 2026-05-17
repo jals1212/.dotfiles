@@ -47,7 +47,7 @@ func RenderSteps(steps []StepInfo, current int, p Palette, width int) string {
 		var dot, label string
 		switch {
 		case i < current:
-			dot = s.stepDone.Render("●")
+			dot = s.stepDone.Render("✓")
 			label = s.stepDone.Render(step.Label)
 		case i == current:
 			dot = s.stepActive.Render("●")
@@ -58,7 +58,7 @@ func RenderSteps(steps []StepInfo, current int, p Palette, width int) string {
 		}
 		parts = append(parts, dot+" "+label)
 	}
-	line := strings.Join(parts, s.stepPending.Render(" · "))
+	line := strings.Join(parts, s.dim.Render(" → "))
 	if width > 0 {
 		return CenterHorizontally(line, width)
 	}

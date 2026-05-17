@@ -15,15 +15,11 @@
                                                                                 
                                 Dotfiles Manager                                
                                                                                 
-╭──────────────────────────────╮
-│                              │
-│  Detected: macOS (arm64)     │
-│                              │
-│                              │
-│  Press enter to continue...  │
-│                              │
-╰──────────────────────────────╯
+Detected: macOS (arm64)
+                       
+
+Press enter to continue...
                                                                                 
-                               enter continue                                   
-                                    ·                                           
+                              [enter] continue                                  
+                                    •                                           
                                      q quit                                     

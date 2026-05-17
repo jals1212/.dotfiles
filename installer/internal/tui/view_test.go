@@ -72,21 +72,67 @@ func TestRenderWelcomeContainsSkullAndSubtitle(t *testing.T) {
 // Task 6.4: renderThemeSelect contains step indicator with Theme active.
 func TestRenderThemeSelectContainsStepIndicator(t *testing.T) {
 	m := Model{
-		Screen:        ScreenThemeSelect,
-		Width:         80,
-		Height:        24,
-		Palette:       flavorPalettes["mocha"],
-		SelectedTheme: "kanagawa",
+		Screen:         ScreenThemeSelect,
+		Width:          80,
+		Height:         24,
+		Palette:        flavorPalettes["mocha"],
+		SelectedTheme:  "kanagawa",
 		SelectedFlavor: "dragon",
-		SystemInfo:    &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
+		SystemInfo:     &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
 	}
 	out := renderThemeSelect(m)
+	plain := stripANSI(out)
 	// Step indicator must contain "Theme" and "Flavor" labels.
-	if !strings.Contains(out, "Theme") {
+	if !strings.Contains(plain, "Theme") {
 		t.Error("renderThemeSelect() missing 'Theme' step label")
 	}
-	if !strings.Contains(out, "Flavor") {
+	if !strings.Contains(plain, "Flavor") {
 		t.Error("renderThemeSelect() missing 'Flavor' step label")
+	}
+	// New separator is →.
+	if !strings.Contains(plain, "→") {
+		t.Error("renderThemeSelect() missing '→' step separator")
+	}
+	// Active step uses ●; done steps use ✓; pending use ○.
+	if !strings.Contains(plain, "●") {
+		t.Error("renderThemeSelect() missing '●' active step icon")
+	}
+}
+
+// Task 7.5: No rounded box border characters on selection screens.
+func TestNoBoxOnSelectionScreens(t *testing.T) {
+	m := Model{
+		Screen:         ScreenThemeSelect,
+		Width:          80,
+		Height:         24,
+		Palette:        flavorPalettes["mocha"],
+		SelectedTheme:  "kanagawa",
+		SelectedFlavor: "dragon",
+		SystemInfo:     &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
+	}
+	out := renderView(m)
+	for _, ch := range []string{"╭", "╮", "╰", "╯"} {
+		if strings.Contains(out, ch) {
+			t.Errorf("renderThemeSelect() contains box border character %q", ch)
+		}
+	}
+}
+
+// Task 7.6: Non-welcome screens omit the skull braille header.
+func TestNonWelcomeOmitsSkull(t *testing.T) {
+	m := Model{
+		Screen:         ScreenThemeSelect,
+		Width:          80,
+		Height:         24,
+		Palette:        flavorPalettes["mocha"],
+		SelectedTheme:  "kanagawa",
+		SelectedFlavor: "dragon",
+		SystemInfo:     &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
+	}
+	out := renderThemeSelect(m)
+	// First line of skull is a distinctive braille sequence.
+	if strings.Contains(out, "⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄") {
+		t.Error("renderThemeSelect() must not contain skull braille header")
 	}
 }
 
@@ -101,8 +147,9 @@ func TestRenderHelpFormatsEntries(t *testing.T) {
 	out := RenderHelp(entries, p, 0)
 	// Strip ANSI escapes for plain-text assertion.
 	plain := stripANSI(out)
-	if !strings.Contains(plain, "enter select") {
-		t.Errorf("RenderHelp() missing 'enter select'; got: %q", plain)
+	// Named keys get brackets; chord keys and single chars do not.
+	if !strings.Contains(plain, "[enter] select") {
+		t.Errorf("RenderHelp() missing '[enter] select'; got: %q", plain)
 	}
 	if !strings.Contains(plain, "j/k navigate") {
 		t.Errorf("RenderHelp() missing 'j/k navigate'; got: %q", plain)
@@ -110,8 +157,8 @@ func TestRenderHelpFormatsEntries(t *testing.T) {
 	if !strings.Contains(plain, "q quit") {
 		t.Errorf("RenderHelp() missing 'q quit'; got: %q", plain)
 	}
-	if !strings.Contains(plain, "·") {
-		t.Errorf("RenderHelp() missing '·' separator; got: %q", plain)
+	if !strings.Contains(plain, "•") {
+		t.Errorf("RenderHelp() missing '•' separator; got: %q", plain)
 	}
 }
 
