@@ -69,7 +69,7 @@ func renderWelcome(m Model) string {
 
 // renderThemeFlavor renders the merged theme+flavor+preview screen.
 // Layout: step indicator → title → two-column list (Themes | Flavors) →
-// preview block → Continue button → help footer.
+// preview block → help footer. Space commits selection; Enter advances.
 func renderThemeFlavor(m Model) string {
 	stepLine := RenderSteps(installFunnelSteps(), currentStepIndex(ScreenThemeFlavor), m.Palette, m.Width)
 	s := getStyles(m.Palette)
@@ -212,18 +212,11 @@ func renderThemeFlavor(m Model) string {
 	bodyB.WriteString(dimStyle.Render("  ─────────────────────────────"))
 	bodyB.WriteString("\n\n")
 
-	// Continue button.
-	if m.Panel == 2 {
-		bodyB.WriteString(s.selected.Render("  ▸ Continue"))
-	} else {
-		bodyB.WriteString(s.normal.Render("  Continue"))
-	}
-	bodyB.WriteString("\n")
-
 	footer := RenderHelp([]HelpEntry{
 		{Key: "↑/k", Action: "up"},
 		{Key: "↓/j", Action: "down"},
 		{Key: "Tab", Action: "switch panel"},
+		{Key: "Space", Action: "select"},
 		{Key: "enter", Action: "continue"},
 		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
@@ -277,18 +270,12 @@ func renderToolSelect(m Model) string {
 		bodyB.WriteString("\n")
 	}
 
-	if m.Cursor == len(m.Tools) {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.selectedItem.Render("▸ 🚀  Install Selected"))
-	} else {
-		bodyB.WriteString("\n")
-		bodyB.WriteString(s.unselectedItem.Render("🚀  Install Selected"))
-	}
-
 	footer := RenderHelp([]HelpEntry{
+		{Key: "↑/k", Action: "up"},
+		{Key: "↓/j", Action: "down"},
 		{Key: "Space", Action: "toggle"},
 		{Key: "enter", Action: "continue"},
-		{Key: "j/k", Action: "navigate"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
@@ -312,17 +299,24 @@ func renderBackupConfirm(m Model) string {
 		"❌  Cancel and go back",
 	}
 	for i, opt := range options {
+		marker := "  "
+		if i == m.BackupChoice {
+			marker = s.selected.Render("● ")
+		}
 		if i == m.Cursor {
-			bodyB.WriteString(s.selectedItem.Render("▸ " + opt))
+			bodyB.WriteString(s.selectedItem.Render("▸ " + marker + opt))
 		} else {
-			bodyB.WriteString(s.unselectedItem.Render(opt))
+			bodyB.WriteString(s.unselectedItem.Render(marker + opt))
 		}
 		bodyB.WriteString("\n")
 	}
 
 	footer := RenderHelp([]HelpEntry{
-		{Key: "j/k", Action: "navigate"},
-		{Key: "enter", Action: "select"},
+		{Key: "↑/k", Action: "up"},
+		{Key: "↓/j", Action: "down"},
+		{Key: "Space", Action: "select"},
+		{Key: "enter", Action: "continue"},
+		{Key: "Esc", Action: "back"},
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 

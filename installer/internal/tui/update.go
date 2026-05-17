@@ -57,8 +57,31 @@ func update(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case " ":
-			if m.Screen == ScreenToolSelect && m.Cursor < len(m.Tools) {
-				m.Tools[m.Cursor].Selected = !m.Tools[m.Cursor].Selected
+			switch m.Screen {
+			case ScreenThemeFlavor:
+				themes := defaultThemes()
+				switch m.Panel {
+				case 0: // Themes panel — commit hovered theme; reset flavor to default.
+					if m.Cursor < len(themes) {
+						m.SelectedTheme = themes[m.Cursor].Name
+						m.SelectedFlavor = defaultFlavorForTheme(m.SelectedTheme)
+						m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
+						// Cursor and Panel unchanged.
+					}
+				case 1: // Flavors panel — commit hovered flavor.
+					flavors := defaultFlavorsForTheme(m.SelectedTheme)
+					if m.Cursor < len(flavors) {
+						m.SelectedFlavor = flavors[m.Cursor]
+						m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
+						// Cursor and Panel unchanged.
+					}
+				}
+			case ScreenToolSelect:
+				if m.Cursor < len(m.Tools) {
+					m.Tools[m.Cursor].Selected = !m.Tools[m.Cursor].Selected
+				}
+			case ScreenBackupConfirm:
+				m.BackupChoice = m.Cursor
 			}
 
 		case "enter":
@@ -142,61 +165,29 @@ func handleEnter(m Model) (tea.Model, tea.Cmd) {
 		}
 
 	case ScreenThemeFlavor:
-		themes := defaultThemes()
-		switch m.Panel {
-		case 0: // Themes panel — commit selected theme, move to Flavors.
-			if m.Cursor < len(themes) {
-				m.SelectedTheme = themes[m.Cursor].Name
-				m.SelectedFlavor = defaultFlavorForTheme(m.SelectedTheme)
-				m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
-				m.Panel = 1
-				// Position cursor on the committed flavor.
-				flavors := defaultFlavorsForTheme(m.SelectedTheme)
-				m.Cursor = 0
-				for i, fl := range flavors {
-					if fl == m.SelectedFlavor {
-						m.Cursor = i
-						break
-					}
-				}
-			}
-		case 1: // Flavors panel — commit selected flavor, move to Continue.
-			flavors := defaultFlavorsForTheme(m.SelectedTheme)
-			if m.Cursor < len(flavors) {
-				m.SelectedFlavor = flavors[m.Cursor]
-				m.Palette = paletteFor(m.SelectedTheme, m.SelectedFlavor)
-			}
-			m.Panel = 2
-			m.Cursor = 0
-		case 2: // Continue — advance to ToolSelect, save cursor/panel for Esc restore.
-			m.PrevCursor = m.Cursor
-			m.PrevPanel = m.Panel
-			m.PrevScreen = m.Screen
-			m.Screen = ScreenToolSelect
-			m.Cursor = 0
-			m.Panel = 0
-		}
+		// Enter always advances to ToolSelect regardless of Panel.
+		m.PrevCursor = m.Cursor
+		m.PrevPanel = m.Panel
+		m.PrevScreen = m.Screen
+		m.Screen = ScreenToolSelect
+		m.Cursor = 0
+		m.Panel = 0
 
 	case ScreenToolSelect:
-		// Last option is "Install"
-		if m.Cursor == len(m.Tools) {
-			return startInstall(m)
-		}
-		// Toggle tool
-		if m.Cursor < len(m.Tools) {
-			m.Tools[m.Cursor].Selected = !m.Tools[m.Cursor].Selected
-		}
+		// Enter advances via startInstall on any tool row.
+		return startInstall(m)
 
 	case ScreenBackupConfirm:
-		switch m.Cursor {
+		// Enter dispatches based on committed BackupChoice.
+		switch m.BackupChoice {
 		case 0: // Install with backup
 			return startInstalling(m, true)
 		case 1: // Install without backup
 			return startInstalling(m, false)
-		case 2: // Cancel
+		case 2: // Cancel — return to ToolSelect
 			m.PrevScreen = m.Screen
 			m.Screen = ScreenToolSelect
-			m.Cursor = 0
+			m.Cursor = m.PrevCursor
 		}
 
 	case ScreenSummary:
@@ -216,7 +207,7 @@ func maxCursor(m Model) int {
 		// maxCursor is only consulted for the generic down handler (which is bypassed).
 		return 0
 	case ScreenToolSelect:
-		return len(m.Tools)
+		return len(m.Tools) - 1
 	case ScreenBackupConfirm:
 		return 2
 	case ScreenInstalling:
@@ -238,43 +229,29 @@ func handleThemeFlavorUp(m Model) Model {
 }
 
 // handleThemeFlavorDown moves the cursor down within the focused panel of ScreenThemeFlavor.
-// Reaching past the last item of a panel advances focus to the next panel.
+// Down at the last row stops; it does NOT advance to a different panel. Tab is the only panel switch.
 func handleThemeFlavorDown(m Model) Model {
 	switch m.Panel {
 	case 0: // Themes
 		themes := defaultThemes()
 		if m.Cursor < len(themes)-1 {
 			m.Cursor++
-		} else {
-			// Advance to Flavors panel.
-			m.Panel = 1
-			flavors := defaultFlavorsForTheme(m.SelectedTheme)
-			m.Cursor = 0
-			for i, fl := range flavors {
-				if fl == m.SelectedFlavor {
-					m.Cursor = i
-					break
-				}
-			}
 		}
+		// At last row: no-op (no auto-advance to Flavors panel).
 	case 1: // Flavors
 		flavors := defaultFlavorsForTheme(m.SelectedTheme)
 		if m.Cursor < len(flavors)-1 {
 			m.Cursor++
-		} else {
-			// Advance to Continue.
-			m.Panel = 2
-			m.Cursor = 0
 		}
-	case 2: // Continue — already at bottom; no-op.
+		// At last row: no-op (no Continue panel to advance to).
 	}
 	return m
 }
 
-// handleThemeFlavorTab cycles panel focus: Themes → Flavors → Continue → Themes.
-// Cursor is positioned on the matching selected item when entering a panel.
+// handleThemeFlavorTab cycles panel focus between Themes (0) and Flavors (1).
+// Cursor is restored to the index of the selected item when entering a panel.
 func handleThemeFlavorTab(m Model) Model {
-	m.Panel = (m.Panel + 1) % 3
+	m.Panel = (m.Panel + 1) % 2
 	switch m.Panel {
 	case 0: // Themes
 		themes := defaultThemes()
@@ -294,8 +271,6 @@ func handleThemeFlavorTab(m Model) Model {
 				break
 			}
 		}
-	case 2: // Continue
-		m.Cursor = 0
 	}
 	return m
 }
