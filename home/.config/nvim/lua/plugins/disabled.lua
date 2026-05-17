@@ -3,4 +3,9 @@
 -- Example:
 --   { "folke/flash.nvim", enabled = false },
 --   { "echasnovski/mini.indentscope", enabled = false },
-return {}
+return {
+  {
+    "sphamba/smear-cursor.nvim",
+    enabled = false,
+  },
+}
