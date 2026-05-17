@@ -163,6 +163,12 @@ func paletteFor(theme, flavor string) Palette {
 	return themePalettes[defaultTheme+"/"+defaultFlavor]
 }
 
+// FlavorPalette returns the Palette for the given theme/flavor pair.
+// Falls back to kanagawa/dragon when the combination is unknown.
+func FlavorPalette(theme, flavor string) Palette {
+	return paletteFor(theme, flavor)
+}
+
 func normalizeThemeFlavor(theme, flavor string) (string, string) {
 	if theme == "" {
 		theme = defaultTheme

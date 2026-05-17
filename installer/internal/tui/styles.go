@@ -52,6 +52,32 @@ func getStyles(p Palette) paletteStyles {
 	}
 }
 
+// SubcommandStyles holds palette-aware lipgloss styles for non-interactive subcommand output.
+type SubcommandStyles struct {
+	Title    lipgloss.Style
+	Subtitle lipgloss.Style
+	Normal   lipgloss.Style
+	Dim      lipgloss.Style
+	Done     lipgloss.Style
+	Failed   lipgloss.Style
+}
+
+// SubcommandStylesFor returns palette-aware styles for use by non-interactive subcommands
+// (e.g. dots doctor, dots update). These are a subset of the full paletteStyles,
+// copied into an exported struct so cmd/dots can import them without depending on
+// the unexported paletteStyles type.
+func SubcommandStylesFor(p Palette) SubcommandStyles {
+	s := getStyles(p)
+	return SubcommandStyles{
+		Title:    s.title,
+		Subtitle: s.subtitle,
+		Normal:   s.normal,
+		Dim:      s.dim,
+		Done:     s.done,
+		Failed:   s.failed,
+	}
+}
+
 // CenterHorizontally centers text within width using lipgloss alignment.
 // Returns text unchanged when width is zero.
 func CenterHorizontally(text string, width int) string {

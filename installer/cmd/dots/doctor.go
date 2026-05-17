@@ -88,7 +88,6 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 		"keybind = alt+s=write_screen_file:paste",
 		"# dots:catppuccin-ghostty-theme begin",
 	}))
-	add("Ghostty shader policy", checkSingleFileInDir(fs, filepath.Join(homeDir, ".config", "ghostty", "shaders"), "cursor_smear.glsl"))
 	add("AeroSpace resize bindings", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "aerospace", "aerospace.toml"), []string{
 		"ctrl-alt-minus = 'resize smart -50'",
 		"ctrl-alt-equal = 'resize smart +50'",
@@ -101,21 +100,19 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 }
 
 func printDoctorReport(w io.Writer, results []doctorResult) {
+	p := subcommandPalette()
 	failures := 0
-	fmt.Fprintln(w, "dots doctor")
+	fmt.Fprintln(w, subcommandHeader(p, "doctor"))
 	for _, result := range results {
 		if result.Err != nil {
 			failures++
-			fmt.Fprintf(w, "✗ %s: %v\n", result.Name, result.Err)
+			fmt.Fprintln(w, subcommandFailRow(p, result.Name, result.Err))
 			continue
 		}
-		fmt.Fprintf(w, "✓ %s\n", result.Name)
+		fmt.Fprintln(w, subcommandPassRow(p, result.Name))
 	}
-	if failures > 0 {
-		fmt.Fprintf(w, "\n✗ Doctor found %d issue(s)\n", failures)
-		return
-	}
-	fmt.Fprintln(w, "\n✓ All doctor checks passed")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, subcommandSummary(p, failures == 0, failures))
 }
 
 func doctorHasFailures(results []doctorResult) bool {
@@ -202,31 +199,6 @@ func checkMarkersOnce(fs system.FileSystem, path string, markers []string) error
 		if count := strings.Count(content, marker); count != 1 {
 			return fmt.Errorf("marker %q count=%d, want 1", marker, count)
 		}
-	}
-	return nil
-}
-
-func checkSingleFileInDir(fs system.FileSystem, dir, filename string) error {
-	entries, err := fs.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-	files := 0
-	found := false
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		files++
-		if entry.Name() == filename {
-			found = true
-		}
-	}
-	if !found {
-		return fmt.Errorf("%s not found in %s", filename, dir)
-	}
-	if files != 1 {
-		return fmt.Errorf("shader file count=%d, want 1", files)
 	}
 	return nil
 }

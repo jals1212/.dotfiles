@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -72,15 +73,33 @@ func runUpdate(args []string) {
 		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Updating dotfiles...")
-	fmt.Printf("Dotfiles: %s\n", info.DotfilesDir)
 
-	if err := deployAndSaveManifest(info, envOrDefault("DOTS_THEME", "kanagawa"), envOrDefault("DOTS_FLAVOR", "dragon")); err != nil {
+	if err := runUpdateReport(os.Stdout, info); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+}
 
-	fmt.Println("\n✓ Configs updated")
+// runUpdateReport performs the update and writes styled progress to w.
+// Extracted for testability.
+func runUpdateReport(w io.Writer, info *system.SystemInfo) error {
+	p := subcommandPalette()
+	theme := envOrDefault("DOTS_THEME", "kanagawa")
+	flavor := envOrDefault("DOTS_FLAVOR", "dragon")
+
+	fmt.Fprintln(w, subcommandHeader(p, "update"))
+	fmt.Fprintln(w, subcommandDimRow(p, "Dotfiles: "+info.DotfilesDir))
+	fmt.Fprintln(w, "")
+
+	fmt.Fprintln(w, subcommandStepRow(p, "Deploying configs", false))
+	if err := deployAndSaveManifest(info, theme, flavor); err != nil {
+		return err
+	}
+	fmt.Fprintln(w, subcommandStepRow(p, "Deploying configs", true))
+	fmt.Fprintln(w, subcommandStepRow(p, "Writing manifest", true))
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, subcommandUpdateSummary(p))
+	return nil
 }
 
 func deployAndSaveManifest(info *system.SystemInfo, theme, flavor string) error {

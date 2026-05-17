@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,6 +79,80 @@ func TestValidateNoArgCommandSupportsDoctorHelp(t *testing.T) {
 	}
 	if !help {
 		t.Fatal("validateNoArgCommand() help = false, want true")
+	}
+}
+
+func TestPrintDoctorReportStyledPassOutput(t *testing.T) {
+	results := []doctorResult{
+		{Name: "shell zshrc", Err: nil},
+		{Name: "tmux config", Err: nil},
+	}
+	var out bytes.Buffer
+	printDoctorReport(&out, results)
+	got := out.String()
+
+	if !strings.Contains(got, "dots doctor") {
+		t.Errorf("styled header missing 'dots doctor':\n%s", got)
+	}
+	if !strings.Contains(got, "✓") {
+		t.Errorf("pass rows missing '✓' glyph:\n%s", got)
+	}
+	if !strings.Contains(got, "All doctor checks passed") {
+		t.Errorf("summary missing 'All doctor checks passed':\n%s", got)
+	}
+	if strings.Contains(got, "shader file count") {
+		t.Errorf("unexpected 'shader file count' in output:\n%s", got)
+	}
+}
+
+func TestPrintDoctorReportStyledFailOutput(t *testing.T) {
+	results := []doctorResult{
+		{Name: "shell zshrc", Err: nil},
+		{Name: "tmux config", Err: fmt.Errorf("file not found")},
+	}
+	var out bytes.Buffer
+	printDoctorReport(&out, results)
+	got := out.String()
+
+	if !strings.Contains(got, "dots doctor") {
+		t.Errorf("styled header missing 'dots doctor':\n%s", got)
+	}
+	if !strings.Contains(got, "✗") {
+		t.Errorf("fail row missing '✗' glyph:\n%s", got)
+	}
+	if !strings.Contains(got, "Doctor found") {
+		t.Errorf("summary missing 'Doctor found':\n%s", got)
+	}
+}
+
+func TestDoctorChecksNoShaderPolicyRow(t *testing.T) {
+	homeDir := t.TempDir()
+	dotfilesDir := t.TempDir()
+	writeDoctorFixture(t, homeDir)
+	// Add extra shader files; the old policy check would fail here.
+	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "shaders", "extra_shader.glsl"), "void main(){}")
+
+	results := runDoctorChecks(system.OSFileSystem{}, homeDir, dotfilesDir)
+	for _, r := range results {
+		if r.Name == "Ghostty shader policy" {
+			t.Errorf("unexpected 'Ghostty shader policy' check still present")
+		}
+		if r.Err != nil && strings.Contains(r.Err.Error(), "shader file count") {
+			t.Errorf("unexpected 'shader file count' error: %v", r.Err)
+		}
+	}
+	// cursor smear shader check should still pass
+	found := false
+	for _, r := range results {
+		if r.Name == "Ghostty cursor smear shader" {
+			found = true
+			if r.Err != nil {
+				t.Errorf("Ghostty cursor smear shader check failed: %v", r.Err)
+			}
+		}
+	}
+	if !found {
+		t.Error("Ghostty cursor smear shader check not found in results")
 	}
 }
 
