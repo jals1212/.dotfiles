@@ -1,11 +1,19 @@
 package tui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 type paletteStyles struct {
 	title, subtitle, selected, cursor, normal, dim, done, running, failed, pending lipgloss.Style
+	box                                                                             lipgloss.Style
+	stepActive, stepDone, stepPending                                               lipgloss.Style
+	help, key                                                                       lipgloss.Style
+	success, error, warning, info                                                   lipgloss.Style
 }
 
 func getStyles(p Palette) paletteStyles {
@@ -20,5 +28,54 @@ func getStyles(p Palette) paletteStyles {
 		running:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Running)),
 		failed:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Failed)),
 		pending:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Pending)),
+
+		box: lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(p.Dim)).
+			Padding(1, 2),
+
+		stepDone:    lipgloss.NewStyle().Foreground(lipgloss.Color(p.Done)),
+		stepActive:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Selected)).Bold(true),
+		stepPending: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Dim)),
+
+		help: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Dim)).Italic(true).MarginTop(1),
+		key:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Selected)).Bold(true),
+
+		success: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Done)),
+		error:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Failed)),
+		warning: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Running)),
+		info:    lipgloss.NewStyle().Foreground(lipgloss.Color(p.Subtitle)),
 	}
+}
+
+// CenterHorizontally centers text within width using lipgloss alignment.
+// Returns text unchanged when width is zero.
+func CenterHorizontally(text string, width int) string {
+	if width == 0 {
+		return text
+	}
+	return lipgloss.NewStyle().Width(width).Align(lipgloss.Center).Render(text)
+}
+
+// CenterVertically adds top padding to vertically center text within height.
+// Returns text unchanged when height is zero.
+func CenterVertically(text string, height int) string {
+	if height == 0 {
+		return text
+	}
+	lines := strings.Count(text, "\n") + 1
+	padTop := (height - lines) / 2
+	if padTop <= 0 {
+		return text
+	}
+	return strings.Repeat("\n", padTop) + text
+}
+
+// CenterBoth places text at the center of a width×height region using lipgloss.Place.
+// Returns text unchanged when width or height is zero.
+func CenterBoth(text string, width, height int) string {
+	if width == 0 || height == 0 {
+		return text
+	}
+	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, text)
 }
