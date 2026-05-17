@@ -1,4 +1,4 @@
-# dots
+# 󰚌 dots
 
 Personal dotfiles managed by a Go/Bubble Tea installer.
 
@@ -39,7 +39,7 @@ make docker-test   # build the Docker E2E image and run the smoke suite
 | Prompt | Oh My Posh JSON config | `home/.config/oh-my-posh/config.json` |
 | Terminal | Ghostty, IosevkaTerm NF, cursor smear shader | `home/.config/ghostty/` |
 | Multiplexer | tmux, TPM, tmux-ukiyo, which-key, resurrect/continuum | `home/.config/tmux/tmux.conf` |
-| Editor | Neovim + LazyVim + repo overrides | `home/.config/nvim/` |
+| Editor | Neovim + LazyVim + repo overrides (one plugin per file under `lua/plugins/`; overrides in `overrides.lua`, disables in `disabled.lua`) | `home/.config/nvim/` |
 | AI editor workflow | OpenCode Neovim integration | `home/.config/nvim/lua/plugins/opencode.lua` |
 | Window manager | AeroSpace with `ctrl-alt` bindings | `home/.config/aerospace/aerospace.toml` |
 | CLI UX | atuin, zoxide, eza, bat, fzf, lazygit, bottom | `home/.config/`, `assets/themes/` |

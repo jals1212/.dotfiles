@@ -37,12 +37,13 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 | `-` | normal | Open Oil parent directory |
 | `<leader>E` | normal | Open Oil floating window |
 | `<leader>-` | normal | Open Oil in current file directory |
-| `<leader>ff` | normal | Telescope find files |
-| `<leader>fg` | normal | Telescope live grep |
-| `<leader>fb` | normal | Telescope buffers |
-| `<leader>fh` | normal | Telescope help tags |
-| `<leader>fr` | normal | Telescope recent files |
+| `<leader>ff` | normal | FzfLua find files |
+| `<leader>fg` | normal | FzfLua live grep |
+| `<leader>fb` | normal | FzfLua buffers |
+| `<leader>fh` | normal | FzfLua help tags |
+| `<leader>fr` | normal | FzfLua recent files |
 | `<leader>fs` | normal/visual | Rip substitute |
+| `<leader>fm` | normal | Open mini.files at current buffer/cwd |
 | `<leader>sg` | visual | Grep selected text |
 | `<leader>sG` | visual | Grep selected text from project root |
 | `<leader>gg` | normal | LazyGit |
@@ -52,10 +53,14 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 | `<leader>bd` | normal | Delete buffer |
 | `<leader>bq` | normal | Delete other buffers |
 | `<leader>md` | normal | Delete all marks |
+| `<leader>ha` | normal | Add current file to Harpoon |
+| `<leader>hh` | normal | Open Harpoon quick menu |
+| `<leader>h1..h4` | normal | Jump to Harpoon entry 1..4 |
+| `<leader>uH` | normal | Convert hex colors on the current line to `hsl(...)` |
 
 ### Editor utilities
 
-Source: `home/.config/nvim/lua/plugins/editor-tools.lua`.
+Source: individual plugin files under `home/.config/nvim/lua/plugins/` (goto-preview, symbols-outline, etc.).
 
 | Key | Mode | Action |
 | --- | --- | --- |
@@ -109,7 +114,7 @@ Source: `home/.config/nvim/lua/plugins/nvim-dap.lua`.
 
 ### UI utilities
 
-Source: `home/.config/nvim/lua/plugins/ui-tools.lua` plus individual plugin files.
+Source: individual plugin files under `home/.config/nvim/lua/plugins/` (which-key, docs-view, zen-mode, etc.).
 
 | Key | Action |
 | --- | --- |
@@ -135,10 +140,62 @@ Prefix is `Ctrl-a`.
 | `Ctrl-a` then `v` or `|` | Horizontal split in current path |
 | `Ctrl-a` then `d` or `-` | Vertical split in current path |
 | `Ctrl-a` then `c` | New window in current path |
-| `Alt-g` | Toggle scratch session popup |
+| `Alt-g` | Toggle scratch session popup (80% × 80%) |
 | `Ctrl-a` then `K` | Kill all other sessions after confirm |
 | `Ctrl-a` then `T` | Open tmux-ukiyo theme menu |
 | `Ctrl-a` then `I` | Install TPM plugins |
+
+### Pane resize
+
+| Key | Action |
+| --- | --- |
+| `Ctrl-a` then `H` | Resize pane left 5 cells (repeatable) |
+| `Ctrl-a` then `J` | Resize pane down 5 cells (repeatable) |
+| `Ctrl-a` then `K` | Resize pane up 5 cells (repeatable) |
+| `Ctrl-a` then `L` | Resize pane right 5 cells (repeatable) |
+
+### Pane sync
+
+| Key | Action |
+| --- | --- |
+| `Ctrl-a` then `e` | Toggle synchronize-panes (status bar shows SYNC when on) |
+
+### Layouts
+
+| Key | Action |
+| --- | --- |
+| `Ctrl-a` then `M-1` | even-horizontal layout |
+| `Ctrl-a` then `M-2` | even-vertical layout |
+| `Ctrl-a` then `M-3` | main-horizontal layout |
+| `Ctrl-a` then `M-4` | main-vertical layout |
+| `Ctrl-a` then `M-5` | tiled layout |
+
+### Navigation shortcuts
+
+| Key | Action |
+| --- | --- |
+| `Ctrl-a` then `Tab` | Jump to last active window |
+| `Ctrl-a` then `Backspace` | Jump to last active session |
+
+### fzf pickers
+
+Requires `fzf` on PATH (already in dotfiles stack).
+
+| Key | Action |
+| --- | --- |
+| `Ctrl-a` then `f` | fzf session picker (80% × 70% popup) |
+| `Ctrl-a` then `w` | fzf window picker across all sessions (80% × 70% popup) |
+
+### Status indicators
+
+| Indicator | Condition |
+| --- | --- |
+| `·PREFIX·` (yellow) | Visible in status-right while prefix key is active |
+| `·SYNC·` (red) | Visible in status-right while synchronize-panes is on |
+
+### Breaking changes
+
+- `prefix + L` no longer maps to last-window. Use `prefix + Tab` instead. `prefix + L` now resizes the current pane right by 5 cells.
 
 Copy mode uses vi keys: `v` begins selection, `Ctrl-v` toggles rectangle selection, `y` copies and exits.
 

@@ -1,5 +1,8 @@
 package tui
 
+// defaultTools returns the tool catalog used by both the interactive TUI and
+// the non-interactive install path. Each entry holds display metadata only;
+// UI logic lives in the screen renderers, install logic in install_steps.go.
 func defaultTools() []Tool {
 	return []Tool{
 		{Name: "ghostty", Description: "Ghostty terminal (selected theme + Iosevka)", Selected: true, Category: "terminal"},

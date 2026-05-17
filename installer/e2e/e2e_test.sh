@@ -209,10 +209,10 @@ test_update_idempotency() {
         log_fail "dots update failed"
     fi
 
-    assert_marker_once "$HOME/.zshrc" "# CATPPUCCIN_BAT_START"
-    assert_marker_once "$HOME/.zshrc" "# CATPPUCCIN_EZA_START"
-    assert_marker_once "$HOME/.zshrc" "# CATPPUCCIN_FZF_START"
-    assert_marker_once "$HOME/.config/ghostty/config" "# CATPPUCCIN_GHOSTTY_THEME_START"
+    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-bat begin"
+    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-eza begin"
+    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-fzf begin"
+    assert_marker_once "$HOME/.config/ghostty/config" "# dots:catppuccin-ghostty-theme begin"
 
     local bat_cache_count
     bat_cache_count=$(cat "$HOME/bat-cache-count")

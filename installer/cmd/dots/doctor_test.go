@@ -56,10 +56,10 @@ func TestRunDoctorChecksReportsDuplicatedMarkers(t *testing.T) {
 	writeTestFile(t, filepath.Join(homeDir, ".zshrc"), strings.Join([]string{
 		`eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"`,
 		`export BAT_THEME="Kanagawa Dragon"`,
-		"# CATPPUCCIN_BAT_START",
-		"# CATPPUCCIN_BAT_START",
-		"# CATPPUCCIN_EZA_START",
-		"# CATPPUCCIN_FZF_START",
+		"# dots:catppuccin-bat begin",
+		"# dots:catppuccin-bat begin",
+		"# dots:catppuccin-eza begin",
+		"# dots:catppuccin-fzf begin",
 	}, "\n"))
 
 	results := runDoctorChecks(system.OSFileSystem{}, homeDir, dotfilesDir)
@@ -86,9 +86,9 @@ func writeDoctorFixture(t *testing.T, homeDir string) {
 	writeTestFile(t, filepath.Join(homeDir, ".zshrc"), strings.Join([]string{
 		`eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"`,
 		`export BAT_THEME="Kanagawa Dragon"`,
-		"# CATPPUCCIN_BAT_START",
-		"# CATPPUCCIN_EZA_START",
-		"# CATPPUCCIN_FZF_START",
+		"# dots:catppuccin-bat begin",
+		"# dots:catppuccin-eza begin",
+		"# dots:catppuccin-fzf begin",
 	}, "\n"))
 	writeTestFile(t, filepath.Join(homeDir, ".zprofile"), "source ~/.zshrc")
 	writeTestFile(t, filepath.Join(homeDir, ".zalias"), "alias ll='eza -la'")
@@ -99,7 +99,7 @@ func writeDoctorFixture(t *testing.T, homeDir string) {
 	writeTestFile(t, filepath.Join(homeDir, ".config", "tmux", "tmux.conf"), "set -g prefix C-a")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "config"), strings.Join([]string{
 		"keybind = alt+s=write_screen_file:paste",
-		"# CATPPUCCIN_GHOSTTY_THEME_START",
+		"# dots:catppuccin-ghostty-theme begin",
 	}, "\n"))
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "shaders", "cursor_smear.glsl"), "void mainImage(){}")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "bat", "themes", "Kanagawa-dragon.tmTheme"), "theme")

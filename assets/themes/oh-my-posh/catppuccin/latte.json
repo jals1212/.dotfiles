@@ -84,7 +84,7 @@
           "foreground_templates": [
             "{{ if gt .Code 0 }}#d20f39{{ else }}#40a02b{{ end }}"
           ],
-          "template": "◉ "
+          "template": "󰚌 "
         }
       ]
     }

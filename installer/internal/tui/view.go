@@ -7,6 +7,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// View implements the tea.Model interface by routing to the per-screen renderer.
+func (m Model) View() string {
+	return renderView(m)
+}
+
 func renderView(m Model) string {
 	switch m.Screen {
 	case ScreenWelcome:
@@ -351,5 +356,22 @@ func renderError(m Model) string {
 	b.WriteString(s.normal.Render(m.ErrorMsg))
 	b.WriteString("\n\n")
 	b.WriteString(s.dim.Render("Press q to quit"))
+	return b.String()
+}
+
+// renderKeymapScreen renders a generic keymap/alias help screen for a given tool.
+// It is called by the per-tool keymaps_<tool>.go screen renderers.
+func renderKeymapScreen(m Model, title string, entries []KeymapEntry) string {
+	s := getStyles(m.Palette)
+	b := strings.Builder{}
+	b.WriteString(s.title.Render(title))
+	b.WriteString("\n\n")
+	for _, e := range entries {
+		b.WriteString(s.selected.Render(fmt.Sprintf("  %-30s", e.Key)))
+		b.WriteString(s.dim.Render(e.Description))
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+	b.WriteString(s.dim.Render("esc back • q quit"))
 	return b.String()
 }

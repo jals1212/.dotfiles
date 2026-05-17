@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jals/dotfiles/internal/system"
 	"github.com/jals/dotfiles/internal/tui"
 )
@@ -41,21 +40,8 @@ func main() {
 	}
 }
 
-func newTUIProgram(model tui.Model) *tea.Program {
-	return tea.NewProgram(model, tea.WithAltScreen())
-}
-
 func runTUI() {
-	model, err := tui.NewModel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	p := newTUIProgram(model)
-	if _, err := p.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	tui.RunInteractive()
 }
 
 func runInstall(args []string) {
@@ -64,81 +50,11 @@ func runInstall(args []string) {
 	fs.Parse(args)
 
 	if *yes {
-		runNonInteractiveInstall()
+		tui.RunNonInteractive()
 		return
 	}
 
-	// Interactive TUI install
-	model, err := tui.NewModel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	p := newTUIProgram(model)
-	if _, err := p.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-func runNonInteractiveInstall() {
-	info, err := system.Detect(system.OSFileSystem{})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error detecting system: %v\n", err)
-		os.Exit(1)
-	}
-
-	flavor := os.Getenv("DOTS_FLAVOR")
-	theme := os.Getenv("DOTS_THEME")
-	if theme == "" {
-		theme = "kanagawa"
-	}
-	if flavor == "" {
-		flavor = "dragon"
-	}
-
-	fmt.Println("Running non-interactive install...")
-	fmt.Printf("OS: %s (%s)\n", info.OSName, info.Arch)
-	fmt.Printf("Theme: %s/%s\n", theme, flavor)
-
-	// Build model for step execution
-	model := &tui.Model{
-		SystemInfo:       info,
-		IsNonInteractive: true,
-		SelectedTheme:    theme,
-		SelectedFlavor:   flavor,
-		SelectedAccent:   "mauve",
-		Tools: []tui.Tool{
-			{Name: "ghostty", Selected: true},
-			{Name: "tmux", Selected: true},
-			{Name: "nvim", Selected: true},
-			{Name: "oh-my-posh", Selected: true},
-			{Name: "atuin", Selected: true},
-			{Name: "zoxide", Selected: true},
-			{Name: "zsh", Selected: true},
-		},
-	}
-
-	// Detect existing configs
-	model.ExistingConfigs = system.DetectExistingConfigs(system.OSFileSystem{}, info.DotfilesDir, info.HomeDir)
-
-	steps := []tui.InstallStep{
-		{ID: "backup", Name: "Backup existing configs"},
-		{ID: "packages", Name: "Install packages"},
-		{ID: "deploy", Name: "Deploy configs"},
-		{ID: "manifest", Name: "Save manifest"},
-	}
-	model.Steps = steps
-
-	for _, step := range steps {
-		if err := tui.ExecuteStep(step.ID, model); err != nil {
-			fmt.Fprintf(os.Stderr, "\n✗ Step '%s' failed: %v\n", step.Name, err)
-			os.Exit(1)
-		}
-	}
-
-	fmt.Println("\n✓ Installation complete!")
-	fmt.Println("Restart your shell: exec zsh")
+	tui.RunInteractive()
 }
 
 func runUpdate(args []string) {

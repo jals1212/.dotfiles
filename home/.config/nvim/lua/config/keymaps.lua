@@ -34,12 +34,12 @@ map("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Delete buffer" })
 -- File explorer
 map("n", "<leader>e", "<cmd>Neotree toggle<cr>", { desc = "Toggle file explorer" })
 
--- Search
-map("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { desc = "Find files" })
-map("n", "<leader>fg", "<cmd>Telescope live_grep<cr>", { desc = "Grep" })
-map("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { desc = "Buffers" })
-map("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { desc = "Help" })
-map("n", "<leader>fr", "<cmd>Telescope oldfiles<cr>", { desc = "Recent files" })
+-- Search (fzf-lua)
+map("n", "<leader>ff", "<cmd>FzfLua files<cr>", { desc = "Find files" })
+map("n", "<leader>fg", "<cmd>FzfLua live_grep<cr>", { desc = "Grep" })
+map("n", "<leader>fb", "<cmd>FzfLua buffers<cr>", { desc = "Buffers" })
+map("n", "<leader>fh", "<cmd>FzfLua help_tags<cr>", { desc = "Help" })
+map("n", "<leader>fr", "<cmd>FzfLua oldfiles<cr>", { desc = "Recent files" })
 
 -- Git
 map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
@@ -157,6 +157,52 @@ vim.keymap.set("i", "<C-b>", "<C-o>de")
 
 -- Escape from all modes
 vim.keymap.set({ "i", "n", "v" }, "<C-c>", [[<C-\><C-n>]])
+
+-- Harpoon quick navigation
+local function with_harpoon(callback)
+  return function()
+    local ok, harpoon = pcall(require, "harpoon")
+    if not ok then
+      vim.notify("Harpoon is not available", vim.log.levels.WARN)
+      return
+    end
+    callback(harpoon)
+  end
+end
+
+map("n", "<leader>ha", with_harpoon(function(harpoon)
+  harpoon:list():add()
+end), { desc = "Harpoon add file" })
+
+map("n", "<leader>hh", with_harpoon(function(harpoon)
+  harpoon.ui:toggle_quick_menu(harpoon:list())
+end), { desc = "Harpoon quick menu" })
+
+for i = 1, 4 do
+  map("n", "<leader>h" .. i, with_harpoon(function(harpoon)
+    harpoon:list():select(i)
+  end), { desc = "Harpoon file " .. i })
+end
+
+-- Fast file editing via mini.files; Oil and Neo-tree remain available.
+map("n", "<leader>fm", function()
+  local ok, mini_files = pcall(require, "mini.files")
+  if not ok then
+    vim.notify("mini.files is not available", vim.log.levels.WARN)
+    return
+  end
+
+  local path = vim.api.nvim_buf_get_name(0)
+  if path == "" then
+    path = vim.uv.cwd()
+  end
+  mini_files.open(path, false)
+end, { desc = "Open mini.files" })
+
+-- Convert hex colors on the current line to hsl(...) for theme editing.
+map("n", "<leader>uH", function()
+  require("config.color_utils").replace_hex_with_hsl_on_line()
+end, { desc = "Convert hex to HSL on line" })
 
 -- Disable <A-j>/<A-k> in all modes
 vim.api.nvim_set_keymap("i", "<A-j>", "<Nop>", { noremap = true, silent = true })

@@ -67,9 +67,9 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 	}))
 	add("bat theme file", checkAnyFileWithSuffix(fs, filepath.Join(homeDir, ".config", "bat", "themes"), ".tmTheme"))
 	add("generated shell markers", checkMarkersOnce(fs, filepath.Join(homeDir, ".zshrc"), []string{
-		"# CATPPUCCIN_BAT_START",
-		"# CATPPUCCIN_EZA_START",
-		"# CATPPUCCIN_FZF_START",
+		"# dots:catppuccin-bat begin",
+		"# dots:catppuccin-eza begin",
+		"# dots:catppuccin-fzf begin",
 	}))
 	add("Neovim config smoke", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "nvim", "init.lua"), []string{
 		`require("config.lazy")`,
@@ -86,7 +86,7 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 	}))
 	add("Ghostty config smoke", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "ghostty", "config"), []string{
 		"keybind = alt+s=write_screen_file:paste",
-		"# CATPPUCCIN_GHOSTTY_THEME_START",
+		"# dots:catppuccin-ghostty-theme begin",
 	}))
 	add("Ghostty shader policy", checkSingleFileInDir(fs, filepath.Join(homeDir, ".config", "ghostty", "shaders"), "cursor_smear.glsl"))
 	add("AeroSpace resize bindings", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "aerospace", "aerospace.toml"), []string{
@@ -94,7 +94,7 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 		"ctrl-alt-equal = 'resize smart +50'",
 	}))
 	add("Ghostty generated marker", checkMarkersOnce(fs, filepath.Join(homeDir, ".config", "ghostty", "config"), []string{
-		"# CATPPUCCIN_GHOSTTY_THEME_START",
+		"# dots:catppuccin-ghostty-theme begin",
 	}))
 
 	return checks

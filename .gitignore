@@ -8,15 +8,17 @@ tmp/
 *.log
 
 # Orchestra
+.claude/
 .codex
 .grit/
+.mcp.json
 .opencode/
 .orchestra/
-.mcp.json
 AGENTS.md
 BATON.md
+CLAUDE.md
 opencode.json
 openspec/
 orchestra
-STACCATO.md
 skills/
+STACCATO.md

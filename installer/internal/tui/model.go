@@ -91,11 +91,3 @@ func NewModel() (Model, error) {
 func (m Model) Init() tea.Cmd {
 	return tea.EnterAltScreen
 }
-
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return update(m, msg)
-}
-
-func (m Model) View() string {
-	return renderView(m)
-}
