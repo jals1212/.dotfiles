@@ -73,4 +73,4 @@ function start_if_needed() {
         exec tmux
     fi
 }
-# start_if_needed
+start_if_needed

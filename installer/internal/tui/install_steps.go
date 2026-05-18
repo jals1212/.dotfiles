@@ -260,7 +260,7 @@ func stepDeployConfigs(m *Model) error {
 		}
 	}
 	batEnv := fmt.Sprintf(`export BAT_THEME="%s"`, batThemeName(theme, flavor))
-	zshrcPath := filepath.Join(homeDir, ".zshrc")
+	zshrcPath := filepath.Join(homeDir, ".config", "zsh", ".zshrc")
 	if err := system.ApplyBlock(zshrcPath, "bat-theme", batEnv); err != nil {
 		report.recordWarning("BAT_THEME setup", err)
 		SendLog(m, stepID, fmt.Sprintf("⚠ BAT_THEME setup failed: %v", err))

@@ -38,7 +38,8 @@ func DetectShell() Shell {
 func RCFile(sh Shell, homeDir string) string {
 	switch sh {
 	case ShellZsh:
-		return filepath.Join(homeDir, ".zshrc")
+		// This repo ships ZDOTDIR=$HOME/.config/zsh; .zshrc lives there.
+		return filepath.Join(homeDir, ".config", "zsh", ".zshrc")
 	case ShellBash:
 		// macOS uses .bash_profile; Linux uses .bashrc.
 		if isMacOS() {

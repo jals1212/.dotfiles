@@ -118,8 +118,8 @@ test_non_interactive_install() {
     log_test "Non-interactive install deploys configs"
 
     setup_fake_bat
-    mkdir -p "$HOME/.config/nvim"
-    printf '%s\n' "original zsh before dots install" > "$HOME/.zshrc"
+    mkdir -p "$HOME/.config/nvim" "$HOME/.config/zsh"
+    printf '%s\n' "original zsh before dots install" > "$HOME/.config/zsh/.zshrc"
     printf '%s\n' "original nvim before dots install" > "$HOME/.config/nvim/init.lua"
 
     if INSTALL_OUTPUT="$(DOTS_VERBOSE=1 DOTS_THEME=kanagawa DOTS_FLAVOR=dragon dots install --yes 2>&1)"; then
@@ -136,9 +136,10 @@ test_non_interactive_install() {
 test_deployed_files() {
     log_test "Required config files are deployed"
 
-    assert_file "$HOME/.zshrc"
-    assert_file "$HOME/.zprofile"
-    assert_file "$HOME/.zalias"
+    assert_file "$HOME/.zshenv"
+    assert_file "$HOME/.config/zsh/.zshrc"
+    assert_file "$HOME/.config/zsh/.zprofile"
+    assert_file "$HOME/.config/zsh/aliases.zsh"
     assert_dir "$HOME/.config"
     assert_file "$HOME/.config/oh-my-posh/config.json"
     assert_file "$HOME/.config/nvim/init.lua"
@@ -153,12 +154,12 @@ test_deployed_files() {
 test_prompt_and_theme_outputs() {
     log_test "Prompt and theme outputs are valid"
 
-    assert_contains "$HOME/.zshrc" "oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json"
+    assert_contains "$HOME/.config/zsh/.zshrc" "oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json"
     python3 -m json.tool "$HOME/.config/oh-my-posh/config.json" >/dev/null
     log_pass "Oh My Posh config is valid JSON"
 
     assert_file "$HOME/.config/bat/themes/Kanagawa-dragon.tmTheme"
-    assert_contains "$HOME/.zshrc" 'export BAT_THEME="Kanagawa Dragon"'
+    assert_contains "$HOME/.config/zsh/.zshrc" 'export BAT_THEME="Kanagawa Dragon"'
 }
 
 test_nvim_config_smoke() {
@@ -209,7 +210,7 @@ test_update_idempotency() {
         log_fail "dots update failed"
     fi
 
-    assert_marker_once "$HOME/.zshrc" "# dots:bat-theme begin"
+    assert_marker_once "$HOME/.config/zsh/.zshrc" "# dots:bat-theme begin"
     [ -f "$HOME/.config/ghostty/themes/dots" ] || log_fail "ghostty themes/dots file missing"
     [ -f "$HOME/.config/fzf/theme.sh" ] || log_fail "fzf theme.sh file missing"
     [ -f "$HOME/.config/eza/colors.sh" ] || log_fail "eza colors.sh file missing"
@@ -270,7 +271,7 @@ test_restore_latest_backup() {
         log_fail "dots restore --latest failed"
     fi
 
-    assert_contains "$HOME/.zshrc" "original zsh before dots install"
+    assert_contains "$HOME/.config/zsh/.zshrc" "original zsh before dots install"
     assert_contains "$HOME/.config/nvim/init.lua" "original nvim before dots install"
 }
 

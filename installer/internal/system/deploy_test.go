@@ -460,18 +460,18 @@ func TestDetectExistingConfigsWithMemFileSystem(t *testing.T) {
 	if err := fs.MkdirAll(filepath.Join(dotfilesDir, "home", ".config", "nvim"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshrc"), []byte("managed zsh"), 0644); err != nil {
+	if err := fs.WriteFile(filepath.Join(dotfilesDir, "home", ".zshenv"), []byte("managed zshenv"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if err := fs.MkdirAll(filepath.Join(home, ".config", "nvim"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("user zsh"), 0644); err != nil {
+	if err := fs.WriteFile(filepath.Join(home, ".zshenv"), []byte("user zshenv"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
 	got := DetectExistingConfigs(fs, dotfilesDir, home)
-	for _, want := range []string{".config/nvim", ".zshrc"} {
+	for _, want := range []string{".config/nvim", ".zshenv"} {
 		if !slices.Contains(got, want) {
 			t.Fatalf("DetectExistingConfigs() = %#v, want %q", got, want)
 		}
@@ -489,10 +489,10 @@ func TestUninstallWithMemFileSystem(t *testing.T) {
 	if err := fs.WriteFile(filepath.Join(home, ".config", "nvim", "init.lua"), []byte("nvim"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := fs.WriteFile(filepath.Join(home, ".zshrc"), []byte("zsh"), 0644); err != nil {
+	if err := fs.WriteFile(filepath.Join(home, ".zshenv"), []byte("zshenv"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := fs.WriteFile(filepath.Join(home, ".dotfiles_backups", "keep", ".zshrc"), []byte("backup"), 0644); err != nil {
+	if err := fs.WriteFile(filepath.Join(home, ".dotfiles_backups", "keep", ".zshenv"), []byte("backup"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if err := fs.WriteFile(filepath.Join(dotfilesDir, "manifest.json"), []byte("{}"), 0644); err != nil {
@@ -504,14 +504,14 @@ func TestUninstallWithMemFileSystem(t *testing.T) {
 	}
 	for _, removed := range []string{
 		filepath.Join(home, ".config", "nvim", "init.lua"),
-		filepath.Join(home, ".zshrc"),
+		filepath.Join(home, ".zshenv"),
 		filepath.Join(dotfilesDir, "manifest.json"),
 	} {
 		if _, err := fs.Stat(removed); err == nil {
 			t.Fatalf("expected %s to be removed", removed)
 		}
 	}
-	if _, err := fs.Stat(filepath.Join(home, ".dotfiles_backups", "keep", ".zshrc")); err != nil {
+	if _, err := fs.Stat(filepath.Join(home, ".dotfiles_backups", "keep", ".zshenv")); err != nil {
 		t.Fatalf("backup should remain: %v", err)
 	}
 }

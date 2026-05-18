@@ -14,34 +14,36 @@ func TestBuildDeployTargetsIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
 	homeDir := t.TempDir()
 
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", "nvim", "init.lua"), "vim.opt.number = true")
+	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", "zsh", ".zshrc"), "# zshrc")
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", ".DS_Store"), "metadata")
-	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshrc"), "source ~/.zalias")
+	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshenv"), `export ZDOTDIR="$HOME/.config/zsh"`)
 
 	targets, err := buildDeployTargets(dotfilesDir, homeDir)
 	if err != nil {
 		t.Fatalf("buildDeployTargets() error = %v", err)
 	}
 
-	wantNames := []string{".config/nvim", ".zshrc"}
+	wantNames := []string{".config/nvim", ".config/zsh", ".zshenv"}
 	if got := targetNames(targets); !equalStrings(got, wantNames) {
 		t.Fatalf("deploy target names = %#v, want %#v", got, wantNames)
 	}
 
 	assertDeployTarget(t, targets[0], ".config/nvim", filepath.Join(dotfilesDir, "home", ".config", "nvim"), filepath.Join(homeDir, ".config", "nvim"), true)
-	assertDeployTarget(t, targets[1], ".zshrc", filepath.Join(dotfilesDir, "home", ".zshrc"), filepath.Join(homeDir, ".zshrc"), false)
+	assertDeployTarget(t, targets[1], ".config/zsh", filepath.Join(dotfilesDir, "home", ".config", "zsh"), filepath.Join(homeDir, ".config", "zsh"), true)
+	assertDeployTarget(t, targets[2], ".zshenv", filepath.Join(dotfilesDir, "home", ".zshenv"), filepath.Join(homeDir, ".zshenv"), false)
 }
 
 func TestBuildDeployTargetsHandlesMissingConfigDirectory(t *testing.T) {
 	dotfilesDir := t.TempDir()
 	homeDir := t.TempDir()
-	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zprofile"), "export ZDOTDIR=$HOME")
+	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshenv"), `export ZDOTDIR="$HOME/.config/zsh"`)
 
 	targets, err := buildDeployTargets(dotfilesDir, homeDir)
 	if err != nil {
 		t.Fatalf("buildDeployTargets() error = %v", err)
 	}
 
-	wantNames := []string{".zprofile"}
+	wantNames := []string{".zshenv"}
 	if got := targetNames(targets); !equalStrings(got, wantNames) {
 		t.Fatalf("deploy target names = %#v, want %#v", got, wantNames)
 	}
@@ -52,7 +54,7 @@ func TestStepDeployConfigsLogsStructuredSummary(t *testing.T) {
 	homeDir := t.TempDir()
 
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", "ghostty", "config"), "# ghostty")
-	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshrc"), "# zsh")
+	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshenv"), `export ZDOTDIR="$HOME/.config/zsh"`)
 	writeTestFile(t, filepath.Join(dotfilesDir, "assets", "themes", "oh-my-posh", "catppuccin", "mocha.json"), "{}")
 	writeTestFile(t, filepath.Join(dotfilesDir, "assets", "themes", "atuin", "catppuccin", "mocha.toml"), "theme = 'mocha'")
 	writeTestFile(t, filepath.Join(dotfilesDir, "assets", "themes", "bottom", "catppuccin", "mocha.toml"), "[colors]")

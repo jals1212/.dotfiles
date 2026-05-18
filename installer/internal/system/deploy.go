@@ -248,7 +248,7 @@ func DetectExistingConfigs(fs FileSystem, dotfilesDir, homeDir string) []string 
 	}
 
 	// Check home dotfiles
-	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
+	homeFiles := []string{".zshenv"}
 	for _, f := range homeFiles {
 		src := filepath.Join(dotfilesDir, "home", f)
 		if _, err := fs.Stat(src); err == nil {
@@ -276,7 +276,7 @@ func Uninstall(fs FileSystem, dotfilesDir, homeDir string) error {
 	}
 
 	// Remove home dotfiles
-	homeFiles := []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
+	homeFiles := []string{".zshenv"}
 	for _, f := range homeFiles {
 		target := filepath.Join(homeDir, f)
 		if err := fs.Remove(target); err != nil && !os.IsNotExist(err) {

@@ -54,7 +54,7 @@ func TestRunDoctorChecksReportsDuplicatedMarkers(t *testing.T) {
 	homeDir := t.TempDir()
 	dotfilesDir := t.TempDir()
 	writeDoctorFixture(t, homeDir)
-	writeTestFile(t, filepath.Join(homeDir, ".zshrc"), strings.Join([]string{
+	writeTestFile(t, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), strings.Join([]string{
 		`eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"`,
 		`export BAT_THEME="Kanagawa Dragon"`,
 		"# dots:bat-theme begin",
@@ -158,15 +158,16 @@ func TestDoctorChecksNoShaderPolicyRow(t *testing.T) {
 
 func writeDoctorFixture(t *testing.T, homeDir string) {
 	t.Helper()
-	writeTestFile(t, filepath.Join(homeDir, ".zshrc"), strings.Join([]string{
+	writeTestFile(t, filepath.Join(homeDir, ".zshenv"), `export ZDOTDIR="$HOME/.config/zsh"`)
+	writeTestFile(t, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), strings.Join([]string{
 		`eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"`,
 		`export BAT_THEME="Kanagawa Dragon"`,
 		"# dots:bat-theme begin",
 		"[ -f ~/.config/fzf/theme.sh ] && source ~/.config/fzf/theme.sh",
 		"[ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh",
 	}, "\n"))
-	writeTestFile(t, filepath.Join(homeDir, ".zprofile"), "source ~/.zshrc")
-	writeTestFile(t, filepath.Join(homeDir, ".zalias"), "alias ll='eza -la'")
+	writeTestFile(t, filepath.Join(homeDir, ".config", "zsh", ".zprofile"), "source $ZDOTDIR/.zshrc")
+	writeTestFile(t, filepath.Join(homeDir, ".config", "zsh", "aliases.zsh"), "alias ll='eza -la'")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "oh-my-posh", "config.json"), `{"version": 3}`)
 	writeTestFile(t, filepath.Join(homeDir, ".config", "nvim", "init.lua"), `require("config.lazy")\nrequire("config.nodejs").setup({ silent = true })`)
 	writeTestFile(t, filepath.Join(homeDir, ".config", "nvim", "lua", "config", "lazy.lua"), `"LazyVim/LazyVim"`)

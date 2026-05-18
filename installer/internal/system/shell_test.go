@@ -39,7 +39,7 @@ func TestRCFilePaths(t *testing.T) {
 		check func(got string) bool
 		desc  string
 	}{
-		{ShellZsh, func(got string) bool { return got == filepath.Join(home, ".zshrc") }, ".zshrc for zsh"},
+		{ShellZsh, func(got string) bool { return got == filepath.Join(home, ".config", "zsh", ".zshrc") }, ".config/zsh/.zshrc for zsh"},
 		{ShellFish, func(got string) bool { return strings.HasSuffix(got, "config.fish") }, "config.fish for fish"},
 		{ShellUnknown, func(got string) bool { return strings.HasSuffix(got, ".profile") }, ".profile for unknown"},
 	}

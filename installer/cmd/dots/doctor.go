@@ -46,9 +46,10 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 		checks = append(checks, doctorResult{Name: name, Err: err})
 	}
 
-	add("shell zshrc", checkFile(fs, filepath.Join(homeDir, ".zshrc")))
-	add("shell zprofile", checkFile(fs, filepath.Join(homeDir, ".zprofile")))
-	add("shell aliases", checkFile(fs, filepath.Join(homeDir, ".zalias")))
+	add("shell zshenv", checkFile(fs, filepath.Join(homeDir, ".zshenv")))
+	add("shell zshrc", checkFile(fs, filepath.Join(homeDir, ".config", "zsh", ".zshrc")))
+	add("shell zprofile", checkFile(fs, filepath.Join(homeDir, ".config", "zsh", ".zprofile")))
+	add("shell aliases", checkFile(fs, filepath.Join(homeDir, ".config", "zsh", "aliases.zsh")))
 	add("config directory", checkDir(fs, filepath.Join(homeDir, ".config")))
 	add("Oh My Posh config", checkFile(fs, filepath.Join(homeDir, ".config", "oh-my-posh", "config.json")))
 	add("Neovim init", checkFile(fs, filepath.Join(homeDir, ".config", "nvim", "init.lua")))
@@ -61,19 +62,24 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 	add("bat themes directory", checkDir(fs, filepath.Join(homeDir, ".config", "bat", "themes")))
 
 	add("Oh My Posh JSON", checkJSONFile(fs, filepath.Join(homeDir, ".config", "oh-my-posh", "config.json")))
-	add("shell prompt and bat theme", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshrc"), []string{
+	add("zshenv sets ZDOTDIR", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshenv"), []string{
+		"ZDOTDIR",
+	}))
+	add("shell prompt and bat theme", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), []string{
 		"oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json",
 		"export BAT_THEME=",
 	}))
 	add("bat theme file", checkAnyFileWithSuffix(fs, filepath.Join(homeDir, ".config", "bat", "themes"), ".tmTheme"))
-	add("generated shell markers", checkMarkersOnce(fs, filepath.Join(homeDir, ".zshrc"), []string{
+	add("generated shell markers", checkMarkersOnce(fs, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), []string{
 		"# dots:bat-theme begin",
 	}))
-	add("fzf theme source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshrc"), []string{
-		"source ~/.config/fzf/theme.sh",
+	add("fzf theme source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), []string{
+		"source",
+		"fzf/theme.sh",
 	}))
-	add("eza colors source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshrc"), []string{
-		"source ~/.config/eza/colors.sh",
+	add("eza colors source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "zsh", ".zshrc"), []string{
+		"source",
+		"eza/colors.sh",
 	}))
 	add("fzf theme file", checkFile(fs, filepath.Join(homeDir, ".config", "fzf", "theme.sh")))
 	add("eza colors file", checkFile(fs, filepath.Join(homeDir, ".config", "eza", "colors.sh")))

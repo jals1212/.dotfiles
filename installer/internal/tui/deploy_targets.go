@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-var deployHomeFiles = []string{".zshrc", ".zprofile", ".zalias", ".zfunc", ".zkey"}
+var deployHomeFiles = []string{".zshenv"}
 
 type deployTarget struct {
 	Name        string
