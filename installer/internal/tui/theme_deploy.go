@@ -55,7 +55,6 @@ func themeReplacements(theme, flavor, accent string) [][2]string {
 		accent = defaultAccent
 	}
 	return [][2]string{
-		{"CATPPUCCIN_FLAVOR", flavor},
 		{"DOTS_THEME_FLAVOR", theme + "/" + flavor},
 		{"DOTS_ATUIN_THEME", atuinThemeName(theme, flavor, accent)},
 		{"DOTS_THEME", theme},
