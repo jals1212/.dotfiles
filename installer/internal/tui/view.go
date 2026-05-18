@@ -63,8 +63,7 @@ func renderWelcome(m Model) string {
 		{Key: "q", Action: "quit"},
 	}, m.Palette, m.Width)
 
-	content := header + "\n" + bodyB.String() + "\n" + footer
-	return CenterBoth(content, m.Width, m.Height)
+	return header + "\n" + bodyB.String() + "\n" + footer
 }
 
 // renderThemeFlavor renders the merged theme+flavor+preview screen.

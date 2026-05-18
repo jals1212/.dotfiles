@@ -53,9 +53,6 @@ func RenderSteps(steps []StepInfo, current int, p Palette, width int) string {
 		}
 		parts = append(parts, dot+" "+label)
 	}
-	line := strings.Join(parts, s.dim.Render(" → "))
-	if width > 0 {
-		return CenterHorizontally(line, width)
-	}
-	return line
+	_ = width
+	return strings.Join(parts, s.dim.Render(" → "))
 }
