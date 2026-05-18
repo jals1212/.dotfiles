@@ -150,7 +150,10 @@ func renderThemeFlavor(m Model) string {
 			} else {
 				styledLabel = s.normal.Render(fl)
 			}
-			flavorRows[i] = cursorStr + markerStyled + styledLabel
+			flavorPal := paletteFor(m.SelectedTheme, fl)
+			swatch := bgSwatch(flavorPal.Background)
+			label := s.dim.Render(lightDarkLabel(flavorPal.IsLight))
+			flavorRows[i] = cursorStr + markerStyled + styledLabel + " " + swatch + " " + label
 		}
 	}
 
@@ -201,6 +204,8 @@ func renderThemeFlavor(m Model) string {
 	normalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Normal))
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(previewPalette.Dim))
 
+	bodyB.WriteString("\n")
+	bodyB.WriteString("  " + dimStyle.Render("Background") + " " + bgSwatch(previewPalette.Background) + " " + dimStyle.Render(lightDarkLabel(previewPalette.IsLight)))
 	bodyB.WriteString("\n")
 	bodyB.WriteString(dimStyle.Render("  Preview"))
 	bodyB.WriteString("\n")
@@ -476,4 +481,21 @@ func renderKeymapScreen(m Model, title string, entries []KeymapEntry) string {
 	}, m.Palette, m.Width)
 
 	return renderChrome(m, "", bodyB.String(), footer)
+}
+
+// bgSwatch renders a two-cell box filled with the given hex background color.
+// Used in the Flavors panel and preview header on ScreenThemeFlavor.
+func bgSwatch(bg string) string {
+	if bg == "" {
+		return "  "
+	}
+	return lipgloss.NewStyle().Background(lipgloss.Color(bg)).Render("  ")
+}
+
+// lightDarkLabel returns the literal "light" or "dark" based on the flag.
+func lightDarkLabel(isLight bool) string {
+	if isLight {
+		return "light"
+	}
+	return "dark"
 }

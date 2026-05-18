@@ -242,12 +242,59 @@ func TestPaletteHasSyntaxFields(t *testing.T) {
 		if p.Type == "" {
 			t.Errorf("%s.Type is empty", name)
 		}
+		if p.Background == "" {
+			t.Errorf("%s.Background is empty", name)
+		}
 	}
 	for name, p := range flavorPalettes {
 		check("flavorPalettes["+name+"]", p)
 	}
 	for name, p := range themePalettes {
 		check("themePalettes["+name+"]", p)
+	}
+}
+
+// TestRenderThemeFlavorShowsLightDarkLabel asserts the Flavors column
+// includes "light" for lotus/latte and "dark" for the dark flavors.
+func TestRenderThemeFlavorShowsLightDarkLabel(t *testing.T) {
+	// Kanagawa: wave + dragon dark, lotus light.
+	m := Model{
+		Screen:         ScreenThemeFlavor,
+		Width:          120,
+		Height:         40,
+		Palette:        paletteFor("kanagawa", "dragon"),
+		SelectedTheme:  "kanagawa",
+		SelectedFlavor: "dragon",
+		Panel:          1,
+		Cursor:         0,
+		SystemInfo:     &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
+	}
+	out := stripANSI(renderThemeFlavor(m))
+	if !strings.Contains(out, "dark") {
+		t.Errorf("kanagawa flavors row missing 'dark' label; got:\n%s", out)
+	}
+	if !strings.Contains(out, "light") {
+		t.Errorf("kanagawa flavors row missing 'light' label for lotus; got:\n%s", out)
+	}
+}
+
+// TestRenderThemeFlavorPreviewHeaderShowsBackground asserts the preview header
+// line contains the "Background" label.
+func TestRenderThemeFlavorPreviewHeaderShowsBackground(t *testing.T) {
+	m := Model{
+		Screen:         ScreenThemeFlavor,
+		Width:          120,
+		Height:         40,
+		Palette:        paletteFor("catppuccin", "mocha"),
+		SelectedTheme:  "catppuccin",
+		SelectedFlavor: "mocha",
+		Panel:          1,
+		Cursor:         3,
+		SystemInfo:     &system.SystemInfo{OSName: "macOS", Arch: "arm64"},
+	}
+	out := stripANSI(renderThemeFlavor(m))
+	if !strings.Contains(out, "Background") {
+		t.Errorf("preview header missing 'Background' label; got:\n%s", out)
 	}
 }
 
