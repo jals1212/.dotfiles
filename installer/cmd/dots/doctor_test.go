@@ -59,8 +59,8 @@ func TestRunDoctorChecksReportsDuplicatedMarkers(t *testing.T) {
 		`export BAT_THEME="Kanagawa Dragon"`,
 		"# dots:bat-theme begin",
 		"# dots:bat-theme begin",
-		"# dots:eza-colors begin",
-		"# dots:fzf-theme begin",
+		"[ -f ~/.config/fzf/theme.sh ] && source ~/.config/fzf/theme.sh",
+		"[ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh",
 	}, "\n"))
 
 	results := runDoctorChecks(system.OSFileSystem{}, homeDir, dotfilesDir)
@@ -162,8 +162,8 @@ func writeDoctorFixture(t *testing.T, homeDir string) {
 		`eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"`,
 		`export BAT_THEME="Kanagawa Dragon"`,
 		"# dots:bat-theme begin",
-		"# dots:eza-colors begin",
-		"# dots:fzf-theme begin",
+		"[ -f ~/.config/fzf/theme.sh ] && source ~/.config/fzf/theme.sh",
+		"[ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh",
 	}, "\n"))
 	writeTestFile(t, filepath.Join(homeDir, ".zprofile"), "source ~/.zshrc")
 	writeTestFile(t, filepath.Join(homeDir, ".zalias"), "alias ll='eza -la'")
@@ -179,6 +179,13 @@ func writeDoctorFixture(t *testing.T, homeDir string) {
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "themes", "dots"), "background = 181616\nforeground = c5c9c5\n")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "shaders", "cursor_smear.glsl"), "void mainImage(){}")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "bat", "themes", "Kanagawa-dragon.tmTheme"), "theme")
+	writeTestFile(t, filepath.Join(homeDir, ".config", "fzf", "theme.sh"), `export FZF_DEFAULT_OPTS="--color=fg:#cdd6f4"`)
+	writeTestFile(t, filepath.Join(homeDir, ".config", "eza", "colors.sh"), `export EZA_COLORS="di=38;2;137;146;167"`)
+	writeTestFile(t, filepath.Join(homeDir, ".config", "atuin", "themes", "dots.toml"), `name = "dots"`)
+	writeTestFile(t, filepath.Join(homeDir, ".config", "atuin", "config.toml"), strings.Join([]string{
+		`[theme]`,
+		`name = "dots"`,
+	}, "\n"))
 	writeTestFile(t, filepath.Join(homeDir, ".config", "aerospace", "aerospace.toml"), strings.Join([]string{
 		"ctrl-alt-minus = 'resize smart -50'",
 		"ctrl-alt-equal = 'resize smart +50'",

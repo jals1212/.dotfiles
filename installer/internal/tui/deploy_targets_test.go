@@ -14,7 +14,6 @@ func TestBuildDeployTargetsIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
 	homeDir := t.TempDir()
 
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", "nvim", "init.lua"), "vim.opt.number = true")
-	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", "starship.toml"), "format = '$all'")
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".config", ".DS_Store"), "metadata")
 	writeTestFile(t, filepath.Join(dotfilesDir, "home", ".zshrc"), "source ~/.zalias")
 
@@ -23,14 +22,13 @@ func TestBuildDeployTargetsIncludesConfigEntriesAndHomeDotfiles(t *testing.T) {
 		t.Fatalf("buildDeployTargets() error = %v", err)
 	}
 
-	wantNames := []string{".config/nvim", ".config/starship.toml", ".zshrc"}
+	wantNames := []string{".config/nvim", ".zshrc"}
 	if got := targetNames(targets); !equalStrings(got, wantNames) {
 		t.Fatalf("deploy target names = %#v, want %#v", got, wantNames)
 	}
 
 	assertDeployTarget(t, targets[0], ".config/nvim", filepath.Join(dotfilesDir, "home", ".config", "nvim"), filepath.Join(homeDir, ".config", "nvim"), true)
-	assertDeployTarget(t, targets[1], ".config/starship.toml", filepath.Join(dotfilesDir, "home", ".config", "starship.toml"), filepath.Join(homeDir, ".config", "starship.toml"), false)
-	assertDeployTarget(t, targets[2], ".zshrc", filepath.Join(dotfilesDir, "home", ".zshrc"), filepath.Join(homeDir, ".zshrc"), false)
+	assertDeployTarget(t, targets[1], ".zshrc", filepath.Join(dotfilesDir, "home", ".zshrc"), filepath.Join(homeDir, ".zshrc"), false)
 }
 
 func TestBuildDeployTargetsHandlesMissingConfigDirectory(t *testing.T) {

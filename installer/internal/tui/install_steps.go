@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/jals/dotfiles/internal/system"
 )
+
+// atuinNameRegex matches a TOML name assignment inside an atuin theme file,
+// e.g. `name = "..."`. Used to patch the asset's internal name so atuin loads
+// the deployed file under the stable "dots" name.
+var atuinNameRegex = regexp.MustCompile(`(?m)^\s*name\s*=\s*"[^"]*"`)
 
 func stepBackupConfigs(m *Model) error {
 	stepID := "backup"
@@ -168,19 +174,28 @@ func stepDeployConfigs(m *Model) error {
 		SendLog(m, stepID, "✓ Oh My Posh theme unchanged")
 	}
 
-	// 4.5 Atuin theme
-	atuinFile := atuinThemeName(theme, flavor, m.SelectedAccent) + ".toml"
-	atuinSrc := themeAssetPath(dotfilesDir, "atuin", theme, atuinFile, fmt.Sprintf("catppuccin-%s-%s.toml", flavor, m.SelectedAccent))
-	atuinDst := filepath.Join(homeDir, ".config", "atuin", "themes", atuinFile)
-	if changed, err := system.CopyFileIfChanged(atuinSrc, atuinDst); err != nil {
-		report.recordWarning("atuin theme", err)
-		SendLog(m, stepID, fmt.Sprintf("⚠ Atuin theme failed: %v", err))
-	} else if changed {
-		report.recordChanged("atuin theme")
-		SendLog(m, stepID, "✓ Atuin theme deployed")
+	// 4.5 Atuin theme — write the active flavor's theme under the stable
+	// filename ~/.config/atuin/themes/dots.toml so config.toml can ship a
+	// static `name = "dots"` reference. The asset's internal `name = "..."`
+	// is patched to "dots" so atuin loads it under that name.
+	atuinAssetFile := atuinThemeName(theme, flavor, m.SelectedAccent) + ".toml"
+	atuinSrc := themeAssetPath(dotfilesDir, "atuin", theme, atuinAssetFile, fmt.Sprintf("catppuccin-%s-%s.toml", flavor, m.SelectedAccent))
+	atuinDst := filepath.Join(homeDir, ".config", "atuin", "themes", "dots.toml")
+	if atuinData, err := os.ReadFile(atuinSrc); err == nil {
+		patched := atuinNameRegex.ReplaceAllString(string(atuinData), `name = "dots"`)
+		if err := os.MkdirAll(filepath.Dir(atuinDst), 0755); err != nil {
+			report.recordWarning("atuin theme", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Atuin themes dir create failed: %v", err))
+		} else if err := os.WriteFile(atuinDst, []byte(patched), 0644); err != nil {
+			report.recordWarning("atuin theme", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Atuin theme write failed: %v", err))
+		} else {
+			report.recordChanged("atuin theme")
+			SendLog(m, stepID, "✓ Atuin theme deployed")
+		}
 	} else {
-		report.recordSkipped("atuin theme")
-		SendLog(m, stepID, "✓ Atuin theme unchanged")
+		report.recordWarning("atuin theme read", err)
+		SendLog(m, stepID, fmt.Sprintf("⚠ Atuin theme read failed: %v", err))
 	}
 
 	// 4.6 Bottom theme
@@ -253,12 +268,17 @@ func stepDeployConfigs(m *Model) error {
 		report.recordChanged("BAT_THEME setup")
 	}
 
-	// 4.9 Eza colors
+	// 4.9 Eza colors — write the active flavor asset to ~/.config/eza/colors.sh.
+	// home/.zshrc sources this file via a static line.
 	ezaSrc := themeAssetPath(dotfilesDir, "eza", theme, fmt.Sprintf("%s.txt", flavor), fmt.Sprintf("%s.txt", flavor))
 	if ezaData, err := os.ReadFile(ezaSrc); err == nil {
-		if err := system.ApplyBlock(zshrcPath, "eza-colors", string(ezaData)); err != nil {
+		ezaDst := filepath.Join(homeDir, ".config", "eza", "colors.sh")
+		if err := os.MkdirAll(filepath.Dir(ezaDst), 0755); err != nil {
 			report.recordWarning("eza colors setup", err)
-			SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors setup failed: %v", err))
+			SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors dir create failed: %v", err))
+		} else if err := os.WriteFile(ezaDst, ezaData, 0644); err != nil {
+			report.recordWarning("eza colors setup", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors write failed: %v", err))
 		} else {
 			report.recordChanged("eza colors")
 			SendLog(m, stepID, "✓ Eza colors deployed")
@@ -268,12 +288,17 @@ func stepDeployConfigs(m *Model) error {
 		SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors read failed: %v", err))
 	}
 
-	// 4.10 fzf colors
+	// 4.10 fzf colors — write the active flavor asset to ~/.config/fzf/theme.sh.
+	// home/.zshrc sources this file via a static line.
 	fzfSrc := themeAssetPath(dotfilesDir, "fzf", theme, fmt.Sprintf("%s.sh", flavor), fmt.Sprintf("%s.sh", flavor))
 	if fzfData, err := os.ReadFile(fzfSrc); err == nil {
-		if err := system.ApplyBlock(zshrcPath, "fzf-theme", string(fzfData)); err != nil {
+		fzfDst := filepath.Join(homeDir, ".config", "fzf", "theme.sh")
+		if err := os.MkdirAll(filepath.Dir(fzfDst), 0755); err != nil {
 			report.recordWarning("fzf colors setup", err)
-			SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors setup failed: %v", err))
+			SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors dir create failed: %v", err))
+		} else if err := os.WriteFile(fzfDst, fzfData, 0644); err != nil {
+			report.recordWarning("fzf colors setup", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors write failed: %v", err))
 		} else {
 			report.recordChanged("fzf colors")
 			SendLog(m, stepID, "✓ Fzf colors deployed")

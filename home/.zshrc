@@ -55,9 +55,12 @@ if command -v fd >/dev/null 2>&1; then
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
+# The active fzf theme is written to ~/.config/fzf/theme.sh by `dots install`.
+[ -f ~/.config/fzf/theme.sh ] && source ~/.config/fzf/theme.sh
 
-# The active fzf theme is injected at deploy time inside the
-# `# dots:fzf-theme` sentinel block by `dots install`.
+# ── Eza ──────────────────────────────────────────────
+# The active eza colors are written to ~/.config/eza/colors.sh by `dots install`.
+[ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh
 
 # ── Source extras ────────────────────────────────────
 [[ -f ~/.zalias ]] && source ~/.zalias

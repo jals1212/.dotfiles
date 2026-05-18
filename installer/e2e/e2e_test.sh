@@ -210,9 +210,11 @@ test_update_idempotency() {
     fi
 
     assert_marker_once "$HOME/.zshrc" "# dots:bat-theme begin"
-    assert_marker_once "$HOME/.zshrc" "# dots:eza-colors begin"
-    assert_marker_once "$HOME/.zshrc" "# dots:fzf-theme begin"
     [ -f "$HOME/.config/ghostty/themes/dots" ] || log_fail "ghostty themes/dots file missing"
+    [ -f "$HOME/.config/fzf/theme.sh" ] || log_fail "fzf theme.sh file missing"
+    [ -f "$HOME/.config/eza/colors.sh" ] || log_fail "eza colors.sh file missing"
+    [ -f "$HOME/.config/atuin/themes/dots.toml" ] || log_fail "atuin themes/dots.toml file missing"
+    grep -q 'name = "dots"' "$HOME/.config/atuin/config.toml" || log_fail "atuin config missing name = \"dots\""
 
     local bat_cache_count
     bat_cache_count=$(cat "$HOME/bat-cache-count")

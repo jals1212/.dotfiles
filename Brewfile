@@ -11,7 +11,6 @@ brew "git"
 brew "mise"
 brew "neovim"
 brew "ripgrep"
-brew "starship"
 brew "tmux"
 brew "zoxide"
 

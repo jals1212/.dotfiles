@@ -68,8 +68,18 @@ func runDoctorChecks(fs system.FileSystem, homeDir, dotfilesDir string) []doctor
 	add("bat theme file", checkAnyFileWithSuffix(fs, filepath.Join(homeDir, ".config", "bat", "themes"), ".tmTheme"))
 	add("generated shell markers", checkMarkersOnce(fs, filepath.Join(homeDir, ".zshrc"), []string{
 		"# dots:bat-theme begin",
-		"# dots:eza-colors begin",
-		"# dots:fzf-theme begin",
+	}))
+	add("fzf theme source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshrc"), []string{
+		"source ~/.config/fzf/theme.sh",
+	}))
+	add("eza colors source line", checkFileContainsAll(fs, filepath.Join(homeDir, ".zshrc"), []string{
+		"source ~/.config/eza/colors.sh",
+	}))
+	add("fzf theme file", checkFile(fs, filepath.Join(homeDir, ".config", "fzf", "theme.sh")))
+	add("eza colors file", checkFile(fs, filepath.Join(homeDir, ".config", "eza", "colors.sh")))
+	add("atuin theme file", checkFile(fs, filepath.Join(homeDir, ".config", "atuin", "themes", "dots.toml")))
+	add("atuin config theme name", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "atuin", "config.toml"), []string{
+		`name = "dots"`,
 	}))
 	add("Neovim config smoke", checkFileContainsAll(fs, filepath.Join(homeDir, ".config", "nvim", "init.lua"), []string{
 		`require("config.lazy")`,

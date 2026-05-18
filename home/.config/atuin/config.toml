@@ -2,7 +2,7 @@
 # Theme: DOTS_THEME/DOTS_FLAVOR
 
 [theme]
-name = "DOTS_ATUIN_THEME"
+name = "dots"
 
 ## keybindings
 ## ctrl-r to open atuin search
