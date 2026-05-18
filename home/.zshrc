@@ -56,14 +56,8 @@ if command -v fd >/dev/null 2>&1; then
   export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
 
-# CATPPUCCIN_FZF_START
-export FZF_DEFAULT_OPTS="\
---color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8\
---color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc\
---color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8\
---color=selected-bg:#45475a\
---color=border:#585b70,label:#cdd6f4"
-# CATPPUCCIN_FZF_END
+# The active fzf theme is injected at deploy time inside the
+# `# dots:fzf-theme` sentinel block by `dots install`.
 
 # ── Source extras ────────────────────────────────────
 [[ -f ~/.zalias ]] && source ~/.zalias
