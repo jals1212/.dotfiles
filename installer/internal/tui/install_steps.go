@@ -245,7 +245,10 @@ func stepDeployConfigs(m *Model) error {
 		}
 	}
 	batEnv := fmt.Sprintf(`export BAT_THEME="%s"`, batThemeName(theme, flavor))
-	if err := system.ApplyBlock(filepath.Join(homeDir, ".zshrc"), "catppuccin-bat", batEnv); err != nil {
+	zshrcPath := filepath.Join(homeDir, ".zshrc")
+	_ = system.RemoveLegacyMarkers(zshrcPath, "# CATPPUCCIN_BAT_START", "# CATPPUCCIN_BAT_END")
+	_ = system.RemoveBlock(zshrcPath, "catppuccin-bat")
+	if err := system.ApplyBlock(zshrcPath, "bat-theme", batEnv); err != nil {
 		report.recordWarning("BAT_THEME setup", err)
 		SendLog(m, stepID, fmt.Sprintf("⚠ BAT_THEME setup failed: %v", err))
 	} else {
@@ -255,7 +258,9 @@ func stepDeployConfigs(m *Model) error {
 	// 4.9 Eza colors
 	ezaSrc := themeAssetPath(dotfilesDir, "eza", theme, fmt.Sprintf("%s.txt", flavor), fmt.Sprintf("%s.txt", flavor))
 	if ezaData, err := os.ReadFile(ezaSrc); err == nil {
-		if err := system.ApplyBlock(filepath.Join(homeDir, ".zshrc"), "catppuccin-eza", string(ezaData)); err != nil {
+		_ = system.RemoveLegacyMarkers(zshrcPath, "# CATPPUCCIN_EZA_START", "# CATPPUCCIN_EZA_END")
+		_ = system.RemoveBlock(zshrcPath, "catppuccin-eza")
+		if err := system.ApplyBlock(zshrcPath, "eza-colors", string(ezaData)); err != nil {
 			report.recordWarning("eza colors setup", err)
 			SendLog(m, stepID, fmt.Sprintf("⚠ Eza colors setup failed: %v", err))
 		} else {
@@ -270,7 +275,9 @@ func stepDeployConfigs(m *Model) error {
 	// 4.10 fzf colors
 	fzfSrc := themeAssetPath(dotfilesDir, "fzf", theme, fmt.Sprintf("%s.sh", flavor), fmt.Sprintf("%s.sh", flavor))
 	if fzfData, err := os.ReadFile(fzfSrc); err == nil {
-		if err := system.ApplyBlock(filepath.Join(homeDir, ".zshrc"), "catppuccin-fzf", string(fzfData)); err != nil {
+		_ = system.RemoveLegacyMarkers(zshrcPath, "# CATPPUCCIN_FZF_START", "# CATPPUCCIN_FZF_END")
+		_ = system.RemoveBlock(zshrcPath, "catppuccin-fzf")
+		if err := system.ApplyBlock(zshrcPath, "fzf-theme", string(fzfData)); err != nil {
 			report.recordWarning("fzf colors setup", err)
 			SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors setup failed: %v", err))
 		} else {
@@ -282,12 +289,25 @@ func stepDeployConfigs(m *Model) error {
 		SendLog(m, stepID, fmt.Sprintf("⚠ Fzf colors read failed: %v", err))
 	}
 
-	// 4.11 Ghostty theme
+	// 4.11 Ghostty theme — use Ghostty's native theme primitive.
+	// Write the palette to ~/.config/ghostty/themes/dots and add a
+	// `theme = dots` directive to the main config under a dedicated sentinel.
 	ghosttySrc := themeAssetPath(dotfilesDir, "ghostty", theme, fmt.Sprintf("%s.conf", flavor), fmt.Sprintf("%s.conf", flavor))
 	if ghosttyData, err := os.ReadFile(ghosttySrc); err == nil {
-		if err := system.ApplyBlock(filepath.Join(homeDir, ".config", "ghostty", "config"), "catppuccin-ghostty-theme", string(ghosttyData)); err != nil {
+		ghosttyConfigPath := filepath.Join(homeDir, ".config", "ghostty", "config")
+		ghosttyThemesDir := filepath.Join(homeDir, ".config", "ghostty", "themes")
+		ghosttyThemeFile := filepath.Join(ghosttyThemesDir, "dots")
+		_ = system.RemoveLegacyMarkers(ghosttyConfigPath, "# CATPPUCCIN_GHOSTTY_THEME_START", "# CATPPUCCIN_GHOSTTY_THEME_END")
+		_ = system.RemoveBlock(ghosttyConfigPath, "catppuccin-ghostty-theme")
+		if err := os.MkdirAll(ghosttyThemesDir, 0755); err != nil {
 			report.recordWarning("ghostty theme setup", err)
-			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme setup failed: %v", err))
+			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty themes dir create failed: %v", err))
+		} else if err := os.WriteFile(ghosttyThemeFile, ghosttyData, 0644); err != nil {
+			report.recordWarning("ghostty theme setup", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme file write failed: %v", err))
+		} else if err := system.ApplyBlock(ghosttyConfigPath, "ghostty-theme-ref", "theme = dots"); err != nil {
+			report.recordWarning("ghostty theme setup", err)
+			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme reference setup failed: %v", err))
 		} else {
 			report.recordChanged("ghostty theme")
 			SendLog(m, stepID, "✓ Ghostty theme deployed")

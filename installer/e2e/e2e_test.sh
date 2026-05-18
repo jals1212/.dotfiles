@@ -209,10 +209,11 @@ test_update_idempotency() {
         log_fail "dots update failed"
     fi
 
-    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-bat begin"
-    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-eza begin"
-    assert_marker_once "$HOME/.zshrc" "# dots:catppuccin-fzf begin"
-    assert_marker_once "$HOME/.config/ghostty/config" "# dots:catppuccin-ghostty-theme begin"
+    assert_marker_once "$HOME/.zshrc" "# dots:bat-theme begin"
+    assert_marker_once "$HOME/.zshrc" "# dots:eza-colors begin"
+    assert_marker_once "$HOME/.zshrc" "# dots:fzf-theme begin"
+    assert_marker_once "$HOME/.config/ghostty/config" "# dots:ghostty-theme-ref begin"
+    [ -f "$HOME/.config/ghostty/themes/dots" ] || log_fail "ghostty themes/dots file missing"
 
     local bat_cache_count
     bat_cache_count=$(cat "$HOME/bat-cache-count")
