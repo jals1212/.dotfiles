@@ -16,18 +16,26 @@ brew "zoxide"
 
 # ── Shell enhancements ───────────────────────────────
 brew "atuin"
+brew "oh-my-posh"
 
 # ── Dev tools ────────────────────────────────────────
 brew "lazygit"
+brew "lazydocker"
 brew "bottom"
 brew "dust"
 brew "jless"
+brew "jq"
+brew "gping"
 
 # ── Fonts ────────────────────────────────────────────
 cask "font-iosevka-term-nerd-font"
 
 # ── Terminal ─────────────────────────────────────────
 cask "ghostty"
+
+# ── Window manager ───────────────────────────────────
+tap "nikitabobko/tap"
+cask "nikitabobko/tap/aerospace"
 
 # ── GUI Apps (optional — uncomment as needed) ────────
 # cask "brave-browser"
