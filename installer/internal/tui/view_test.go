@@ -219,6 +219,38 @@ func TestRenderThemeFlavorLivePreview(t *testing.T) {
 	}
 }
 
+// TestPaletteHasSyntaxFields asserts every entry in flavorPalettes and
+// themePalettes has non-empty syntax color fields (Keyword/String/Function/
+// Comment/Number/Type) so the live preview never falls back to default color.
+func TestPaletteHasSyntaxFields(t *testing.T) {
+	check := func(name string, p Palette) {
+		if p.Keyword == "" {
+			t.Errorf("%s.Keyword is empty", name)
+		}
+		if p.String == "" {
+			t.Errorf("%s.String is empty", name)
+		}
+		if p.Function == "" {
+			t.Errorf("%s.Function is empty", name)
+		}
+		if p.Comment == "" {
+			t.Errorf("%s.Comment is empty", name)
+		}
+		if p.Number == "" {
+			t.Errorf("%s.Number is empty", name)
+		}
+		if p.Type == "" {
+			t.Errorf("%s.Type is empty", name)
+		}
+	}
+	for name, p := range flavorPalettes {
+		check("flavorPalettes["+name+"]", p)
+	}
+	for name, p := range themePalettes {
+		check("themePalettes["+name+"]", p)
+	}
+}
+
 // Task 6.5: RenderHelp formats three entries correctly.
 func TestRenderHelpFormatsEntries(t *testing.T) {
 	entries := []HelpEntry{

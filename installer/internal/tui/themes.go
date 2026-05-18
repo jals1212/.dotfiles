@@ -2,6 +2,9 @@ package tui
 
 type Palette struct {
 	Title, Subtitle, Selected, Cursor, Normal, Dim, Done, Running, Failed, Pending string
+	// Syntax color fields used by the live preview on ScreenThemeFlavor.
+	// Sourced from upstream editor themes (kanagawa.nvim / catppuccin nvim).
+	Keyword, String, Function, Comment, Number, Type string
 }
 
 type ThemeDefinition struct {
@@ -30,6 +33,12 @@ var flavorPalettes = map[string]Palette{
 		Running:  "#df8e1d",
 		Failed:   "#d20f39",
 		Pending:  "#9ca0b0",
+		Keyword:  "#8839ef",
+		String:   "#40a02b",
+		Function: "#1e66f5",
+		Comment:  "#9ca0b0",
+		Number:   "#fe640b",
+		Type:     "#df8e1d",
 	},
 	"frappe": {
 		Title:    "#ca9ee6",
@@ -42,6 +51,12 @@ var flavorPalettes = map[string]Palette{
 		Running:  "#e5c890",
 		Failed:   "#e78284",
 		Pending:  "#737994",
+		Keyword:  "#ca9ee6",
+		String:   "#a6d189",
+		Function: "#8caaee",
+		Comment:  "#737994",
+		Number:   "#ef9f76",
+		Type:     "#e5c890",
 	},
 	"macchiato": {
 		Title:    "#c6a0f6",
@@ -54,6 +69,12 @@ var flavorPalettes = map[string]Palette{
 		Running:  "#eed49f",
 		Failed:   "#ed8796",
 		Pending:  "#6e738d",
+		Keyword:  "#c6a0f6",
+		String:   "#a6da95",
+		Function: "#8aadf4",
+		Comment:  "#6e738d",
+		Number:   "#f5a97f",
+		Type:     "#eed49f",
 	},
 	"mocha": {
 		Title:    "#cba6f7",
@@ -66,6 +87,12 @@ var flavorPalettes = map[string]Palette{
 		Running:  "#f9e2af",
 		Failed:   "#f38ba8",
 		Pending:  "#6c7086",
+		Keyword:  "#cba6f7",
+		String:   "#a6e3a1",
+		Function: "#89b4fa",
+		Comment:  "#6c7086",
+		Number:   "#fab387",
+		Type:     "#f9e2af",
 	},
 }
 
@@ -85,6 +112,12 @@ var themePalettes = map[string]Palette{
 		Running:  "#e6c384",
 		Failed:   "#e82424",
 		Pending:  "#727169",
+		Keyword:  "#957fb8",
+		String:   "#98bb6c",
+		Function: "#7e9cd8",
+		Comment:  "#727169",
+		Number:   "#d27e99",
+		Type:     "#7fb4ca",
 	},
 	"kanagawa/dragon": {
 		Title:    "#8992a7",
@@ -97,6 +130,12 @@ var themePalettes = map[string]Palette{
 		Running:  "#c4b28a",
 		Failed:   "#c4746e",
 		Pending:  "#737c73",
+		Keyword:  "#957fb8",
+		String:   "#87a987",
+		Function: "#8ba4b0",
+		Comment:  "#737c73",
+		Number:   "#b6927b",
+		Type:     "#8ea4a2",
 	},
 	"kanagawa/lotus": {
 		Title:    "#624c83",
@@ -109,6 +148,12 @@ var themePalettes = map[string]Palette{
 		Running:  "#de9800",
 		Failed:   "#c84053",
 		Pending:  "#8a8980",
+		Keyword:  "#624c83",
+		String:   "#6f894e",
+		Function: "#4d699b",
+		Comment:  "#8a8980",
+		Number:   "#b35b79",
+		Type:     "#597b75",
 	},
 }
 
