@@ -9,45 +9,19 @@ if [[ ! -d "$ZINIT_HOME" ]]; then
 fi
 source "${ZINIT_HOME}/zinit.zsh"
 
-# Plugins
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
-
-# ── Completions ──────────────────────────────────────
-autoload -Uz compinit && compinit
-zinit cdreplay -q
-
 # ── History ──────────────────────────────────────────
-HISTSIZE=10000
-SAVEHIST=10000
-HISTFILE=~/.zsh_history
-setopt appendhistory
-setopt sharehistory
+# Atuin is the history source of truth. Keep native zsh history ephemeral.
+HISTSIZE=0
+SAVEHIST=0
+unset HISTFILE
 setopt hist_ignore_space
-setopt hist_ignore_all_dups
-setopt hist_save_no_dups
 
-# ── Oh My Posh ───────────────────────────────────────
-if command -v oh-my-posh >/dev/null 2>&1; then
-  eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/config.json)"
-fi
-
-# ── Atuin ────────────────────────────────────────────
-if command -v atuin >/dev/null 2>&1; then
-  eval "$(atuin init zsh)"
-fi
-
-# ── Zoxide ───────────────────────────────────────────
-if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
-fi
-
-# ── Mise ─────────────────────────────────────────────
-if command -v mise >/dev/null 2>&1; then
-  eval "$(mise activate zsh)"
-fi
+# ── Aliases, functions, keymaps ──────────────────────
+# Load first so later plugins can add tool-specific bindings without resets.
+# Modules live next to this file in $ZDOTDIR (set by ~/.zshenv).
+[[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
+[[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
+[[ -f "$ZDOTDIR/keymaps.zsh" ]]   && source "$ZDOTDIR/keymaps.zsh"
 
 # ── FZF ──────────────────────────────────────────────
 if command -v fd >/dev/null 2>&1; then
@@ -62,16 +36,40 @@ fi
 # The active eza colors are written to ~/.config/eza/colors.sh by `dots install`.
 [ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh
 
-# ── Aliases, functions, keymaps ──────────────────────
-# Modules live next to this file in $ZDOTDIR (set by ~/.zshenv).
-[[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
-[[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
-[[ -f "$ZDOTDIR/keymaps.zsh" ]]   && source "$ZDOTDIR/keymaps.zsh"
+# Completion definitions must be loaded before compinit.
+zinit light zsh-users/zsh-completions
+
+# ── Completions ──────────────────────────────────────
+autoload -Uz compinit && compinit
+zinit cdreplay -q
+
+# fzf-tab must load after compinit, but before widget-wrapping plugins.
+zinit light Aloxaf/fzf-tab
+
+# ── Oh My Posh ───────────────────────────────────────
+zinit ice has"oh-my-posh"
+zinit light "$ZDOTDIR/plugins/oh-my-posh"
+
+# ── Zoxide ───────────────────────────────────────────
+zinit ice has"zoxide"
+zinit light "$ZDOTDIR/plugins/zoxide"
+
+# ── Mise ─────────────────────────────────────────────
+zinit ice has"mise"
+zinit light "$ZDOTDIR/plugins/mise"
+
+# ── Atuin ────────────────────────────────────────────
+zinit ice has"atuin"
+zinit light "$ZDOTDIR/plugins/atuin"
+
+# Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.
+zinit light zsh-users/zsh-autosuggestions
+zinit light zsh-users/zsh-syntax-highlighting
 
 # ── Auto-start tmux ──────────────────────────────────
 function start_if_needed() {
     if [[ $- == *i* ]] && [[ -z "${TMUX}" ]] && [[ -t 1 ]] && [[ -z "${DOTS_NO_TMUX}" ]]; then
-        exec tmux
+        tmux new-session -A -s main
     fi
 }
 start_if_needed

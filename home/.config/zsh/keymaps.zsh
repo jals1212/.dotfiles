@@ -3,10 +3,6 @@
 # Emacs mode
 bindkey -e
 
-# History search with arrow keys
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
-
 # Kill region
 bindkey '\ew' kill-region
 
