@@ -174,9 +174,7 @@ func writeDoctorFixture(t *testing.T, homeDir string) {
 	writeTestFile(t, filepath.Join(homeDir, ".config", "tmux", "tmux.conf"), "set -g prefix C-a")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "config"), strings.Join([]string{
 		"keybind = alt+s=write_screen_file:paste",
-		"# dots:ghostty-theme-ref begin",
 		"theme = dots",
-		"# dots:ghostty-theme-ref end",
 	}, "\n"))
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "themes", "dots"), "background = 181616\nforeground = c5c9c5\n")
 	writeTestFile(t, filepath.Join(homeDir, ".config", "ghostty", "shaders", "cursor_smear.glsl"), "void mainImage(){}")

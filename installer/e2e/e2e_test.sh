@@ -212,7 +212,6 @@ test_update_idempotency() {
     assert_marker_once "$HOME/.zshrc" "# dots:bat-theme begin"
     assert_marker_once "$HOME/.zshrc" "# dots:eza-colors begin"
     assert_marker_once "$HOME/.zshrc" "# dots:fzf-theme begin"
-    assert_marker_once "$HOME/.config/ghostty/config" "# dots:ghostty-theme-ref begin"
     [ -f "$HOME/.config/ghostty/themes/dots" ] || log_fail "ghostty themes/dots file missing"
 
     local bat_cache_count

@@ -284,11 +284,10 @@ func stepDeployConfigs(m *Model) error {
 	}
 
 	// 4.11 Ghostty theme — use Ghostty's native theme primitive.
-	// Write the palette to ~/.config/ghostty/themes/dots and add a
-	// `theme = dots` directive to the main config under a dedicated sentinel.
+	// Write the palette to ~/.config/ghostty/themes/dots; the `theme = dots`
+	// directive is part of the static config template in home/.config/ghostty/config.
 	ghosttySrc := themeAssetPath(dotfilesDir, "ghostty", theme, fmt.Sprintf("%s.conf", flavor), fmt.Sprintf("%s.conf", flavor))
 	if ghosttyData, err := os.ReadFile(ghosttySrc); err == nil {
-		ghosttyConfigPath := filepath.Join(homeDir, ".config", "ghostty", "config")
 		ghosttyThemesDir := filepath.Join(homeDir, ".config", "ghostty", "themes")
 		ghosttyThemeFile := filepath.Join(ghosttyThemesDir, "dots")
 		if err := os.MkdirAll(ghosttyThemesDir, 0755); err != nil {
@@ -297,9 +296,6 @@ func stepDeployConfigs(m *Model) error {
 		} else if err := os.WriteFile(ghosttyThemeFile, ghosttyData, 0644); err != nil {
 			report.recordWarning("ghostty theme setup", err)
 			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme file write failed: %v", err))
-		} else if err := system.ApplyBlock(ghosttyConfigPath, "ghostty-theme-ref", "theme = dots"); err != nil {
-			report.recordWarning("ghostty theme setup", err)
-			SendLog(m, stepID, fmt.Sprintf("⚠ Ghostty theme reference setup failed: %v", err))
 		} else {
 			report.recordChanged("ghostty theme")
 			SendLog(m, stepID, "✓ Ghostty theme deployed")

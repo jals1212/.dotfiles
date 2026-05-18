@@ -44,8 +44,8 @@ keybind = shift+enter=text:\x1b\r
 keybind = alt+s=write_screen_file:paste
 
 # ── Theme ────────────────────────────────────────────
-# The active theme is written to ~/.config/ghostty/themes/dots by `dots install`
-# and referenced below via Ghostty's native `theme = dots` directive inside the
-# `# dots:ghostty-theme-ref` sentinel block (injected at deploy time).
+# The active flavor's palette is written to ~/.config/ghostty/themes/dots
+# by `dots install` / `dots update`; this file references it natively.
+theme = dots
 
 custom-shader = shaders/cursor_smear.glsl
