@@ -62,10 +62,11 @@ fi
 # The active eza colors are written to ~/.config/eza/colors.sh by `dots install`.
 [ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh
 
-# ── Source extras ────────────────────────────────────
-[[ -f ~/.zalias ]] && source ~/.zalias
-[[ -f ~/.zfunc ]] && source ~/.zfunc
-[[ -f ~/.zkey ]]  && source ~/.zkey
+# ── Aliases, functions, keymaps ──────────────────────
+# Modules live next to this file in $ZDOTDIR (set by ~/.zshenv).
+[[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
+[[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
+[[ -f "$ZDOTDIR/keymaps.zsh" ]]   && source "$ZDOTDIR/keymaps.zsh"
 
 # ── Auto-start tmux ──────────────────────────────────
 function start_if_needed() {
