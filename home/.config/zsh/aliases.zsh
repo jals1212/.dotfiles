@@ -30,7 +30,6 @@ alias vim='nvim'
 alias v='nvim'
 alias lg='lazygit'
 alias ld='lazydocker'
-alias g='git'
 
 # Suffixes
 alias -s csv='$EDITOR'

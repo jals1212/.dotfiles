@@ -28,24 +28,3 @@ function clear-screen-and-scrollback() {
 zle -N clear-screen-and-scrollback
 bindkey '^x^l' clear-screen-and-scrollback
 
-# Copy current command buffer to clipboard (macOS)
-function copy-buffer-to-clipboard() {
-  echo -n "$BUFFER" | pbcopy
-  zle -M "Copied to clipboard"
-}
-zle -N copy-buffer-to-clipboard
-bindkey '^x^c' copy-buffer-to-clipboard
-
-# For Linux with wl-copy:
-# function copy-buffer-to-clipboard() {
-#   echo -n "$BUFFER" | wl-copy
-#   zle -M "Copied to clipboard"
-# }
-
-# Snippets
-
-bindkey -s '^x^g' 'git status'
-bindkey -s '^x^gc' 'git commit -m ""\C-b'
-bindkey -s '^x^gp' 'git push origin '
-bindkey -s '^x^gs' 'git status\n'
-bindkey -s '^x^gl' 'git log --oneline -n 10\n'
