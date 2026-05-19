@@ -1,6 +1,12 @@
 # Dotfiles — ZSH
 # Theme: DOTS_THEME/DOTS_FLAVOR (via Oh My Posh)
 
+# ── Config dir ───────────────────────────────────────
+# Standard zsh files (.zshrc, .zshenv, .zprofile) live at $HOME. Repo
+# fragments and plugins live under $XDG_CONFIG_HOME/zsh/ and are sourced
+# explicitly from this file.
+_zsh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+
 # ── Zinit ────────────────────────────────────────────
 # Sourced from Homebrew (Brewfile: brew "zinit"). HOMEBREW_PREFIX is exported
 # by `brew shellenv` in .zshenv. Setting ZINIT[BIN_DIR] before sourcing
@@ -26,10 +32,9 @@ setopt hist_ignore_space
 
 # ── Aliases, functions, keymaps ──────────────────────
 # Load first so later plugins can add tool-specific bindings without resets.
-# Modules live next to this file in $ZDOTDIR (set by ~/.zshenv).
-[[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
-[[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
-[[ -f "$ZDOTDIR/keymaps.zsh" ]]   && source "$ZDOTDIR/keymaps.zsh"
+[[ -f "$_zsh_config_dir/aliases.zsh" ]]   && source "$_zsh_config_dir/aliases.zsh"
+[[ -f "$_zsh_config_dir/functions.zsh" ]] && source "$_zsh_config_dir/functions.zsh"
+[[ -f "$_zsh_config_dir/keymaps.zsh" ]]   && source "$_zsh_config_dir/keymaps.zsh"
 
 # ── FZF ──────────────────────────────────────────────
 if command -v fd >/dev/null 2>&1; then
@@ -56,19 +61,19 @@ zinit light Aloxaf/fzf-tab
 
 # ── Oh My Posh ───────────────────────────────────────
 zinit ice has"oh-my-posh"
-zinit light "$ZDOTDIR/plugins/oh-my-posh"
+zinit light "$_zsh_config_dir/plugins/oh-my-posh"
 
 # ── Zoxide ───────────────────────────────────────────
 zinit ice has"zoxide"
-zinit light "$ZDOTDIR/plugins/zoxide"
+zinit light "$_zsh_config_dir/plugins/zoxide"
 
 # ── Mise ─────────────────────────────────────────────
 zinit ice has"mise"
-zinit light "$ZDOTDIR/plugins/mise"
+zinit light "$_zsh_config_dir/plugins/mise"
 
 # ── Atuin ────────────────────────────────────────────
 zinit ice has"atuin"
-zinit light "$ZDOTDIR/plugins/atuin"
+zinit light "$_zsh_config_dir/plugins/atuin"
 
 # Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.
 zinit light zsh-users/zsh-autosuggestions

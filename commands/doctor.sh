@@ -23,7 +23,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '  JSON validity      : .dots-selection.json, manifest.json\n'
     printf '  Hash drift         : computed source_hash vs manifest stored hash\n'
     printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'
-    printf '                       BAT_THEME sentinels in .zshrc, ZDOTDIR in .zshenv\n\n'
+    printf '                       BAT_THEME sentinels in .zshrc\n\n'
     printf 'OPTIONS\n'
     printf '  --help, -h   Print this message and exit 0 without running checks.\n\n'
     printf 'EXAMPLES\n'

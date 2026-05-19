@@ -193,9 +193,9 @@ check_ghostty_theme() {
 
 # check_bat_theme_block
 #   Checks that both the begin and end sentinels for the BAT_THEME apply_block
-#   are present in $HOME/.config/zsh/.zshrc.
+#   are present in $HOME/.zshrc.
 check_bat_theme_block() {
-    _zshrc="${HOME}/.config/zsh/.zshrc"
+    _zshrc="${HOME}/.zshrc"
     _cbt_ok=0
 
     check_contains "${_zshrc}" \
@@ -209,15 +209,9 @@ check_bat_theme_block() {
     return "${_cbt_ok}"
 }
 
-check_zdotdir() {
-    check_contains "${HOME}/.zshenv" \
-        "ZDOTDIR" \
-        "ZDOTDIR layout in .zshenv"
-}
-
 # ---------------------------------------------------------------------------
 # Registry — space-separated list consumed by commands/doctor.sh
 # ---------------------------------------------------------------------------
 # shellcheck disable=SC2034
-DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_selection_exists check_selection_json check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block check_zdotdir"
+DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_selection_exists check_selection_json check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block"
 export DOCTOR_CHECKS

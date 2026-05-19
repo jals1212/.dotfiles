@@ -104,7 +104,7 @@ Lookup order: `.dots-selection.local.json` (if present) takes precedence over `.
 ./dots doctor --help
 ```
 
-`doctor` runs local, non-mutating health checks against deployed dotfiles. Checks cover required paths, Oh My Posh JSON syntax, config-content markers (tmux prefix, Ghostty theme block, BAT_THEME, ZDOTDIR), and Homebrew presence.
+`doctor` runs local, non-mutating health checks against deployed dotfiles. Checks cover required paths, Oh My Posh JSON syntax, config-content markers (tmux prefix, Ghostty theme block, BAT_THEME), and Homebrew presence.
 
 Doctor does not install dependencies, repair files, or perform network calls. Run it after install/update/reload to catch config drift.
 

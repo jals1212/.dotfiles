@@ -103,7 +103,7 @@ deploy_bat_cache
 _theme_tc="$(printf '%s' "${_theme}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_theme}" | cut -c2-)"
 _flavor_tc="$(printf '%s' "${_flavor}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_flavor}" | cut -c2-)"
 _bat_theme_name="${_theme_tc}-${_flavor_tc}"
-_zshrc="${HOME}/.config/zsh/.zshrc"
+_zshrc="${HOME}/.zshrc"
 if [ -f "${_zshrc}" ]; then
     log_step "Injecting BAT_THEME block into ${_zshrc}..."
     apply_block "${_zshrc}" "bat-theme" "export BAT_THEME=\"${_bat_theme_name}\""

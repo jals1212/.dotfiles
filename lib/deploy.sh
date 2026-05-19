@@ -50,14 +50,14 @@ deploy_apply_template() {
 
     # The eight template files (paths relative to $HOME/.config or $HOME)
     _dat_files="
-${HOME}/.config/zsh/.zshrc
-${HOME}/.config/zsh/.zprofile
+${HOME}/.zshrc
+${HOME}/.zprofile
+${HOME}/.zshenv
 ${HOME}/.config/tmux/tmux.conf
 ${HOME}/.config/nvim/lua/plugins/colorschemes.lua
 ${HOME}/.config/nvim/lua/config/lazy.lua
 ${HOME}/.config/ghostty/config
 ${HOME}/.config/atuin/config.toml
-${HOME}/.zshenv
 "
 
     printf '%s\n' "${_dat_files}" | while IFS= read -r _dat_f; do
