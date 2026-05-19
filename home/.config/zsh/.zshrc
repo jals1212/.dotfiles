@@ -2,12 +2,16 @@
 # Theme: DOTS_THEME/DOTS_FLAVOR (via Oh My Posh)
 
 # ── Zinit ────────────────────────────────────────────
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [[ ! -d "$ZINIT_HOME" ]]; then
-  mkdir -p "$(dirname $ZINIT_HOME)"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
-fi
-source "${ZINIT_HOME}/zinit.zsh"
+# Sourced from Homebrew (Brewfile: brew "zinit"). HOMEBREW_PREFIX is exported
+# by `brew shellenv` in .zshenv. Fall back to known prefixes if unset.
+: "${HOMEBREW_PREFIX:=$(command -v brew >/dev/null 2>&1 && brew --prefix 2>/dev/null)}"
+for _zinit_dir in "${HOMEBREW_PREFIX}/opt/zinit" /opt/homebrew/opt/zinit /usr/local/opt/zinit /home/linuxbrew/.linuxbrew/opt/zinit; do
+  if [[ -f "${_zinit_dir}/zinit.zsh" ]]; then
+    source "${_zinit_dir}/zinit.zsh"
+    break
+  fi
+done
+unset _zinit_dir
 
 # ── History ──────────────────────────────────────────
 # Atuin is the history source of truth. Keep native zsh history ephemeral.
