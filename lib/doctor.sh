@@ -113,18 +113,6 @@ check_gum() {
 }
 
 # ---------------------------------------------------------------------------
-# Concrete checks — selection file (task 6.2)
-# ---------------------------------------------------------------------------
-
-check_selection_exists() {
-    check_file "${REPO_ROOT}/.dots-selection.json" "Selection file exists"
-}
-
-check_selection_json() {
-    check_json "${REPO_ROOT}/.dots-selection.json" "Selection file is valid JSON"
-}
-
-# ---------------------------------------------------------------------------
 # Concrete checks — manifest (task 6.2)
 # ---------------------------------------------------------------------------
 
@@ -213,5 +201,5 @@ check_bat_theme_block() {
 # Registry — space-separated list consumed by commands/doctor.sh
 # ---------------------------------------------------------------------------
 # shellcheck disable=SC2034
-DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_selection_exists check_selection_json check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block"
+DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block"
 export DOCTOR_CHECKS

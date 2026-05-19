@@ -14,6 +14,44 @@
 # Order matches the spec-mandated default: zsh tmux nvim ghostty oh-my-posh atuin zoxide.
 _SELECT_TOOLS="zsh tmux nvim ghostty oh-my-posh atuin zoxide"
 
+# Hardcoded defaults consumed when no manifest exists (fresh clone).
+_SELECT_DEFAULT_THEME="kanagawa"
+_SELECT_DEFAULT_FLAVOR="dragon"
+_SELECT_DEFAULT_ACCENT="mauve"
+_SELECT_DEFAULT_TOOLS_CSV="zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide"
+
+# ---------------------------------------------------------------------------
+# read_current_selection <repo_root>
+#   Returns the current "selection state" as a single space-separated line:
+#       <theme> <flavor> <accent> <tools_csv>
+#   Source of truth (in order):
+#     1. ${repo_root}/manifest.json (post-apply state) when present and valid.
+#     2. Hardcoded defaults from this file.
+#   Note: the transitory .dots-selection.json is intentionally NOT consulted;
+#   it represents intent-in-progress, not state.
+# ---------------------------------------------------------------------------
+read_current_selection() {
+    _rcs_repo="${1:?read_current_selection: repo_root required}"
+    _rcs_manifest="${_rcs_repo}/manifest.json"
+
+    if [ -f "${_rcs_manifest}" ] && jq empty "${_rcs_manifest}" 2>/dev/null; then
+        _rcs_theme="$(jq -r '.theme // empty' "${_rcs_manifest}")"
+        _rcs_flavor="$(jq -r '.flavor // empty' "${_rcs_manifest}")"
+        _rcs_accent="$(jq -r '.accent // empty' "${_rcs_manifest}")"
+        _rcs_tools="$(jq -r '.tools | join(",") // empty' "${_rcs_manifest}")"
+        if [ -n "${_rcs_theme}" ] && [ -n "${_rcs_flavor}" ] && [ -n "${_rcs_tools}" ]; then
+            printf '%s %s %s %s\n' "${_rcs_theme}" "${_rcs_flavor}" "${_rcs_accent:-${_SELECT_DEFAULT_ACCENT}}" "${_rcs_tools}"
+            return 0
+        fi
+    fi
+
+    printf '%s %s %s %s\n' \
+        "${_SELECT_DEFAULT_THEME}" \
+        "${_SELECT_DEFAULT_FLAVOR}" \
+        "${_SELECT_DEFAULT_ACCENT}" \
+        "${_SELECT_DEFAULT_TOOLS_CSV}"
+}
+
 # ---------------------------------------------------------------------------
 # _check_gum
 #   Verifies gum is available; exits 1 with error if not.
@@ -136,12 +174,14 @@ validate_tools() {
 }
 
 # ---------------------------------------------------------------------------
-# select_theme <repo_root>
+# select_theme <repo_root> [current_theme]
 #   Presents a gum choose picker over available themes.
+#   If current_theme is provided and matches an available theme, gum pre-focuses it.
 #   Prints chosen theme to stdout.
 # ---------------------------------------------------------------------------
 select_theme() {
     _st_root="${1}"
+    _st_current="${2:-}"
     _st_themes_dir="${_st_root}/assets/themes/oh-my-posh"
 
     _check_gum
@@ -154,8 +194,13 @@ select_theme() {
         exit 1
     fi
 
+    _st_selected_arg=""
+    if [ -n "${_st_current}" ]; then
+        _st_selected_arg="--selected=${_st_current}"
+    fi
+
     # shellcheck disable=SC2086
-    _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "Select a theme:")"
+    _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "Select a theme:" ${_st_selected_arg})"
     if [ -z "${_st_chosen}" ]; then
         log_error "No theme selected. Exiting."
         exit 1
@@ -165,13 +210,15 @@ select_theme() {
 }
 
 # ---------------------------------------------------------------------------
-# select_flavor <repo_root> <theme>
+# select_flavor <repo_root> <theme> [current_flavor]
 #   Presents a gum choose picker over available flavors for the given theme.
+#   If current_flavor is provided and matches, gum pre-focuses it.
 #   Prints chosen flavor to stdout.
 # ---------------------------------------------------------------------------
 select_flavor() {
     _sf_root="${1}"
     _sf_theme="${2}"
+    _sf_current="${3:-}"
     _sf_theme_dir="${_sf_root}/assets/themes/oh-my-posh/${_sf_theme}"
 
     _check_gum
@@ -184,8 +231,13 @@ select_flavor() {
         exit 1
     fi
 
+    _sf_selected_arg=""
+    if [ -n "${_sf_current}" ]; then
+        _sf_selected_arg="--selected=${_sf_current}"
+    fi
+
     # shellcheck disable=SC2086
-    _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "Select a flavor for ${_sf_theme}:")"
+    _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "Select a flavor for ${_sf_theme}:" ${_sf_selected_arg})"
     if [ -z "${_sf_chosen}" ]; then
         log_error "No flavor selected. Exiting."
         exit 1
@@ -203,6 +255,7 @@ select_flavor() {
 select_accent() {
     _sa_root="${1}"
     _sa_theme="${2}"
+    _sa_current="${3:-}"
 
     if [ "${_sa_theme}" != "catppuccin" ]; then
         printf 'mauve'
@@ -221,8 +274,13 @@ select_accent() {
         exit 1
     fi
 
+    _sa_selected_arg=""
+    if [ -n "${_sa_current}" ]; then
+        _sa_selected_arg="--selected=${_sa_current}"
+    fi
+
     # shellcheck disable=SC2086
-    _sa_chosen="$(printf '%s\n' ${_sa_accents} | gum choose --header "Select an accent color:")"
+    _sa_chosen="$(printf '%s\n' ${_sa_accents} | gum choose --header "Select an accent color:" ${_sa_selected_arg})"
     if [ -z "${_sa_chosen}" ]; then
         log_error "No accent selected. Exiting."
         exit 1
@@ -240,6 +298,7 @@ select_accent() {
 # ---------------------------------------------------------------------------
 select_tools() {
     _stl_root="${1}"
+    _stl_current_csv="${2:-${_SELECT_DEFAULT_TOOLS_CSV}}"
     # repo_root unused directly here but kept for signature consistency
     : "${_stl_root}"
 
@@ -250,7 +309,7 @@ select_tools() {
         _stl_chosen="$(printf '%s\n' ${_SELECT_TOOLS} | \
             gum choose --no-limit \
                 --header "Select tools to install (SPACE to toggle, ENTER to confirm):" \
-                --selected="zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide")"
+                --selected="${_stl_current_csv}")"
 
         if [ -z "${_stl_chosen}" ]; then
             log_warn "At least one tool must be selected. Please try again."

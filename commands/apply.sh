@@ -117,4 +117,8 @@ _hash="$(source_hash "${REPO_ROOT}")"
 manifest_write "${REPO_ROOT}/manifest.json" \
     "${_theme}" "${_flavor}" "${_accent}" "${_tools_csv}" "${_hash}"
 
+# Consume the transitory selection file. Manifest is now authoritative.
+rm -f "${REPO_ROOT}/.dots-selection.json"
+log_info "Selection consumed; manifest is authoritative."
+
 log_info "Apply complete. Theme: ${_theme}/${_flavor}"

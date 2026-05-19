@@ -38,11 +38,11 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/manifest.sh"
 
 # ---------------------------------------------------------------------------
-# Read and validate selection
+# Read selection from manifest (authoritative post-apply state)
 # ---------------------------------------------------------------------------
-_sel="${REPO_ROOT}/.dots-selection.json"
-if [ ! -f "${_sel}" ]; then
-    log_error ".dots-selection.json not found. Run: ./dots select"
+_manifest="${REPO_ROOT}/manifest.json"
+if [ ! -f "${_manifest}" ]; then
+    log_error "manifest.json not found. Run: ./dots apply first."
     exit 1
 fi
 
@@ -51,17 +51,17 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 1
 fi
 
-_theme="$(jq -r '.theme  // empty' "${_sel}")"
-_flavor="$(jq -r '.flavor // empty' "${_sel}")"
-_accent="$(jq -r '.accent // empty' "${_sel}")"
+_theme="$(jq -r '.theme  // empty' "${_manifest}")"
+_flavor="$(jq -r '.flavor // empty' "${_manifest}")"
+_accent="$(jq -r '.accent // empty' "${_manifest}")"
 
 if [ -z "${_theme}" ] || [ -z "${_flavor}" ]; then
-    log_error "Selection file missing 'theme' or 'flavor'. Re-run: ./dots select"
+    log_error "Manifest missing 'theme' or 'flavor'. Re-run: ./dots apply."
     exit 1
 fi
 
 _accent="${_accent:-mauve}"
-_tools_csv="$(jq -r '.tools | join(",")' "${_sel}")"
+_tools_csv="$(jq -r '.tools | join(",")' "${_manifest}")"
 
 log_step "Validating selection: theme=${_theme} flavor=${_flavor}"
 validate_theme  "${REPO_ROOT}" "${_theme}"

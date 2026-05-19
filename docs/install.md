@@ -33,11 +33,19 @@ cd ~/.dotfiles
 
 Supported flags: `--yes`, `--theme`, `--flavor`, `--accent`, `--tools`.
 
-With `--yes`, the wizard is skipped and the existing `.dots-selection.json` is used (or defaults are written if absent).
+With `--yes`, the wizard is skipped: `./dots select --yes` materializes a transitory `.dots-selection.json` from `manifest.json` (if present) or hardcoded defaults, and `./dots apply` consumes it.
 
-## Selection file format
+## Selection lifecycle
 
-`./dots select` writes a `.dots-selection.json` at the repository root:
+`.dots-selection.json` is **transitory** — it lives only between `./dots select` and `./dots apply`. Once apply writes the manifest, the selection file is removed; the manifest becomes the source of truth.
+
+The file is listed in `.gitignore` and is never committed.
+
+**Lifecycle:**
+
+1. `./dots select` writes `.dots-selection.json` pre-populated from `manifest.json` (post-apply state) if present, else from hardcoded defaults in `lib/select.sh`.
+2. `./dots apply` reads `.dots-selection.json`, deploys, writes `manifest.json`, then removes `.dots-selection.json`.
+3. `./dots update` and `./dots reload` read theme/flavor/accent/tools from `manifest.json`; they do not require the selection file.
 
 ```json
 {
@@ -66,33 +74,14 @@ With `--yes`, the wizard is skipped and the existing `.dots-selection.json` is u
 
 The selection wizard rejects unknown themes or flavors (no matching asset under `assets/themes/oh-my-posh/<theme>/<flavor>.json`) with a non-zero exit.
 
-## Local override pattern
-
-For machine-specific preferences that should not be committed, create `.dots-selection.local.json` next to `.dots-selection.json`:
-
-```json
-{
-  "theme": "catppuccin",
-  "flavor": "mocha",
-  "accent": "mauve",
-  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"]
-}
-```
-
-Lookup order: `.dots-selection.local.json` (if present) takes precedence over `.dots-selection.json`.
-
-`.dots-selection.local.json` is listed in `.gitignore` and is never committed. The committed `.dots-selection.json` holds shared defaults.
-
-> **Note:** `.local.json` precedence is specified in the selection-file spec and is the intended behavior. Verify that `commands/apply.sh` in your checkout implements this check if you rely on it; the pattern will be wired automatically once the precedence logic is added to the apply/update/reload commands.
-
 ## Interactive subcommands
 
 | Command | Description |
 | --- | --- |
-| `./dots select` | Re-run the theme/tool wizard; writes `.dots-selection.json`. |
-| `./dots apply` | Validate selection → backup → deploy → write manifest. |
-| `./dots update` | Re-deploy configs and theme assets without checking source hash. |
-| `./dots reload` | Re-deploy only when `home/` or `assets/themes/` source hash changed; `--force` skips the check. |
+| `./dots select` | Re-run the theme/tool wizard; writes the transitory `.dots-selection.json` (pre-populated from manifest or defaults). |
+| `./dots apply` | Validate selection → backup → deploy → write manifest → remove the transitory selection. |
+| `./dots update` | Re-deploy using state from `manifest.json`; no source-hash check. |
+| `./dots reload` | Re-deploy using state from `manifest.json` only when source hash differs; `--force` skips the check. |
 | `./dots doctor` | Non-mutating health checks on deployed dotfiles. |
 | `./dots restore --latest` | Restore the newest backup from `$HOME/.dotfiles_backups/`. |
 | `./dots uninstall` | Remove managed payload and `manifest.json`. |

@@ -6,6 +6,6 @@ backups/
 manifest.json
 tmp/
 *.log
-.dots-selection.local.json
+.dots-selection.json
 .backups/
 *.bak
