@@ -25,13 +25,13 @@ Supported themes: `kanagawa` (flavors: `wave`, `dragon`, `lotus`), `catppuccin` 
 Useful follow-up commands:
 
 ```sh
-./dots select      # re-run theme/tool wizard
-./dots apply       # deploy from saved selection
-./dots update      # re-deploy configs only
-./dots reload      # re-deploy only when source configs changed
+./dots select      # wizard + full deploy (interactive change)
+./dots apply       # non-interactive replay of the deploy pipeline
+./dots update      # forced re-deploy from manifest (no backup, no hash check)
+./dots sync        # re-deploy only when source hash differs from manifest (--force to override)
 ./dots doctor      # validate deployed dotfiles locally
-./dots uninstall   # remove deployed configs
 ./dots restore --latest # restore newest backup
+./dots uninstall   # remove deployed configs and manifest.json
 make lint          # shellcheck all scripts
 make e2e           # Docker E2E smoke suite
 ```
@@ -60,18 +60,16 @@ make e2e           # Docker E2E smoke suite
 
 ```text
 .
-├── bootstrap.sh        # Entry point: Homebrew + wizard + apply
-├── dots                # Dispatcher: select, apply, update, reload, doctor, restore, uninstall
+├── bootstrap.sh        # Entry point: Homebrew + Brewfile + select
+├── dots                # Dispatcher: select, apply, update, sync, doctor, restore, uninstall
 ├── commands/           # Subcommand scripts (POSIX sh)
 ├── lib/                # Shared library scripts (log, detect, brew, select, deploy, backup, manifest, doctor)
 ├── home/               # Managed files copied into $HOME
-│   ├── .config/
 │   ├── .zshrc
+│   ├── .zshenv
 │   ├── .zprofile
-│   ├── .zalias
-│   ├── .zfunc
-│   └── .zkey
-├── assets/themes/      # Source theme assets by tool/family/flavor
+│   └── .config/        # Tool configs (nvim, tmux, ghostty, oh-my-posh,
+│                       #   atuin, bat, bottom, eza, fzf, lazygit, zsh/)
 ├── assets/themes/      # Source theme assets by tool/family/flavor
 ├── docs/               # User-facing docs
 ├── Brewfile            # Package list (Homebrew)
