@@ -181,7 +181,8 @@ check_ghostty_theme() {
 
 # check_bat_theme_block
 #   Checks that both the begin and end sentinels for the BAT_THEME apply_block
-#   are present in $HOME/.zshrc.
+#   are present in $HOME/.zshrc, and that the block contains the canonical
+#   `export BAT_THEME="dots"` literal.
 check_bat_theme_block() {
     _zshrc="${HOME}/.zshrc"
     _cbt_ok=0
@@ -194,12 +195,31 @@ check_bat_theme_block() {
         "# dots:bat-theme end" \
         "BAT_THEME block end sentinel in .zshrc" || _cbt_ok=1
 
+    check_contains "${_zshrc}" \
+        'export BAT_THEME="dots"' \
+        'BAT_THEME="dots" literal in .zshrc' || _cbt_ok=1
+
     return "${_cbt_ok}"
+}
+
+check_bat_theme_dst() {
+    check_file "${HOME}/.config/bat/themes/dots.tmTheme" \
+        "bat dots.tmTheme deployed"
+}
+
+check_fzf_theme_dst() {
+    check_file "${HOME}/.config/fzf/themes/dots.sh" \
+        "fzf themes/dots.sh deployed"
+}
+
+check_eza_theme_dst() {
+    check_file "${HOME}/.config/eza/themes/dots.sh" \
+        "eza themes/dots.sh deployed"
 }
 
 # ---------------------------------------------------------------------------
 # Registry — space-separated list consumed by commands/doctor.sh
 # ---------------------------------------------------------------------------
 # shellcheck disable=SC2034
-DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block"
+DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block check_bat_theme_dst check_fzf_theme_dst check_eza_theme_dst"
 export DOCTOR_CHECKS
