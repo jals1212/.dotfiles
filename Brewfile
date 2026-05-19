@@ -27,15 +27,18 @@ brew "jless"
 brew "jq"
 brew "gping"
 
+# ── Interactive / TUI helpers ─────────────────────────
+brew "gum"
+
 # ── Fonts ────────────────────────────────────────────
-cask "font-iosevka-term-nerd-font"
+cask "font-iosevka-term-nerd-font" if OS.mac?
 
 # ── Terminal ─────────────────────────────────────────
-cask "ghostty"
+cask "ghostty" if OS.mac?
 
 # ── Window manager ───────────────────────────────────
-tap "nikitabobko/tap"
-cask "nikitabobko/tap/aerospace"
+tap "nikitabobko/tap" if OS.mac?
+cask "nikitabobko/tap/aerospace" if OS.mac?
 
 # ── GUI Apps (optional — uncomment as needed) ────────
 # cask "brave-browser"
