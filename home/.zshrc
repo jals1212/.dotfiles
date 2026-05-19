@@ -8,16 +8,26 @@
 _zsh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 # ── Zinit ────────────────────────────────────────────
-# Upstream-recommended install: self-managed source + data dir under
-# ${XDG_DATA_HOME}/zinit. zinit is a plugin manager — it owns its own
-# state by design; trying to point it at a brew install (or any other
-# external source path) breaks its data-dir bookkeeping. Just let it run.
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [[ ! -d "${ZINIT_HOME}" ]]; then
-  mkdir -p "$(dirname "${ZINIT_HOME}")"
-  git clone https://github.com/zdharma-continuum/zinit.git "${ZINIT_HOME}"
+# Mirrors the snippet zdharma-continuum/zinit's installer appends to .zshrc.
+# https://github.com/zdharma-continuum/zinit/blob/main/scripts/install.sh
+#
+# Why this exact form:
+#   - chmod g-rwX on the parent dir avoids compinit "insecure dir" prompts
+#     against the data directory.
+#   - autoload + _comps[zinit]=_zinit registers the zinit completion without
+#     relying on compinit to discover _zinit via fpath (the file-based path
+#     is fragile when the data dir layout changes).
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit"
+if [[ ! -f "${ZINIT_HOME}/zinit.git/zinit.zsh" ]]; then
+  print -P "%F{33} %F{220}Installing %F{33}zdharma-continuum/zinit%F{220}…%f"
+  command mkdir -p "${ZINIT_HOME}" && command chmod g-rwX "${ZINIT_HOME}"
+  command git clone https://github.com/zdharma-continuum/zinit "${ZINIT_HOME}/zinit.git" && \
+    print -P "%F{34}Installation successful.%f%b" || \
+    print -P "%F{160}The clone has failed.%f%b"
 fi
-source "${ZINIT_HOME}/zinit.zsh"
+source "${ZINIT_HOME}/zinit.git/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
 
 # ── History ──────────────────────────────────────────
 # Atuin is the history source of truth. Keep native zsh history ephemeral.
@@ -49,9 +59,7 @@ fi
 zinit light zsh-users/zsh-completions
 
 # ── Completions ──────────────────────────────────────
-# `compinit -i` silently skips insecure entries (e.g. brew's group-writable
-# /opt/homebrew/opt) instead of prompting on every shell start.
-autoload -Uz compinit && compinit -i
+autoload -Uz compinit && compinit
 zinit cdreplay -q
 
 # fzf-tab must load after compinit, but before widget-wrapping plugins.
