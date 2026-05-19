@@ -97,18 +97,18 @@ There is no selection file. `./dots select` runs the wizard and the deploy pipel
 
 `doctor` runs local, non-mutating health checks against deployed dotfiles. Checks cover required paths, Oh My Posh JSON syntax, config-content markers (tmux prefix, Ghostty theme block, BAT_THEME), and Homebrew presence.
 
-Doctor does not install dependencies, repair files, or perform network calls. Run it after install/update/reload to catch config drift.
+Doctor does not install dependencies, repair files, or perform network calls. Run it after install/update/sync to catch config drift.
 
-## Reload vs update
+## Sync vs update
 
-Use `reload` when you only want to apply repo source drift (hash changed). Use `update` for unconditional target repair.
+Use `sync` when you only want to apply repo source drift (hash changed). Use `update` for unconditional target repair.
 
 ## Backups and manifest
 
 Before deploying, `apply` creates a timestamped backup:
 
 ```text
-$HOME/.dotfiles_backups/YYYY-MM-DD_HHMMSS/
+<repo>/.backups/<YYYY-MM-DDTHH-MM-SSZ>/
 ```
 
 A `manifest.json` at the repo root records:

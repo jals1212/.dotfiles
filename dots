@@ -35,7 +35,7 @@ _dots_help() {
     printf '  apply       Non-interactive replay of the deploy pipeline from manifest.\n' >&2
     printf '  update      Re-deploy from manifest without hash check (no backup).\n' >&2
     printf '  sync        Re-deploy only when source hash differs from manifest (or --force).\n' >&2
-    printf '  doctor      Run health checks (requires Sec 6 lib/doctor.sh).\n' >&2
+    printf '  doctor      Non-mutating health checks on deployed dotfiles.\n' >&2
     printf '  restore     Restore a backup: --latest or an explicit path.\n' >&2
     printf '  uninstall   Remove managed config files and manifest.json.\n' >&2
     printf '  help        Show this message.\n\n' >&2

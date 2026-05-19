@@ -1,8 +1,6 @@
 #!/bin/sh
 # commands/doctor.sh — run health checks via lib/doctor.sh
 # POSIX sh. Invoked by the dots dispatcher or directly.
-# NOTE: lib/doctor.sh is implemented in Sec 6. Until then this command exits 1
-# with a clear message (forward-ref approach — no stub functions here).
 
 set -eu
 
@@ -23,7 +21,9 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '  JSON validity      : manifest.json\n'
     printf '  Hash drift         : computed source_hash vs manifest stored hash\n'
     printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'
-    printf '                       BAT_THEME sentinels in .zshrc\n\n'
+    printf '                       BAT_THEME="dots" block in .zshrc\n'
+    printf '  Theme dst files    : bat/themes/dots.tmTheme, fzf/themes/dots.sh,\n'
+    printf '                       eza/themes/dots.sh\n\n'
     printf 'OPTIONS\n'
     printf '  --help, -h   Print this message and exit 0 without running checks.\n\n'
     printf 'EXAMPLES\n'
@@ -47,11 +47,11 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/detect.sh"
 
 # ---------------------------------------------------------------------------
-# Defensively source lib/doctor.sh (Sec 6 pending)
+# Source lib/doctor.sh (defines check_* functions and DOCTOR_CHECKS registry)
 # ---------------------------------------------------------------------------
 _doctor_lib="${REPO_ROOT}/lib/doctor.sh"
 if [ ! -f "${_doctor_lib}" ]; then
-    log_error "lib/doctor.sh missing (Sec 6 pending)"
+    log_error "lib/doctor.sh missing"
     exit 1
 fi
 # shellcheck disable=SC1090,SC1091
