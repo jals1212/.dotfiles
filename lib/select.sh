@@ -27,8 +27,7 @@ _SELECT_DEFAULT_TOOLS_CSV="zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide"
 #   Source of truth (in order):
 #     1. ${repo_root}/manifest.json (post-apply state) when present and valid.
 #     2. Hardcoded defaults from this file.
-#   Note: the transitory .dots-selection.json is intentionally NOT consulted;
-#   it represents intent-in-progress, not state.
+#   No transitory selection file exists — the manifest is the only durable state.
 # ---------------------------------------------------------------------------
 read_current_selection() {
     _rcs_repo="${1:?read_current_selection: repo_root required}"

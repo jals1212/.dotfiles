@@ -3,11 +3,8 @@
 # POSIX sh, set -eu.
 # Usage: ./bootstrap.sh [--yes] [--theme=NAME] [--flavor=NAME] [--accent=NAME] [--tools=LIST]
 #
-# Forward dependencies (Sec 3–5):
-#   ./dots select   — implemented by commands/select.sh (Sec 5.2)
-#   ./dots apply    — implemented by commands/apply.sh  (Sec 5.3)
-# When those files land, the forward-ref calls below naturally resolve.
-# Until then, bootstrap falls back with a clear log_warn and exit 1.
+# Flow: header → OS detect → Linux deps (if needed) → Homebrew install →
+#       brew bundle → `./dots select` (which runs the full deploy pipeline).
 
 set -eu
 
@@ -50,7 +47,7 @@ Usage: $(basename "$0") [OPTIONS]
 Bootstrap dotfiles on a fresh macOS or Linux machine.
 
 Options:
-  --yes              Non-interactive mode; skip all prompts, use committed defaults.
+  --yes              Non-interactive mode; skip all prompts, use manifest or hardcoded defaults.
   --theme=NAME       Set theme without prompting. Supported: kanagawa, catppuccin.
   --flavor=NAME      Set flavor without prompting (e.g. dragon, mocha).
   --accent=NAME      Set accent without prompting (catppuccin only, e.g. mauve).
@@ -136,30 +133,20 @@ load_brew_shellenv
 brew_bundle_install "${REPO_ROOT}/Brewfile"
 
 # ---------------------------------------------------------------------------
-# 7. Wizard (selection)
-# Forward-ref: dots select (commands/select.sh, Sec 5.2)
-# When --yes AND all of THEME/FLAVOR/TOOLS are set, skip prompts.
+# 7. Run ./dots select — wizard + full deploy pipeline in one step.
+# With --yes plus all theme/flavor/tools flags, select skips prompts.
 # ---------------------------------------------------------------------------
-_skip_wizard=0
-if [ "${YES}" = "1" ] && [ -n "${THEME}" ] && [ -n "${FLAVOR}" ] && [ -n "${TOOLS}" ]; then
-    log_info "All theme/flavor/tools flags provided with --yes; skipping interactive wizard."
-    _skip_wizard=1
+if [ ! -x "${REPO_ROOT}/dots" ]; then
+    log_error "${REPO_ROOT}/dots dispatcher is missing or not executable."
+    exit 1
 fi
 
-if [ "${_skip_wizard}" = "0" ]; then
-    # Forward-ref: ./dots select is provided by Sec 5 (commands/select.sh via dots dispatcher).
-    if [ -x "${REPO_ROOT}/dots" ]; then
-        "${REPO_ROOT}/dots" select \
-            ${THEME:+--theme="${THEME}"} \
-            ${FLAVOR:+--flavor="${FLAVOR}"} \
-            ${ACCENT:+--accent="${ACCENT}"} \
-            ${TOOLS:+--tools="${TOOLS}"}
-    else
-        log_warn "Interactive wizard not yet available (./dots dispatcher pending Sec 5)."
-        log_warn "Re-run after Sec 5 lands, or use: ./bootstrap.sh --yes --theme=kanagawa --flavor=dragon --tools=zsh,tmux,nvim,oh-my-posh,atuin,zoxide,ghostty"
-        exit 1
-    fi
-fi
+_yes_arg=""
+[ "${YES}" = "1" ] && _yes_arg="--yes"
 
-# Step 7 (./dots select) runs the full pipeline (backup → deploy → manifest).
-# No separate apply step is needed.
+"${REPO_ROOT}/dots" select \
+    ${_yes_arg} \
+    ${THEME:+--theme="${THEME}"} \
+    ${FLAVOR:+--flavor="${FLAVOR}"} \
+    ${ACCENT:+--accent="${ACCENT}"} \
+    ${TOOLS:+--tools="${TOOLS}"}

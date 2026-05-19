@@ -12,7 +12,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf 'dots update - re-deploy dotfiles unconditionally\n\n' >&2
     printf 'USAGE\n' >&2
     printf '  ./dots update\n\n' >&2
-    printf 'Reads .dots-selection.json, deploys the payload, and refreshes manifest.json.\n' >&2
+    printf 'Reads manifest.json, deploys the payload unconditionally, and refreshes manifest.json.\n' >&2
     printf "Does NOT create a backup. Use './dots apply' for a backup-before-deploy flow.\n" >&2
     exit 0
 fi
