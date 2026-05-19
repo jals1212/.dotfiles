@@ -11,7 +11,12 @@ SH_FILES := $(shell find . -name '*.sh' \
 # ---------------------------------------------------------------------------
 lint:
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck --shell=sh $(SH_FILES); \
+		find . -name '*.sh' \
+			-not -path './tmp/*' \
+			-not -path './openspec/*' \
+			-not -path './.git/*' \
+			-exec shellcheck --shell=sh {} +; \
+		shellcheck --shell=sh dots; \
 	else \
 		echo "shellcheck not found; skipping lint" >&2; \
 		exit 1; \
