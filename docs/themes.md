@@ -1,12 +1,12 @@
 # Themes
 
-The installer deploys themes from source assets in `assets/themes/` and writes selected values into managed configs under `home/`.
+Themes are deployed from source assets in `assets/themes/` and written into managed configs under `home/` by `./dots apply`.
 
 ## Defaults
 
 - Default family: `kanagawa`
 - Default flavor: `dragon`
-- Non-interactive override: `DOTS_THEME=<family> DOTS_FLAVOR=<flavor> ./dots install --yes`
+- Non-interactive override: `./bootstrap.sh --yes --theme=<family> --flavor=<flavor>`
 
 ## Supported families and flavors
 
@@ -78,13 +78,13 @@ Do not convert OMP assets to TOML unless the repo decision changes.
 
 ## bat cache behavior
 
-After deploying a bat theme, the installer checks whether `bat` exists before running:
+After deploying a bat theme, `./dots apply` checks whether `bat` exists before running:
 
 ```bash
 bat cache --build
 ```
 
-If `bat` is missing, the installer logs an informational skip instead of failing. The E2E suite asserts the install output stays quiet and does not expose bat cache internals like `Writing theme set`.
+If `bat` is missing, the deploy logs an informational skip instead of failing. The E2E suite asserts the apply output stays quiet and does not expose bat cache internals like `Writing theme set`.
 
 ## Ghostty shader policy
 
@@ -104,11 +104,10 @@ Do not add extra Ghostty shaders unless the policy changes.
 4. Confirm configs using placeholders still render correctly.
 5. Validate:
 
-```bash
-make test
+```sh
+make lint
 ./dots doctor
-make docker-test
-openspec validate --all --strict
+make e2e
 ```
 
 Run `./dots doctor` after deploying a changed theme locally so the generated marker blocks, required config files, Oh My Posh JSON, Ghostty theme block, and related smoke checks are verified against `$HOME`.

@@ -2,159 +2,141 @@
 
 ## Prerequisites
 
-- macOS or Linux shell environment.
-- Go for local builds.
-- Docker/OrbStack only if running the E2E suite.
-- On macOS, Homebrew is expected for the package set in `Brewfile`.
+**macOS**: `curl` only. Git is picked up via Xcode Command Line Tools or installed automatically by Homebrew.
 
-The installer is intentionally current-state only: old layouts and deprecated workflows are not preserved.
+**Linux**: `curl`, `git`, and `sudo`. The bootstrap installs build-essential (or equivalent) and Homebrew via `sudo` before running the Brewfile.
 
-## Build
+No Go or Docker required for a standard install.
 
-```bash
-make build
+## Bootstrap
+
+```sh
+git clone <repo> ~/.dotfiles
+cd ~/.dotfiles
+./bootstrap.sh
 ```
 
-This compiles `installer/cmd/dots` into the root `./dots` binary.
+`bootstrap.sh` orchestrates:
 
-## Interactive install
-
-```bash
-./dots
-# or
-./dots install
-```
-
-The TUI walks through:
-
-1. theme family selection,
-2. flavor selection,
-3. theme preview,
-4. tool selection,
-5. backup confirmation,
-6. installation progress,
-7. summary and post-install instructions.
-
-Default selected tools are Ghostty, tmux, Neovim, Oh My Posh, Atuin, zoxide, and Zsh.
+1. OS/arch detection.
+2. Linux system deps (`apt-get` / `dnf` / `pacman` — build-essential, curl, git, unzip, fontconfig).
+3. Homebrew install (if missing).
+4. `brew bundle --file=Brewfile`.
+5. Interactive theme/tool wizard (`./dots select`).
+6. Deploy (`./dots apply`).
 
 ## Non-interactive install
 
-```bash
-./dots install --yes
+```sh
+./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
 ```
 
-Non-interactive mode installs the default selected stack and uses environment variables for theme selection:
+Supported flags: `--yes`, `--theme`, `--flavor`, `--accent`, `--tools`.
 
-```bash
-DOTS_THEME=kanagawa DOTS_FLAVOR=dragon ./dots install --yes
-DOTS_THEME=catppuccin DOTS_FLAVOR=mocha ./dots install --yes
+With `--yes`, the wizard is skipped and the existing `.dots-selection.json` is used (or defaults are written if absent).
+
+## Selection file format
+
+`./dots select` writes a `.dots-selection.json` at the repository root:
+
+```json
+{
+  "theme": "kanagawa",
+  "flavor": "dragon",
+  "accent": "mauve",
+  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"]
+}
 ```
 
-If the variables are empty, the installer defaults to `kanagawa/dragon`.
+**Fields:**
 
-## Update configs
+| Field | Type | Description |
+| --- | --- | --- |
+| `theme` | string | Theme family. Valid: `kanagawa`, `catppuccin`. |
+| `flavor` | string | Variant within the family (see below). |
+| `accent` | string | Accent color (catppuccin only). Valid: `mauve`, `blue`, `green`, `peach`, `pink`, `red`, `yellow`. Ignored for kanagawa. |
+| `tools` | array of strings | Tools to deploy. Valid members: `zsh`, `tmux`, `nvim`, `ghostty`, `oh-my-posh`, `atuin`, `zoxide`. |
 
-```bash
-./dots update
+**Valid themes and flavors:**
+
+| Theme | Flavors |
+| --- | --- |
+| `kanagawa` | `wave`, `dragon`, `lotus` |
+| `catppuccin` | `latte`, `frappe`, `macchiato`, `mocha` |
+
+The selection wizard rejects unknown themes or flavors (no matching asset under `assets/themes/oh-my-posh/<theme>/<flavor>.json`) with a non-zero exit.
+
+## Local override pattern
+
+For machine-specific preferences that should not be committed, create `.dots-selection.local.json` next to `.dots-selection.json`:
+
+```json
+{
+  "theme": "catppuccin",
+  "flavor": "mocha",
+  "accent": "mauve",
+  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"]
+}
 ```
 
-`update` re-deploys managed configs and theme blocks from the current repository without running the full selection flow. It uses `DOTS_THEME` and `DOTS_FLAVOR`, defaulting to `kanagawa/dragon`.
+Lookup order: `.dots-selection.local.json` (if present) takes precedence over `.dots-selection.json`.
 
-## Reload when source changed
+`.dots-selection.local.json` is listed in `.gitignore` and is never committed. The committed `.dots-selection.json` holds shared defaults.
 
-```bash
-./dots reload
-./dots reload --force
-```
+> **Note:** `.local.json` precedence is specified in the selection-file spec and is the intended behavior. Verify that `commands/apply.sh` in your checkout implements this check if you rely on it; the pattern will be wired automatically once the precedence logic is added to the apply/update/reload commands.
 
-`reload` compares the current source hash for `home/` and `assets/themes/` with the `source_hash` stored in `manifest.json`. If the hash matches, it reports that configs are already current and skips deploy. If the hash is missing or changed, it re-deploys configs and saves a new manifest. Use `--force` to re-deploy regardless of the stored hash.
+## Interactive subcommands
 
-Use `update` when you want unconditional target repair; use `reload` when you only want to apply repo source drift.
+| Command | Description |
+| --- | --- |
+| `./dots select` | Re-run the theme/tool wizard; writes `.dots-selection.json`. |
+| `./dots apply` | Validate selection → backup → deploy → write manifest. |
+| `./dots update` | Re-deploy configs and theme assets without checking source hash. |
+| `./dots reload` | Re-deploy only when `home/` or `assets/themes/` source hash changed; `--force` skips the check. |
+| `./dots doctor` | Non-mutating health checks on deployed dotfiles. |
+| `./dots restore --latest` | Restore the newest backup from `$HOME/.dotfiles_backups/`. |
+| `./dots uninstall` | Remove managed payload and `manifest.json`. |
 
 ## Doctor
 
-```bash
+```sh
 ./dots doctor
 ./dots doctor --help
 ```
 
-`doctor` runs local, non-mutating health checks against deployed dotfiles. It checks required deployed paths, Oh My Posh JSON syntax, generated marker uniqueness, and essential config-content smoke checks for the managed shell, Neovim, tmux, Ghostty, bat, and AeroSpace files.
+`doctor` runs local, non-mutating health checks against deployed dotfiles. Checks cover required paths, Oh My Posh JSON syntax, config-content markers (tmux prefix, Ghostty theme block, BAT_THEME, ZDOTDIR), and Homebrew presence.
 
-Doctor intentionally does not install dependencies, repair files, call package managers, or perform network checks. Use it after install/update/reload to catch local config drift before opening the tools.
+Doctor does not install dependencies, repair files, or perform network calls. Run it after install/update/reload to catch config drift.
 
-## Uninstall
+## Reload vs update
 
-```bash
-./dots uninstall
-```
-
-`uninstall` removes managed payload entries that correspond to files/directories under `home/` and removes the repo-local `manifest.json`. Use `dots restore` if you want to restore a backup afterward.
-
-## Restore
-
-```bash
-./dots restore --latest
-./dots restore "$HOME/.dotfiles_backups/YYYY-MM-DD_HHMMSS"
-```
-
-`restore --latest` selects the lexicographically newest backup directory under `$HOME/.dotfiles_backups`. A specific backup path restores that directory instead. Restore overwrites matching files in `$HOME`.
+Use `reload` when you only want to apply repo source drift (hash changed). Use `update` for unconditional target repair.
 
 ## Backups and manifest
 
-When backup is enabled from the TUI, existing managed targets are copied to:
+Before deploying, `apply` creates a timestamped backup:
 
 ```text
 $HOME/.dotfiles_backups/YYYY-MM-DD_HHMMSS/
 ```
 
-The installer writes a repo-local `manifest.json` with deployment metadata:
+A `manifest.json` at the repo root records:
 
 - `deployed_at`
 - `version`
 - `theme`
 - `flavor`
+- `accent`
 - `source_hash`
-
-## Validation
-
-Fast local validation:
-
-```bash
-make test
-openspec validate --all --strict
-```
-
-After deploying configs locally, run:
-
-```bash
-./dots doctor
-```
-
-Full E2E validation:
-
-```bash
-make docker-test
-```
-
-`make docker-test` performs these steps:
-
-1. builds `./dots`,
-2. builds `installer/Dockerfile` as `dots-test`,
-3. runs `installer/e2e/e2e_test.sh` inside the container.
-
-The E2E suite checks CLI help, non-interactive install, deployed config files, quiet bat cache output, JSON validity for Oh My Posh, key shortcut policy, Ghostty shader policy, update idempotency, and reload no-op behavior.
-It also verifies that `dots restore --latest` restores backed-up files.
 
 ## Post-install checks
 
-```bash
+```sh
 exec zsh
 ./dots doctor
 which oh-my-posh
 bat --config-dir
 nvim
 ```
-
-`dots doctor` is the repo-owned smoke check for deployed dotfiles. It validates local files and config content only; it does not replace opening tmux/Neovim/Ghostty or installing tmux/LazyVim plugins on first launch.
 
 Tmux uses `Ctrl-a` as prefix. Install/update tmux plugins with `Ctrl-a I` after opening a session.

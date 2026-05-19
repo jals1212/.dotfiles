@@ -1,27 +1,39 @@
 # 󰚌 dots
 
-Personal dotfiles managed by a Go/Bubble Tea installer.
+Personal dotfiles managed by a POSIX shell bootstrap and a `dots` dispatcher script.
 
-The repo keeps the installer code under `installer/`, the deployable home payload under `home/`, and reusable theme assets under `assets/themes/`. The default theme selection is `kanagawa/dragon`; non-interactive installs can override it with `DOTS_THEME` and `DOTS_FLAVOR`.
+The repo keeps deployable home payload under `home/`, reusable theme assets under `assets/themes/`, and shell scripts under `lib/` and `commands/`. The default theme selection is `kanagawa/dragon`.
 
 ## Quick Start
 
-```bash
-make build
-./dots              # interactive TUI
-./dots install --yes # non-interactive install
+```sh
+git clone <repo> ~/.dotfiles
+cd ~/.dotfiles
+./bootstrap.sh
 ```
+
+`bootstrap.sh` installs Homebrew (if missing), installs the Brewfile stack, runs the interactive theme/tool wizard, and deploys configs.
+
+Non-interactive (CI or headless):
+
+```sh
+./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
+```
+
+Supported themes: `kanagawa` (flavors: `wave`, `dragon`, `lotus`), `catppuccin` (flavors: `latte`, `frappe`, `macchiato`, `mocha`).
 
 Useful follow-up commands:
 
-```bash
+```sh
+./dots select      # re-run theme/tool wizard
+./dots apply       # deploy from saved selection
 ./dots update      # re-deploy configs only
 ./dots reload      # re-deploy only when source configs changed
 ./dots doctor      # validate deployed dotfiles locally
 ./dots uninstall   # remove deployed configs
 ./dots restore --latest # restore newest backup
-make test          # Go unit tests
-make docker-test   # build the Docker E2E image and run the smoke suite
+make lint          # shellcheck all scripts
+make e2e           # Docker E2E smoke suite
 ```
 
 ## Documentation
@@ -34,7 +46,7 @@ make docker-test   # build the Docker E2E image and run the smoke suite
 
 | Area | Tools / configs | Source |
 | --- | --- | --- |
-| Installer | Go + Bubble Tea TUI, Docker E2E harness | `installer/` |
+| Bootstrap | POSIX sh bootstrap + `dots` dispatcher, Docker E2E harness | `bootstrap.sh`, `dots`, `commands/`, `lib/` |
 | Shell | Zsh, zinit, aliases/functions/keys | `home/.zshrc`, `home/.zalias`, `home/.zfunc`, `home/.zkey` |
 | Prompt | Oh My Posh JSON config | `home/.config/oh-my-posh/config.json` |
 | Terminal | Ghostty, IosevkaTerm NF, cursor smear shader | `home/.config/ghostty/` |
@@ -48,13 +60,10 @@ make docker-test   # build the Docker E2E image and run the smoke suite
 
 ```text
 .
-├── installer/          # Go installer module
-│   ├── cmd/dots/       # CLI/TUI entry point
-│   ├── internal/system # OS detection, deploy, filesystem/runner helpers
-│   ├── internal/tui    # Bubble Tea screens and install steps
-│   ├── e2e/            # Docker E2E test script
-│   ├── Dockerfile      # E2E/runtime image used by make docker-test
-│   └── go.mod
+├── bootstrap.sh        # Entry point: Homebrew + wizard + apply
+├── dots                # Dispatcher: select, apply, update, reload, doctor, restore, uninstall
+├── commands/           # Subcommand scripts (POSIX sh)
+├── lib/                # Shared library scripts (log, detect, brew, select, deploy, backup, manifest, doctor)
 ├── home/               # Managed files copied into $HOME
 │   ├── .config/
 │   ├── .zshrc
@@ -63,18 +72,19 @@ make docker-test   # build the Docker E2E image and run the smoke suite
 │   ├── .zfunc
 │   └── .zkey
 ├── assets/themes/      # Source theme assets by tool/family/flavor
+├── assets/themes/      # Source theme assets by tool/family/flavor
 ├── docs/               # User-facing docs
-├── Brewfile            # macOS package list
-└── Makefile            # build/test/docker entry points
+├── Brewfile            # Package list (Homebrew)
+└── Makefile            # lint/test/e2e/clean entry points
 ```
 
 ## Post-Install
 
 1. Restart the shell: `exec zsh`.
-2. Open tmux and install/update plugins if needed: `tmux new -s main`, then `prefix + I` (`prefix` is `Ctrl-a`).
+2. Open tmux and install/update plugins: `tmux new -s main`, then `prefix + I` (`prefix` is `Ctrl-a`).
 3. Open Neovim; LazyVim plugins install on first launch.
 4. Run `./dots doctor` to validate deployed config files and local smoke checks.
-5. Run `make docker-test` before changing installer behavior or deploy assets.
+5. Run `make e2e` before changing deploy scripts or theme assets.
 
 ## License
 
