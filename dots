@@ -1,0 +1,68 @@
+#!/bin/sh
+# dots — POSIX sh dispatcher for the dotfiles manager
+# Usage: ./dots <subcommand> [args...]
+# Run ./dots help for a full command listing.
+# First-run: use ./bootstrap.sh to install dependencies and configure the system.
+
+set -eu
+
+# ---------------------------------------------------------------------------
+# Compute REPO_ROOT as the directory containing this script (resolved).
+# ---------------------------------------------------------------------------
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+export REPO_ROOT
+
+# ---------------------------------------------------------------------------
+# Source shared libraries.
+# ---------------------------------------------------------------------------
+# shellcheck source=lib/log.sh
+. "${REPO_ROOT}/lib/log.sh"
+# shellcheck source=lib/detect.sh
+. "${REPO_ROOT}/lib/detect.sh"
+# shellcheck source=lib/header.sh
+. "${REPO_ROOT}/lib/header.sh"
+
+# ---------------------------------------------------------------------------
+# _dots_help
+#   Print usage summary and exit 0.
+# ---------------------------------------------------------------------------
+_dots_help() {
+    printf 'dots - dotfiles manager\n\n' >&2
+    printf 'USAGE\n' >&2
+    printf '  ./dots <subcommand> [flags]\n\n' >&2
+    printf 'SUBCOMMANDS\n' >&2
+    printf '  select      Run the interactive theme/tool selection wizard.\n' >&2
+    printf '  apply       Read selection, backup existing configs, deploy payload, write manifest.\n' >&2
+    printf '  update      Re-deploy using current selection without hash check.\n' >&2
+    printf '  reload      Re-deploy only when source hash differs from manifest (or --force).\n' >&2
+    printf '  doctor      Run health checks (requires Sec 6 lib/doctor.sh).\n' >&2
+    printf '  restore     Restore a backup: --latest or an explicit path.\n' >&2
+    printf '  uninstall   Remove managed config files and manifest.json.\n' >&2
+    printf '  help        Show this message.\n\n' >&2
+    printf 'FLAGS (per subcommand)\n' >&2
+    printf '  --help / -h   Show subcommand usage.\n\n' >&2
+    printf 'FIRST RUN\n' >&2
+    printf '  ./bootstrap.sh    Install dependencies (Homebrew, Brewfile) and run apply.\n' >&2
+}
+
+# ---------------------------------------------------------------------------
+# Dispatcher
+# ---------------------------------------------------------------------------
+cmd="${1:-help}"
+shift 2>/dev/null || true
+
+case "${cmd}" in
+    select)    sh "${REPO_ROOT}/commands/select.sh"    "$@" ;;
+    apply)     sh "${REPO_ROOT}/commands/apply.sh"     "$@" ;;
+    update)    sh "${REPO_ROOT}/commands/update.sh"    "$@" ;;
+    reload)    sh "${REPO_ROOT}/commands/reload.sh"    "$@" ;;
+    doctor)    sh "${REPO_ROOT}/commands/doctor.sh"    "$@" ;;
+    restore)   sh "${REPO_ROOT}/commands/restore.sh"   "$@" ;;
+    uninstall) sh "${REPO_ROOT}/commands/uninstall.sh" "$@" ;;
+    help|-h|--help) _dots_help; exit 0 ;;
+    *)
+        log_error "Unknown command: ${cmd}"
+        _dots_help
+        exit 2
+        ;;
+esac
