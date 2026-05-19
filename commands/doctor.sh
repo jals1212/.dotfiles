@@ -10,12 +10,25 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots doctor - run environment health checks\n\n' >&2
-    printf 'USAGE\n' >&2
-    printf '  ./dots doctor\n\n' >&2
-    printf 'Invokes check_* functions from lib/doctor.sh.\n' >&2
-    printf 'Prints X/Y checks passed and exits 0 if all pass, 1 otherwise.\n\n' >&2
-    printf 'Requires lib/doctor.sh (implemented in Section 6 of the migration).\n' >&2
+    printf 'dots doctor — run environment health checks\n\n'
+    printf 'USAGE\n'
+    printf '  ./dots doctor [--help|-h]\n\n'
+    printf 'DESCRIPTION\n'
+    printf '  Non-mutating health check over the local environment and deployed dotfiles.\n'
+    printf '  Runs all check_* functions registered in lib/doctor.sh and prints a\n'
+    printf '  PASS/FAIL/WARN/SKIP line for each. Exits 0 when all checks pass, 1 otherwise.\n\n'
+    printf 'CHECK CATEGORIES\n'
+    printf '  Commands present   : brew, zsh, tmux, nvim, git, jq, gum\n'
+    printf '  Files present      : .dots-selection.json, manifest.json\n'
+    printf '  JSON validity      : .dots-selection.json, manifest.json\n'
+    printf '  Hash drift         : computed source_hash vs manifest stored hash\n'
+    printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'
+    printf '                       BAT_THEME sentinels in .zshrc, ZDOTDIR in .zshenv\n\n'
+    printf 'OPTIONS\n'
+    printf '  --help, -h   Print this message and exit 0 without running checks.\n\n'
+    printf 'EXAMPLES\n'
+    printf '  ./dots doctor          # Run all checks\n'
+    printf '  ./dots doctor --help   # Print usage\n'
     exit 0
 fi
 
