@@ -3,10 +3,14 @@
 
 # ── Zinit ────────────────────────────────────────────
 # Sourced from Homebrew (Brewfile: brew "zinit"). HOMEBREW_PREFIX is exported
-# by `brew shellenv` in .zshenv. Fall back to known prefixes if unset.
+# by `brew shellenv` in .zshenv. Setting ZINIT[BIN_DIR] before sourcing
+# tells zinit its source lives at the brew prefix, suppressing the
+# self-clone into ~/.local/share/zinit/zinit.git/.
 : "${HOMEBREW_PREFIX:=$(command -v brew >/dev/null 2>&1 && brew --prefix 2>/dev/null)}"
 for _zinit_dir in "${HOMEBREW_PREFIX}/opt/zinit" /opt/homebrew/opt/zinit /usr/local/opt/zinit /home/linuxbrew/.linuxbrew/opt/zinit; do
   if [[ -f "${_zinit_dir}/zinit.zsh" ]]; then
+    typeset -gA ZINIT
+    ZINIT[BIN_DIR]="${_zinit_dir}"
     source "${_zinit_dir}/zinit.zsh"
     break
   fi
