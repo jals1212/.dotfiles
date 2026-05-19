@@ -1,35 +1,43 @@
-.PHONY: build test install clean run docker-test docker-interactive docker-shell docker-clean
+.PHONY: lint test e2e clean
 
-BINARY=dots
-GOCACHE ?= /private/tmp/dotfiles-go-build
+# All .sh files excluding tmp/ and openspec/ (generated/vendored dirs)
+SH_FILES := $(shell find . -name '*.sh' \
+	-not -path './tmp/*' \
+	-not -path './openspec/*' \
+	-not -path './.git/*')
 
-build:
-	cd installer && GOCACHE=$(GOCACHE) go build -o ../$(BINARY) ./cmd/dots
+# ---------------------------------------------------------------------------
+# lint — shellcheck all POSIX sh files
+# ---------------------------------------------------------------------------
+lint:
+	@if command -v shellcheck >/dev/null 2>&1; then \
+		shellcheck --shell=sh $(SH_FILES); \
+	else \
+		echo "shellcheck not found; skipping lint" >&2; \
+		exit 1; \
+	fi
 
+# ---------------------------------------------------------------------------
+# test — bats-core unit tests (optional; skipped when bats is absent)
+# ---------------------------------------------------------------------------
 test:
-	cd installer && GOCACHE=$(GOCACHE) go test ./...
+	@if command -v bats >/dev/null 2>&1; then \
+		bats tests/; \
+	else \
+		echo "bats not installed; skipping unit tests" >&2; \
+	fi
 
-install: build
-	cp $(BINARY) /usr/local/bin/
+# ---------------------------------------------------------------------------
+# e2e — Docker smoke tests (Debian, Fedora, Arch)
+# Section 8 will add the actual e2e scripts; targets listed here for make tab.
+# ---------------------------------------------------------------------------
+e2e:
+	@for d in debian fedora arch; do \
+		sh installer/e2e/e2e_$$d.sh || exit 1; \
+	done
 
+# ---------------------------------------------------------------------------
+# clean — remove generated / ephemeral artifacts
+# ---------------------------------------------------------------------------
 clean:
-	rm -f $(BINARY)
-
-run: build
-	./$(BINARY)
-
-# Docker testing
-docker-test: build
-	docker build -f installer/Dockerfile -t dots-test .
-	docker run --rm dots-test ./installer/e2e/e2e_test.sh
-
-docker-interactive: build
-	docker build -f installer/Dockerfile -t dots-test .
-	docker run --rm -it dots-test ./dots
-
-docker-shell: build
-	docker build -f installer/Dockerfile -t dots-test .
-	docker run --rm -it dots-test /bin/bash
-
-docker-clean:
-	docker rmi dots-test 2>/dev/null || true
+	rm -rf .backups/ *.bak .dots-selection.local.json

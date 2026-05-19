@@ -6,19 +6,6 @@ backups/
 manifest.json
 tmp/
 *.log
-
-# Orchestra
-.claude/
-.codex
-.grit/
-.mcp.json
-.opencode/
-.orchestra/
-AGENTS.md
-BATON.md
-CLAUDE.md
-opencode.json
-openspec/
-orchestra
-skills/
-STACCATO.md
+.dots-selection.local.json
+.backups/
+*.bak
