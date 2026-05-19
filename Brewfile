@@ -27,9 +27,6 @@ brew "jless"
 brew "jq"
 brew "gping"
 
-# ── Shell plugins ────────────────────────────────────
-brew "zinit"
-
 # ── Interactive / TUI helpers ─────────────────────────
 brew "gum"
 

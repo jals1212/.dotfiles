@@ -8,30 +8,16 @@
 _zsh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 # ── Zinit ────────────────────────────────────────────
-# Sourced from Homebrew (Brewfile: brew "zinit"). HOMEBREW_PREFIX is exported
-# by `brew shellenv` in .zshenv. Setting ZINIT[BIN_DIR] before sourcing
-# tells zinit its source lives at the brew prefix, suppressing the
-# self-clone into ~/.local/share/zinit/zinit.git/.
-: "${HOMEBREW_PREFIX:=$(command -v brew >/dev/null 2>&1 && brew --prefix 2>/dev/null)}"
-for _zinit_dir in "${HOMEBREW_PREFIX}/opt/zinit" /opt/homebrew/opt/zinit /usr/local/opt/zinit /home/linuxbrew/.linuxbrew/opt/zinit; do
-  if [[ -f "${_zinit_dir}/zinit.zsh" ]]; then
-    typeset -gA ZINIT
-    ZINIT[BIN_DIR]="${_zinit_dir}"
-    # Expose brew-installed zinit completion (_zinit) to compinit.
-    fpath+=("${_zinit_dir}")
-    # Repair zinit's data-dir _zinit symlink. The self-clone that used to
-    # populate ~/.local/share/zinit/{zinit.git,plugins/_local---zinit}/_zinit
-    # is suppressed by the BIN_DIR pin above; without an explicit symlink to
-    # the brew install, compinit warns that the dangling target is missing.
-    if [[ -f "${_zinit_dir}/_zinit" ]]; then
-      mkdir -p "${HOME}/.local/share/zinit/completions"
-      ln -sfn "${_zinit_dir}/_zinit" "${HOME}/.local/share/zinit/completions/_zinit"
-    fi
-    source "${_zinit_dir}/zinit.zsh"
-    break
-  fi
-done
-unset _zinit_dir
+# Upstream-recommended install: self-managed source + data dir under
+# ${XDG_DATA_HOME}/zinit. zinit is a plugin manager — it owns its own
+# state by design; trying to point it at a brew install (or any other
+# external source path) breaks its data-dir bookkeeping. Just let it run.
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+if [[ ! -d "${ZINIT_HOME}" ]]; then
+  mkdir -p "$(dirname "${ZINIT_HOME}")"
+  git clone https://github.com/zdharma-continuum/zinit.git "${ZINIT_HOME}"
+fi
+source "${ZINIT_HOME}/zinit.zsh"
 
 # ── History ──────────────────────────────────────────
 # Atuin is the history source of truth. Keep native zsh history ephemeral.
