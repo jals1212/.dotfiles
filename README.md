@@ -39,6 +39,9 @@ make e2e           # Docker E2E smoke suite
 ## Documentation
 
 - [Install guide](docs/install.md) — prerequisites, workflows, Docker validation, backups, update/uninstall, and post-install checks.
+- [Tools](docs/tools.md) — brief usage and upstream links for each managed CLI tool (excluding Neovim).
+- [Aliases](docs/aliases.md) — zsh aliases, functions, and shell-level keybindings.
+- [Plugins](docs/plugins.md) — Zinit-loaded zsh plugins and TPM-loaded tmux plugins.
 - [Keymaps](docs/keymaps.md) — repo-owned Neovim, tmux, Ghostty, and AeroSpace shortcuts.
 - [Themes](docs/themes.md) — theme families/flavors, asset layout, deploy targets, and maintenance conventions.
 
