@@ -57,7 +57,9 @@ fi
 zinit light zsh-users/zsh-completions
 
 # ── Completions ──────────────────────────────────────
-autoload -Uz compinit && compinit
+# `compinit -i` silently skips insecure entries (e.g. brew's group-writable
+# /opt/homebrew/opt) instead of prompting on every shell start.
+autoload -Uz compinit && compinit -i
 zinit cdreplay -q
 
 # fzf-tab must load after compinit, but before widget-wrapping plugins.
