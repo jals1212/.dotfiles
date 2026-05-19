@@ -17,6 +17,10 @@ for _zinit_dir in "${HOMEBREW_PREFIX}/opt/zinit" /opt/homebrew/opt/zinit /usr/lo
   if [[ -f "${_zinit_dir}/zinit.zsh" ]]; then
     typeset -gA ZINIT
     ZINIT[BIN_DIR]="${_zinit_dir}"
+    # Expose brew-installed zinit completion (_zinit) to compinit.
+    # Without this, compinit warns that ~/.local/share/zinit/completions/_zinit
+    # is missing because the self-clone that used to populate it is suppressed.
+    fpath+=("${_zinit_dir}")
     source "${_zinit_dir}/zinit.zsh"
     break
   fi
