@@ -18,9 +18,15 @@ for _zinit_dir in "${HOMEBREW_PREFIX}/opt/zinit" /opt/homebrew/opt/zinit /usr/lo
     typeset -gA ZINIT
     ZINIT[BIN_DIR]="${_zinit_dir}"
     # Expose brew-installed zinit completion (_zinit) to compinit.
-    # Without this, compinit warns that ~/.local/share/zinit/completions/_zinit
-    # is missing because the self-clone that used to populate it is suppressed.
     fpath+=("${_zinit_dir}")
+    # Repair zinit's data-dir _zinit symlink. The self-clone that used to
+    # populate ~/.local/share/zinit/{zinit.git,plugins/_local---zinit}/_zinit
+    # is suppressed by the BIN_DIR pin above; without an explicit symlink to
+    # the brew install, compinit warns that the dangling target is missing.
+    if [[ -f "${_zinit_dir}/_zinit" ]]; then
+      mkdir -p "${HOME}/.local/share/zinit/completions"
+      ln -sfn "${_zinit_dir}/_zinit" "${HOME}/.local/share/zinit/completions/_zinit"
+    fi
     source "${_zinit_dir}/zinit.zsh"
     break
   fi
