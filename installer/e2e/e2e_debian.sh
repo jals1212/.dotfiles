@@ -25,7 +25,11 @@ docker run --rm \
     apt-get install -y -qq curl git sudo build-essential ca-certificates
 
     # First run: bootstrap installs Homebrew + Brewfile + applies defaults
-    ./bootstrap.sh --yes --theme kanagawa --flavor dragon
+    ./bootstrap.sh --yes
+
+    # bootstrap.sh sources brew shellenv internally; re-source it here so the
+    # subsequent docker shell commands inherit brew on PATH.
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
     # Assert: Homebrew installed and on PATH
     brew --version
