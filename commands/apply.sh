@@ -85,14 +85,13 @@ deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}" "${_accent}"
 log_step "Building bat cache..."
 deploy_bat_cache
 
-# Inject BAT_THEME block into deployed .zshrc
-_theme_tc="$(printf '%s' "${_theme}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_theme}" | cut -c2-)"
-_flavor_tc="$(printf '%s' "${_flavor}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_flavor}" | cut -c2-)"
-_bat_theme_name="${_theme_tc}-${_flavor_tc}"
+# Inject BAT_THEME block into deployed .zshrc.
+# Bat theme is materialized as dots.tmTheme by deploy_theme_assets; the env var
+# stays stable across flavor switches.
 _zshrc="${HOME}/.zshrc"
 if [ -f "${_zshrc}" ]; then
     log_step "Injecting BAT_THEME block into ${_zshrc}..."
-    apply_block "${_zshrc}" "bat-theme" "export BAT_THEME=\"${_bat_theme_name}\""
+    apply_block "${_zshrc}" "bat-theme" 'export BAT_THEME="dots"'
 fi
 
 # ---------------------------------------------------------------------------

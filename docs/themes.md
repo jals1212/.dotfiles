@@ -39,9 +39,9 @@ Kanagawa filenames sometimes include the upstream family prefix for a tool, for 
 | Atuin | Copies theme to `~/.config/atuin/themes/` and keeps config in `~/.config/atuin/config.toml` |
 | bottom | Writes `~/.config/bottom/bottom.toml` |
 | lazygit | Writes `~/.config/lazygit/config.yml` |
-| bat | Copies `.tmTheme` into `~/.config/bat/themes/` and sets `BAT_THEME` in `.zshrc` |
-| eza | Writes color variables into managed marker block in `.zshrc` |
-| fzf | Writes color variables into managed marker block in `.zshrc` |
+| bat | Copies `.tmTheme` to `~/.config/bat/themes/dots.tmTheme` and exports `BAT_THEME=dots` in `.zshrc` |
+| eza | Writes color shell snippet to `~/.config/eza/themes/dots.sh`; sourced from `.zshrc` |
+| fzf | Writes color shell snippet to `~/.config/fzf/themes/dots.sh`; sourced from `.zshrc` |
 | Ghostty | Replaces the managed theme block in `~/.config/ghostty/config` |
 | tmux | Uses `DOTS_THEME_FLAVOR` placeholder for tmux-ukiyo (`family/flavor`) |
 | Neovim | Uses the selected theme/flavor through managed config placeholders and plugin config |

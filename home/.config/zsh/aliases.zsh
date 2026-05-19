@@ -60,5 +60,5 @@ alias dots='cd ~/.dotfiles && nvim'
 alias dotsync='~/.dotfiles/dots'
 
 # FZF previews
-alias fzfbat='fzf --preview="bat --theme=Catppuccin-mocha --color=always {}"'
-alias fzfnvim='nvim $(fzf --preview="bat --theme=Catppuccin-mocha --color=always {}")'
+alias fzfbat='fzf --preview="bat --theme=dots --color=always {}"'
+alias fzfnvim='nvim $(fzf --preview="bat --theme=dots --color=always {}")'

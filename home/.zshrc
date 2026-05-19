@@ -39,12 +39,12 @@ if command -v fd >/dev/null 2>&1; then
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
-# The active fzf theme is written to ~/.config/fzf/theme.sh by `dots install`.
-[ -f ~/.config/fzf/theme.sh ] && source ~/.config/fzf/theme.sh
+# The active fzf theme is written to ~/.config/fzf/themes/dots.sh by `dots install`.
+[ -f ~/.config/fzf/themes/dots.sh ] && source ~/.config/fzf/themes/dots.sh
 
 # ── Eza ──────────────────────────────────────────────
-# The active eza colors are written to ~/.config/eza/colors.sh by `dots install`.
-[ -f ~/.config/eza/colors.sh ] && source ~/.config/eza/colors.sh
+# The active eza colors are written to ~/.config/eza/themes/dots.sh by `dots install`.
+[ -f ~/.config/eza/themes/dots.sh ] && source ~/.config/eza/themes/dots.sh
 
 # Completion definitions must be loaded before compinit.
 zinit light zsh-users/zsh-completions

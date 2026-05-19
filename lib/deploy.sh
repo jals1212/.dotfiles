@@ -106,11 +106,11 @@ _deploy_titlecase() {
 #     lazygit    : assets/themes/lazygit/<theme>/<flavor>.yml
 #                  → $HOME/.config/lazygit/config.yml
 #     bat        : assets/themes/bat/<theme>/<Titlecase-theme>-<flavor>.tmTheme
-#                  → $HOME/.config/bat/themes/<Titlecase-theme>-<flavor>.tmTheme
+#                  → $HOME/.config/bat/themes/dots.tmTheme
 #     eza        : assets/themes/eza/<theme>/<flavor>.txt
-#                  → $HOME/.config/eza/colors.sh
+#                  → $HOME/.config/eza/themes/dots.sh
 #     fzf        : assets/themes/fzf/<theme>/<flavor>.sh
-#                  → $HOME/.config/fzf/theme.sh
+#                  → $HOME/.config/fzf/themes/dots.sh
 #     ghostty    : assets/themes/ghostty/<theme>/<flavor>.conf
 #                  → $HOME/.config/ghostty/themes/dots
 # ---------------------------------------------------------------------------
@@ -180,13 +180,15 @@ deploy_theme_assets() {
     fi
 
     # ── bat ──────────────────────────────────────────────────────────────────
-    # File naming: Kanagawa-dragon.tmTheme / Catppuccin-mocha.tmTheme
+    # Source files keep upstream-style naming (Kanagawa-dragon.tmTheme,
+    # Catppuccin-mocha.tmTheme); destination is normalized to dots.tmTheme so
+    # BAT_THEME=dots stays stable across flavor switches.
     _dta_theme_tc="$(_deploy_titlecase "${_dta_theme}")"
     _dta_flavor_tc="$(_deploy_titlecase "${_dta_flavor}")"
-    _dta_bat_name="${_dta_theme_tc}-${_dta_flavor_tc}.tmTheme"
-    _dta_src="${_dta_assets}/bat/${_dta_theme}/${_dta_bat_name}"
+    _dta_bat_src_name="${_dta_theme_tc}-${_dta_flavor_tc}.tmTheme"
+    _dta_src="${_dta_assets}/bat/${_dta_theme}/${_dta_bat_src_name}"
     _dta_bat_dst_dir="${HOME}/.config/bat/themes"
-    _dta_dst="${_dta_bat_dst_dir}/${_dta_bat_name}"
+    _dta_dst="${_dta_bat_dst_dir}/dots.tmTheme"
     if [ -f "${_dta_src}" ]; then
         mkdir -p "${_dta_bat_dst_dir}"
         cp "${_dta_src}" "${_dta_dst}"
@@ -197,7 +199,7 @@ deploy_theme_assets() {
 
     # ── eza ───────────────────────────────────────────────────────────────────
     _dta_src="${_dta_assets}/eza/${_dta_theme}/${_dta_flavor}.txt"
-    _dta_dst="${HOME}/.config/eza/colors.sh"
+    _dta_dst="${HOME}/.config/eza/themes/dots.sh"
     if [ -f "${_dta_src}" ]; then
         mkdir -p "$(dirname "${_dta_dst}")"
         cp "${_dta_src}" "${_dta_dst}"
@@ -208,7 +210,7 @@ deploy_theme_assets() {
 
     # ── fzf ───────────────────────────────────────────────────────────────────
     _dta_src="${_dta_assets}/fzf/${_dta_theme}/${_dta_flavor}.sh"
-    _dta_dst="${HOME}/.config/fzf/theme.sh"
+    _dta_dst="${HOME}/.config/fzf/themes/dots.sh"
     if [ -f "${_dta_src}" ]; then
         mkdir -p "$(dirname "${_dta_dst}")"
         cp "${_dta_src}" "${_dta_dst}"
