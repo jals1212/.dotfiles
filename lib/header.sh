@@ -21,10 +21,6 @@ _header_color_code() {
             printf '170' ;;   # mauve macchiato
         catppuccin/latte)
             printf '133' ;;   # mauve latte
-        dracula|dracula/*)
-            printf '141' ;;   # purple
-        tokyonight|tokyonight/*)
-            printf '111' ;;   # blue
         *)
             printf '141' ;;   # fallback: soft purple
     esac
