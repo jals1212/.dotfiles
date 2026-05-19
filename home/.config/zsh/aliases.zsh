@@ -23,7 +23,6 @@ alias git='hub'
 
 # Shortcuts
 alias c='clear'
-alias x='exit'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'

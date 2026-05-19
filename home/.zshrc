@@ -72,6 +72,17 @@ zinit light "$_zsh_config_dir/plugins/mise"
 zinit ice has"atuin"
 zinit light "$_zsh_config_dir/plugins/atuin"
 
+# ── Oh My Zsh plugins (snippet-loaded) ───────────────
+zinit snippet OMZP::git
+zinit snippet OMZP::extract
+zinit snippet OMZP::safe-paste
+zinit snippet OMZP::copypath
+zinit snippet OMZP::copyfile
+zinit snippet OMZP::copybuffer
+zinit snippet OMZP::fancy-ctrl-z
+zinit snippet OMZP::jsontools
+zinit snippet OMZP::gh
+
 # Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.
 zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-syntax-highlighting
