@@ -15,12 +15,17 @@ printf 'E2E smoke test: %s\n' "${IMAGE}"
 printf 'Repo root:      %s\n' "${REPO_ROOT}"
 
 docker run --rm \
+  --platform linux/amd64 \
   -v "${REPO_ROOT}:/repo" \
   -w /repo \
   -e NONINTERACTIVE=1 \
   "${IMAGE}" \
   sh -c '
     set -eu
+    # Disable pacman 7+ ALPM sandbox (needs user namespace caps not granted in
+    # default Docker; throws "switching to sandbox user alpm failed").
+    sed -i "s/^DownloadUser/#DownloadUser/" /etc/pacman.conf 2>/dev/null || true
+    sed -i "s/^[[:space:]]*Sandbox.*/Sandbox = no/" /etc/pacman.conf 2>/dev/null || true
     pacman -Sy --noconfirm curl git sudo base-devel ca-certificates
 
     # First run: bootstrap installs Homebrew + Brewfile + applies defaults
