@@ -1,6 +1,10 @@
 #!/bin/sh
-# commands/apply.sh — validate selection → backup → deploy → manifest
+# commands/apply.sh — non-interactive deploy replay
 # POSIX sh. Invoked by the dots dispatcher or directly.
+#
+# Reads theme/flavor/accent/tools from manifest.json (or hardcoded defaults
+# from lib/select.sh when no manifest exists), then runs the full deploy
+# pipeline (backup → deploy → manifest). No wizard, no prompts.
 
 set -eu
 
@@ -8,25 +12,24 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots apply - deploy dotfiles from the current selection\n\n' >&2
+    printf 'dots apply - non-interactive replay of the deploy pipeline\n\n' >&2
     printf 'USAGE\n' >&2
     printf '  ./dots apply\n\n' >&2
-    printf 'Reads .dots-selection.json, creates a timestamped backup, copies the home\n' >&2
-    printf 'payload, applies theme template substitution, materializes theme assets,\n' >&2
-    printf 'builds the bat cache, and writes manifest.json.\n\n' >&2
-    printf "Run './dots select' first to create a selection.\n" >&2
+    printf 'BEHAVIOR\n' >&2
+    printf '  Reads theme/flavor/accent/tools from manifest.json (or hardcoded\n' >&2
+    printf '  defaults if absent), creates a timestamped backup, deploys the\n' >&2
+    printf '  payload, materializes theme assets, builds the bat cache, and\n' >&2
+    printf '  refreshes manifest.json.\n\n' >&2
+    printf '  This is the non-interactive sibling of ./dots select.\n' >&2
     exit 0
 fi
 
 # ---------------------------------------------------------------------------
-# Compute REPO_ROOT
+# Compute REPO_ROOT and source libs
 # ---------------------------------------------------------------------------
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export REPO_ROOT
 
-# ---------------------------------------------------------------------------
-# Source libs
-# ---------------------------------------------------------------------------
 # shellcheck source=lib/log.sh
 . "${REPO_ROOT}/lib/log.sh"
 # shellcheck source=lib/detect.sh
@@ -41,35 +44,19 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/manifest.sh"
 
 # ---------------------------------------------------------------------------
-# Read and validate selection
+# Source of truth: manifest.json (or hardcoded defaults via read_current_selection)
 # ---------------------------------------------------------------------------
-_sel="${REPO_ROOT}/.dots-selection.json"
-if [ ! -f "${_sel}" ]; then
-    log_error ".dots-selection.json not found. Run: ./dots select"
-    exit 1
-fi
+_current="$(read_current_selection "${REPO_ROOT}")"
+_theme="$(printf '%s' "${_current}" | awk '{print $1}')"
+_flavor="$(printf '%s' "${_current}" | awk '{print $2}')"
+_accent="$(printf '%s' "${_current}" | awk '{print $3}')"
+_tools_csv="$(printf '%s' "${_current}" | awk '{print $4}')"
 
-if ! command -v jq >/dev/null 2>&1; then
-    log_error "jq is required but not found on PATH. Run: brew install jq"
-    exit 1
-fi
+log_info "Apply input: ${_theme}/${_flavor}/${_accent} + tools=${_tools_csv}"
 
-_theme="$(jq -r '.theme  // empty' "${_sel}")"
-_flavor="$(jq -r '.flavor // empty' "${_sel}")"
-_accent="$(jq -r '.accent // empty' "${_sel}")"
-_tools_json="$(jq -r '.tools // empty' "${_sel}")"
-
-if [ -z "${_theme}" ] || [ -z "${_flavor}" ]; then
-    log_error "Selection file missing 'theme' or 'flavor'. Re-run: ./dots select"
-    exit 1
-fi
-
-# Default accent if absent
-_accent="${_accent:-mauve}"
-
-# Convert tools JSON array → CSV for manifest_write / validate_tools
-_tools_csv="$(jq -r '.tools | join(",")' "${_sel}")"
-
+# ---------------------------------------------------------------------------
+# Validate
+# ---------------------------------------------------------------------------
 log_step "Validating selection: theme=${_theme} flavor=${_flavor} accent=${_accent}"
 validate_theme  "${REPO_ROOT}" "${_theme}"
 validate_flavor "${REPO_ROOT}" "${_theme}" "${_flavor}"
@@ -99,7 +86,6 @@ log_step "Building bat cache..."
 deploy_bat_cache
 
 # Inject BAT_THEME block into deployed .zshrc
-# Bat theme name: Titlecase-theme-Titlecase-flavor (mirrors deploy_theme_assets naming)
 _theme_tc="$(printf '%s' "${_theme}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_theme}" | cut -c2-)"
 _flavor_tc="$(printf '%s' "${_flavor}" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "${_flavor}" | cut -c2-)"
 _bat_theme_name="${_theme_tc}-${_flavor_tc}"
@@ -116,9 +102,5 @@ log_step "Writing manifest..."
 _hash="$(source_hash "${REPO_ROOT}")"
 manifest_write "${REPO_ROOT}/manifest.json" \
     "${_theme}" "${_flavor}" "${_accent}" "${_tools_csv}" "${_hash}"
-
-# Consume the transitory selection file. Manifest is now authoritative.
-rm -f "${REPO_ROOT}/.dots-selection.json"
-log_info "Selection consumed; manifest is authoritative."
 
 log_info "Apply complete. Theme: ${_theme}/${_flavor}"

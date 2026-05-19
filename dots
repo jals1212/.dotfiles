@@ -31,10 +31,10 @@ _dots_help() {
     printf 'USAGE\n' >&2
     printf '  ./dots <subcommand> [flags]\n\n' >&2
     printf 'SUBCOMMANDS\n' >&2
-    printf '  select      Run the interactive theme/tool selection wizard.\n' >&2
-    printf '  apply       Read selection, backup existing configs, deploy payload, write manifest.\n' >&2
-    printf '  update      Re-deploy using current selection without hash check.\n' >&2
-    printf '  reload      Re-deploy only when source hash differs from manifest (or --force).\n' >&2
+    printf '  select      Wizard + full deploy (interactive entry).\n' >&2
+    printf '  apply       Non-interactive replay of the deploy pipeline from manifest.\n' >&2
+    printf '  update      Re-deploy from manifest without hash check (no backup).\n' >&2
+    printf '  sync        Re-deploy only when source hash differs from manifest (or --force).\n' >&2
     printf '  doctor      Run health checks (requires Sec 6 lib/doctor.sh).\n' >&2
     printf '  restore     Restore a backup: --latest or an explicit path.\n' >&2
     printf '  uninstall   Remove managed config files and manifest.json.\n' >&2
@@ -42,7 +42,7 @@ _dots_help() {
     printf 'FLAGS (per subcommand)\n' >&2
     printf '  --help / -h   Show subcommand usage.\n\n' >&2
     printf 'FIRST RUN\n' >&2
-    printf '  ./bootstrap.sh    Install dependencies (Homebrew, Brewfile) and run apply.\n' >&2
+    printf '  ./bootstrap.sh    Install dependencies (Homebrew, Brewfile) and run select.\n' >&2
 }
 
 # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ case "${cmd}" in
     select)    sh "${REPO_ROOT}/commands/select.sh"    "$@" ;;
     apply)     sh "${REPO_ROOT}/commands/apply.sh"     "$@" ;;
     update)    sh "${REPO_ROOT}/commands/update.sh"    "$@" ;;
-    reload)    sh "${REPO_ROOT}/commands/reload.sh"    "$@" ;;
+    sync)      sh "${REPO_ROOT}/commands/sync.sh"      "$@" ;;
     doctor)    sh "${REPO_ROOT}/commands/doctor.sh"    "$@" ;;
     restore)   sh "${REPO_ROOT}/commands/restore.sh"   "$@" ;;
     uninstall) sh "${REPO_ROOT}/commands/uninstall.sh" "$@" ;;

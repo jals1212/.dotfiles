@@ -64,17 +64,6 @@ _check_gum() {
 }
 
 # ---------------------------------------------------------------------------
-# _check_jq
-#   Verifies jq is available; exits 1 with error if not.
-# ---------------------------------------------------------------------------
-_check_jq() {
-    if ! command -v jq >/dev/null 2>&1; then
-        log_error "jq is required but not found on PATH. Run: brew install jq"
-        exit 1
-    fi
-}
-
-# ---------------------------------------------------------------------------
 # validate_theme <repo_root> <theme>
 #   Verifies that assets/themes/oh-my-posh/<theme>/ exists.
 #   Exits 1 with log_error listing valid themes on failure.
@@ -331,49 +320,3 @@ confirm_apply() {
     gum confirm "Apply selection?"
 }
 
-# ---------------------------------------------------------------------------
-# write_selection <path> <theme> <flavor> <accent> <tools_csv>
-#   Validates all inputs, then atomically writes .dots-selection.json.
-#   Stable key order: theme, flavor, accent, tools.
-#   Exits 1 on validation failure or write failure.
-#
-#   <tools_csv>  — comma-separated tool names (e.g. "zsh,tmux,nvim")
-#   <path>       — destination file (e.g. "${REPO_ROOT}/.dots-selection.json")
-# ---------------------------------------------------------------------------
-write_selection() {
-    _ws_path="${1}"
-    _ws_theme="${2}"
-    _ws_flavor="${3}"
-    _ws_accent="${4}"
-    _ws_tools_csv="${5}"
-
-    _check_jq
-
-    # Derive repo_root from the path's dirname for validation
-    _ws_root="$(dirname "${_ws_path}")"
-
-    # Validate all inputs before touching the filesystem
-    validate_theme  "${_ws_root}" "${_ws_theme}"
-    validate_flavor "${_ws_root}" "${_ws_theme}" "${_ws_flavor}"
-    validate_accent "${_ws_root}" "${_ws_theme}" "${_ws_accent}"
-    validate_tools  "${_ws_tools_csv}"
-
-    # Convert CSV → JSON array.  Each element is trimmed of whitespace.
-    # We build a quoted jq array string by converting commas to '","'
-    _ws_tools_json="$(printf '%s' "${_ws_tools_csv}" | \
-        jq -R 'split(",") | map(ltrimstr(" ") | rtrimstr(" ")) | map(select(length > 0))')"
-
-    # Atomic write: tmp → mv
-    _ws_tmp="${_ws_path}.tmp"
-    jq -n \
-        --arg   theme  "${_ws_theme}" \
-        --arg   flavor "${_ws_flavor}" \
-        --arg   accent "${_ws_accent}" \
-        --argjson tools "${_ws_tools_json}" \
-        '{theme: $theme, flavor: $flavor, accent: $accent, tools: $tools}' \
-        > "${_ws_tmp}" || { log_error "jq failed to produce selection JSON"; exit 1; }
-
-    mv "${_ws_tmp}" "${_ws_path}" || { log_error "Failed to write ${_ws_path}"; exit 1; }
-
-    log_info "Selection written to ${_ws_path}"
-}

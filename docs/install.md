@@ -33,30 +33,32 @@ cd ~/.dotfiles
 
 Supported flags: `--yes`, `--theme`, `--flavor`, `--accent`, `--tools`.
 
-With `--yes`, the wizard is skipped: `./dots select --yes` materializes a transitory `.dots-selection.json` from `manifest.json` (if present) or hardcoded defaults, and `./dots apply` consumes it.
+With `--yes`, `./dots select --yes` skips the pickers, uses values from `manifest.json` (or hardcoded defaults if no manifest), and runs the full deploy pipeline immediately.
 
 ## Selection lifecycle
 
-`.dots-selection.json` is **transitory** — it lives only between `./dots select` and `./dots apply`. Once apply writes the manifest, the selection file is removed; the manifest becomes the source of truth.
+There is no selection file. `./dots select` runs the wizard and the deploy pipeline in one step. The single durable record of a deployed selection is `manifest.json`.
 
-The file is listed in `.gitignore` and is never committed.
+**Sources of truth:**
 
-**Lifecycle:**
+- `manifest.json` — written by `./dots select`, `./dots apply`, `./dots update`, and `./dots sync` after every successful deploy. Holds theme/flavor/accent/tools plus `source_hash` and `applied_at`.
+- Hardcoded defaults in `lib/select.sh` (`_SELECT_DEFAULT_THEME=kanagawa`, etc.) — used only when no manifest exists yet (fresh clone).
 
-1. `./dots select` writes `.dots-selection.json` pre-populated from `manifest.json` (post-apply state) if present, else from hardcoded defaults in `lib/select.sh`.
-2. `./dots apply` reads `.dots-selection.json`, deploys, writes `manifest.json`, then removes `.dots-selection.json`.
-3. `./dots update` and `./dots reload` read theme/flavor/accent/tools from `manifest.json`; they do not require the selection file.
+**Schema of the deployed state (as serialized in `manifest.json`):**
 
 ```json
 {
+  "version": "2.0.0",
   "theme": "kanagawa",
   "flavor": "dragon",
   "accent": "mauve",
-  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"]
+  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"],
+  "source_hash": "<64-hex>",
+  "applied_at": "<ISO 8601 UTC>"
 }
 ```
 
-**Fields:**
+**Fields (selection portion):**
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -72,18 +74,18 @@ The file is listed in `.gitignore` and is never committed.
 | `kanagawa` | `wave`, `dragon`, `lotus` |
 | `catppuccin` | `latte`, `frappe`, `macchiato`, `mocha` |
 
-The selection wizard rejects unknown themes or flavors (no matching asset under `assets/themes/oh-my-posh/<theme>/<flavor>.json`) with a non-zero exit.
+`./dots select` and `./dots apply` reject unknown themes, flavors, accents, or tools (no matching asset) with a non-zero exit.
 
 ## Interactive subcommands
 
 | Command | Description |
 | --- | --- |
-| `./dots select` | Re-run the theme/tool wizard; writes the transitory `.dots-selection.json` (pre-populated from manifest or defaults). |
-| `./dots apply` | Validate selection → backup → deploy → write manifest → remove the transitory selection. |
-| `./dots update` | Re-deploy using state from `manifest.json`; no source-hash check. |
-| `./dots reload` | Re-deploy using state from `manifest.json` only when source hash differs; `--force` skips the check. |
+| `./dots select` | Wizard + full deploy in one step. Interactive entry for any change. |
+| `./dots apply` | Non-interactive replay of the deploy pipeline using state from `manifest.json` (or defaults). |
+| `./dots update` | Re-deploy from `manifest.json` without source-hash check or backup. |
+| `./dots sync` | Re-deploy from `manifest.json` only when source hash differs; `--force` skips the check. |
 | `./dots doctor` | Non-mutating health checks on deployed dotfiles. |
-| `./dots restore --latest` | Restore the newest backup from `$HOME/.dotfiles_backups/`. |
+| `./dots restore --latest` | Restore the newest backup from `.backups/`. |
 | `./dots uninstall` | Remove managed payload and `manifest.json`. |
 
 ## Doctor

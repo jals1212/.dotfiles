@@ -161,20 +161,5 @@ if [ "${_skip_wizard}" = "0" ]; then
     fi
 fi
 
-# ---------------------------------------------------------------------------
-# 8. Confirm
-# When YES=1, the wizard's confirm step is bypassed upstream (--yes propagated
-# to dots select). Bootstrap does NOT duplicate confirmation here.
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# 9. Apply
-# Forward-ref: ./dots apply is provided by Sec 5 (commands/apply.sh via dots dispatcher).
-# ---------------------------------------------------------------------------
-if [ -x "${REPO_ROOT}/dots" ]; then
-    "${REPO_ROOT}/dots" apply
-else
-    log_warn "Apply not yet available (./dots dispatcher pending Sec 5)."
-    log_warn "Re-run after Sec 5 lands, or run: ./dots apply"
-    exit 1
-fi
+# Step 7 (./dots select) runs the full pipeline (backup → deploy → manifest).
+# No separate apply step is needed.

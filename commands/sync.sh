@@ -1,5 +1,5 @@
 #!/bin/sh
-# commands/reload.sh — re-deploy only when source hash has drifted (or --force)
+# commands/sync.sh — re-deploy only when source hash has drifted (or --force)
 # POSIX sh. Invoked by the dots dispatcher or directly.
 
 set -eu
@@ -8,9 +8,9 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots reload - re-deploy when source hash differs from manifest\n\n' >&2
+    printf 'dots sync - re-deploy when source hash differs from manifest\n\n' >&2
     printf 'USAGE\n' >&2
-    printf '  ./dots reload [--force]\n\n' >&2
+    printf '  ./dots sync [--force]\n\n' >&2
     printf 'FLAGS\n' >&2
     printf '  --force   Re-deploy even when hashes match.\n\n' >&2
     printf 'Compares current source hash against manifest.json. If they match\n' >&2
@@ -102,7 +102,7 @@ validate_accent "${REPO_ROOT}" "${_theme}" "${_accent}"
 validate_tools  "${_tools_csv}"
 
 # ---------------------------------------------------------------------------
-# Deploy (no backup for reload — same as update semantics)
+# Deploy (no backup for sync — same as update semantics)
 # ---------------------------------------------------------------------------
 log_step "Deploying home payload..."
 deploy_copy_home "${REPO_ROOT}"
