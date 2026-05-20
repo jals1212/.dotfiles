@@ -27,7 +27,7 @@ deploy_copy_home() {
 }
 
 # ---------------------------------------------------------------------------
-# deploy_apply_template <repo_root> <theme> <flavor> <accent>
+# deploy_apply_template <repo_root> <theme> <flavor>
 #   Replaces template placeholders in the eight known template files that were
 #   already deployed to $HOME/.config/ by deploy_copy_home.
 #
@@ -42,7 +42,6 @@ deploy_apply_template() {
     _dat_root="${1:?deploy_apply_template: repo_root required}"
     _dat_theme="${2:?deploy_apply_template: theme required}"
     _dat_flavor="${3:?deploy_apply_template: flavor required}"
-    _dat_accent="${4:-}"   # accent is optional
 
     _dat_theme_flavor="${_dat_theme}/${_dat_flavor}"
 
@@ -89,7 +88,7 @@ _deploy_titlecase() {
 }
 
 # ---------------------------------------------------------------------------
-# deploy_theme_assets <repo_root> <theme> <flavor> <accent>
+# deploy_theme_assets <repo_root> <theme> <flavor>
 #   Materializes eight theme-derived files from
 #     <repo_root>/assets/themes/<tool>/<theme>/<source-file>
 #   to their tool-specific destinations under $HOME/.config/.
@@ -118,7 +117,6 @@ deploy_theme_assets() {
     _dta_root="${1:?deploy_theme_assets: repo_root required}"
     _dta_theme="${2:?deploy_theme_assets: theme required}"
     _dta_flavor="${3:?deploy_theme_assets: flavor required}"
-    _dta_accent="${4:-}"
 
     _dta_assets="${_dta_root}/assets/themes"
 

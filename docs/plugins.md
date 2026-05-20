@@ -1,63 +1,62 @@
 # Plugins
 
-Plugin managers and the curated list each one loads. Nvim plugins are not covered here (one-per-file under `home/.config/nvim/lua/plugins/`).
+Usage notes for the shell and tmux plugins enabled by these dotfiles. For editor mappings, see [keymaps.md](keymaps.md#neovim).
 
-## Zsh — Zinit
+## Zsh plugins
 
-Manager: [Zinit](https://github.com/zdharma-continuum/zinit). Self-installs to `~/.local/share/zinit/zinit.git` on first run if missing. Load order in [`.zshrc`](../home/.zshrc) is intentional — completions before `compinit`, fzf-tab before widget-wrappers, syntax highlighting last.
+These load automatically in new shells after `./dots update` or `./dots sync` has been applied. Restart the shell with `exec zsh` if you just changed settings.
 
-Per-load command reference: [`zinit` commands](https://github.com/zdharma-continuum/zinit#documentation).
+### Completions and picker UI
 
-### Completion source
+- Extra completions: press `Tab` after a command to complete more tools and options.
+- fzf-tab: `Tab` opens a fuzzy completion picker when multiple choices are available.
 
-- [`zsh-users/zsh-completions`](https://github.com/zsh-users/zsh-completions) — extra completion definitions. Loaded **before** `compinit` so generated functions are picked up.
+### Prompt, navigation, and history
 
-### Completion UI
+- [Oh My Posh](https://ohmyposh.dev/) renders the prompt. Change prompt flavor with `./dots update`, then reload with `exec zsh`.
+- [Zoxide](https://github.com/ajeetdsouza/zoxide) adds smart directory jumps:
+  - `z <partial>` jumps to a frequently used matching directory.
+  - `zi` opens an interactive picker.
+- [Mise](https://mise.jdx.dev/) manages project runtimes:
+  - `mise use node@lts`
+  - `mise install`
+  - `mise ls`
+- [Atuin](https://docs.atuin.sh/) powers shell history search:
+  - `Up` searches session history.
+  - `Ctrl-R` opens global history search.
+  - `Ctrl-P` opens history search through fzf.
 
-- [`Aloxaf/fzf-tab`](https://github.com/Aloxaf/fzf-tab) — replaces the default zsh tab UI with an fzf picker. Loads after `compinit` and before widget wrappers. Use `Tab` to fuzz over completion candidates.
+### Oh My Zsh helpers
 
-### Conditional integrations (load only when binary present)
+These helpers are available without installing the full Oh My Zsh framework.
 
-Loaded via `zinit ice has"<bin>"` against the custom shims in [`home/.config/zsh/plugins/`](../home/.config/zsh/plugins).
-
-- [Oh My Posh](https://ohmyposh.dev/) — `oh-my-posh init zsh --config ...`. Prompt renderer; theme lives at `~/.config/oh-my-posh/config.json`.
-- [Zoxide](https://github.com/ajeetdsouza/zoxide) — `zoxide init zsh`. Adds `z` / `zi` jump commands.
-- [Mise](https://mise.jdx.dev/) — `mise activate zsh`. Polyglot runtime manager (Node, Python, Go, …).
-- [Atuin](https://docs.atuin.sh/) — `atuin init zsh --disable-ai`. Replaces zsh history with SQLite-backed search. Adds an `fzf-atuin-history-widget` bound to `Ctrl-P` over Atuin's `Up` and `Ctrl-R` bindings.
-
-### Oh My Zsh snippets
-
-Loaded as snippets so we get the OMZ plugin without dragging in OMZ itself. Each link below points at the plugin's README.
-
-- [`git`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git) — large catalogue of `g`-prefixed aliases (`gst`, `gco`, `gp`, `gl`, `gd`, `grb`, …). Skim the README for the full list.
-- [`extract`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/extract) — `extract <archive>` (alias `x`) handles tar/zip/7z/rar/etc.
-- [`safe-paste`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/safe-paste) — pasted multi-line text is held for review before execution.
-- [`copypath`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copypath) — `copypath` copies the cwd (or a path) to the clipboard.
-- [`copyfile`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copyfile) — `copyfile <path>` copies the file contents to the clipboard.
+- [`git`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git) — `g`-prefixed aliases like `gst`, `gco`, `gp`, `gl`, `gd`, and `grb`.
+- [`extract`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/extract) — `extract <archive>` or `x <archive>` extracts common archive formats.
+- [`safe-paste`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/safe-paste) — reviews pasted multi-line commands before execution.
+- [`copypath`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copypath) — `copypath` copies the current directory or a path.
+- [`copyfile`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copyfile) — `copyfile <path>` copies file contents.
 - [`copybuffer`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copybuffer) — `Ctrl-O` copies the current command line.
-- [`fancy-ctrl-z`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/fancy-ctrl-z) — `Ctrl-Z` from the prompt foregrounds the last suspended job (one keystroke instead of `fg`).
-- [`jsontools`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jsontools) — `pp_json`, `is_json`, `urlencode_json`, `urldecode_json` helpers.
-- [`gh`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh) — completion for the [GitHub CLI](https://cli.github.com/).
+- [`fancy-ctrl-z`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/fancy-ctrl-z) — `Ctrl-Z` at an empty prompt brings back the last suspended job.
+- [`jsontools`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jsontools) — `pp_json`, `is_json`, `urlencode_json`, and `urldecode_json`.
+- [`gh`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh) — GitHub CLI completion.
 
-### Widget-wrapping plugins
+### Editing assistance
 
-These wrap zle widgets, so they MUST load after `compinit`, fzf-tab, and any custom widgets.
+- [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text suggestions from history. Accept with `→` or `End`.
+- [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) colors commands as you type so missing commands and invalid syntax stand out early.
 
-- [`zsh-users/zsh-autosuggestions`](https://github.com/zsh-users/zsh-autosuggestions) — inline ghost-text suggestions from history. Accept with `→` or `End`.
-- [`zsh-users/zsh-syntax-highlighting`](https://github.com/zsh-users/zsh-syntax-highlighting) — live command-line syntax colouring. Must be the last `zinit light` to wrap everything else.
+## tmux plugins
 
-## tmux — TPM
+Open tmux with `tx` or `tmux`, then install or refresh plugins with `Ctrl-a I`.
 
-Manager: [TPM](https://github.com/tmux-plugins/tpm). Self-installs to `~/.config/tmux/plugins/tpm` on first run. Install/refresh from inside tmux with `prefix + I` (`Ctrl-a I`). Source: [`tmux.conf`](../home/.config/tmux/tmux.conf).
-
-- [`tmux-plugins/tmux-sensible`](https://github.com/tmux-plugins/tmux-sensible) — sane defaults (focus-events, history-limit, fast escape, …).
-- [`tmux-plugins/tmux-yank`](https://github.com/tmux-plugins/tmux-yank) — copy mode selections go to the system clipboard.
-- [`christoomey/vim-tmux-navigator`](https://github.com/christoomey/vim-tmux-navigator) — `Ctrl-h/j/k/l` traverses Vim splits and tmux panes seamlessly.
-- [`tmux-plugins/tmux-resurrect`](https://github.com/tmux-plugins/tmux-resurrect) — save/restore tmux state (`prefix + Ctrl-s` save, `prefix + Ctrl-r` restore).
-- [`tmux-plugins/tmux-continuum`](https://github.com/tmux-plugins/tmux-continuum) — runs resurrect on a timer + auto-restore on tmux start (`@continuum-restore on`).
-- [`alexwforsythe/tmux-which-key`](https://github.com/alexwforsythe/tmux-which-key) — popup menu describing prefix bindings (trigger with `prefix + Space`).
-- [`Nybkox/tmux-ukiyo`](https://github.com/Nybkox/tmux-ukiyo) — theme engine. Flavor comes from `DOTS_THEME_FLAVOR` (rewritten by `./dots apply`). Switch interactively with `prefix + T`. Status modules: `git`, `cpu-usage`, `ram-usage`.
+- [tmux-sensible](https://github.com/tmux-plugins/tmux-sensible) — safer defaults.
+- [tmux-yank](https://github.com/tmux-plugins/tmux-yank) — copy mode selections go to the system clipboard.
+- [vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator) — `Ctrl-h/j/k/l` moves across Neovim splits and tmux panes.
+- [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) — `Ctrl-a Ctrl-s` saves tmux state; `Ctrl-a Ctrl-r` restores it.
+- [tmux-continuum](https://github.com/tmux-plugins/tmux-continuum) — periodically saves state and restores it on tmux start.
+- [tmux-which-key](https://github.com/alexwforsythe/tmux-which-key) — `Ctrl-a Space` opens a binding helper popup.
+- [tmux-ukiyo](https://github.com/Nybkox/tmux-ukiyo) — theme engine. Change the managed theme with `./dots update`; switch interactively with `Ctrl-a T` when available.
 
 ## Ghostty and AeroSpace
 
-Neither uses a plugin manager — all behaviour is in their respective config files. Keybindings in [keymaps.md](keymaps.md).
+Ghostty and AeroSpace do not need plugin commands. Their shortcuts are listed in [keymaps.md](keymaps.md).

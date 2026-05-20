@@ -50,7 +50,7 @@ backup_create() {
 
     # Determine if any files were actually backed up by checking if dir exists
     if [ -d "${_bc_dir}" ]; then
-        log_info "Backup complete: ${_bc_dir}"
+        log_ok "Backup → ${_bc_dir}"
         printf '%s\n' "${_bc_dir}"
     fi
 
@@ -74,6 +74,19 @@ backup_latest() {
     if [ -n "${_bl_latest}" ]; then
         printf '%s\n' "${_bl_backups}/${_bl_latest}"
     fi
+}
+
+# backup_list <repo_root>
+#   Lists backup directories newest first, one absolute path per line.
+backup_list() {
+    _bls_root="${1:?backup_list: repo_root required}"
+    _bls_backups="${_bls_root}/.backups"
+
+    if [ ! -d "${_bls_backups}" ]; then
+        return 0
+    fi
+
+    find "${_bls_backups}" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | sort -r
 }
 
 # restore_from <repo_root> <backup_dir>

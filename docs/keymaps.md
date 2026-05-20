@@ -12,8 +12,6 @@ This document lists repo-owned keymaps. LazyVim and plugin defaults can add more
 
 ## Neovim
 
-Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home/.config/nvim/lua/plugins/`.
-
 ### Core navigation
 
 | Key | Mode | Action |
@@ -60,8 +58,6 @@ Source: `home/.config/nvim/lua/config/keymaps.lua` plus plugin files under `home
 
 ### Editor utilities
 
-Source: individual plugin files under `home/.config/nvim/lua/plugins/` (goto-preview, symbols-outline, etc.).
-
 | Key | Mode | Action |
 | --- | --- | --- |
 | `gpd` | normal | Preview definition |
@@ -73,8 +69,6 @@ Source: individual plugin files under `home/.config/nvim/lua/plugins/` (goto-pre
 | `<leader>cs` | normal | Symbols outline |
 
 ### OpenCode
-
-Source: `home/.config/nvim/lua/plugins/opencode.lua`.
 
 | Key | Mode | Action |
 | --- | --- | --- |
@@ -92,8 +86,6 @@ Source: `home/.config/nvim/lua/plugins/opencode.lua`.
 | `<leader>apo` | normal/visual | Optimize |
 
 ### DAP
-
-Source: `home/.config/nvim/lua/plugins/nvim-dap.lua`.
 
 | Key | Action |
 | --- | --- |
@@ -114,8 +106,6 @@ Source: `home/.config/nvim/lua/plugins/nvim-dap.lua`.
 
 ### UI utilities
 
-Source: individual plugin files under `home/.config/nvim/lua/plugins/` (which-key, docs-view, zen-mode, etc.).
-
 | Key | Action |
 | --- | --- |
 | `<leader>?` | Show buffer-local keymaps |
@@ -125,8 +115,6 @@ Source: individual plugin files under `home/.config/nvim/lua/plugins/` (which-ke
 | `<leader>uk` | Toggle Screenkey |
 
 ## tmux
-
-Source: `home/.config/tmux/tmux.conf`.
 
 Prefix is `Ctrl-a`.
 
@@ -201,8 +189,6 @@ Copy mode uses vi keys: `v` begins selection, `Ctrl-v` toggles rectangle selecti
 
 ## Ghostty
 
-Source: `home/.config/ghostty/config`.
-
 | Key | Action |
 | --- | --- |
 | `Alt-v` | New split right |
@@ -214,8 +200,6 @@ Source: `home/.config/ghostty/config`.
 | `Alt-s` | Write screen file to paste |
 
 ## AeroSpace
-
-Source: `home/.config/aerospace/aerospace.toml`.
 
 ### Layout and focus
 

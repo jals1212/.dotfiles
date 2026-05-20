@@ -35,7 +35,7 @@ _header_color_code() {
 # ---------------------------------------------------------------------------
 render_header() {
     _rh_theme="${1:-kanagawa}"
-    _rh_subtitle="${2:-Dotfiles Manager}"
+    _rh_subtitle="${2:-}"
 
     # Determine whether to use color
     _rh_use_color=0
@@ -67,12 +67,30 @@ render_header() {
 SKULL
 )
 
+    # DOTS block-letter banner, prints under the skull.
+    # Font: ANSI Shadow (figlet) — box-drawing shadow effect.
+    _rh_dots=$(cat <<'DOTS'
+██████╗  ██████╗ ████████╗███████╗
+██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝
+██║  ██║██║   ██║   ██║   ███████╗
+██║  ██║██║   ██║   ██║   ╚════██║
+██████╔╝╚██████╔╝   ██║   ███████║
+╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+DOTS
+)
+
     if [ "${_rh_use_color}" -eq 1 ]; then
         # ANSI 256-color: ESC[38;5;<n>m ... ESC[0m
         printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_skull}"
-        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_subtitle}"
+        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_dots}"
+        if [ -n "${_rh_subtitle}" ]; then
+            printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_subtitle}"
+        fi
     else
         printf '%s\n' "${_rh_skull}"
-        printf '%s\n' "${_rh_subtitle}"
+        printf '%s\n' "${_rh_dots}"
+        if [ -n "${_rh_subtitle}" ]; then
+            printf '%s\n' "${_rh_subtitle}"
+        fi
     fi
 }

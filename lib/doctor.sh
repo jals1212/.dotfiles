@@ -137,7 +137,7 @@ check_source_hash_match() {
     _cshm_manifest="${REPO_ROOT}/manifest.json"
 
     if [ ! -f "${_cshm_manifest}" ]; then
-        _log_line 214 '[SKIP]' "${_cshm_label}: no manifest (run ./dots apply first)"
+        _log_line 214 '[SKIP]' "${_cshm_label}: no manifest (run ./dots update first)"
         return 0
     fi
 

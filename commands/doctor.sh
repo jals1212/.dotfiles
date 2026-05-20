@@ -45,6 +45,11 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/log.sh"
 # shellcheck source=lib/detect.sh
 . "${REPO_ROOT}/lib/detect.sh"
+# shellcheck source=lib/tui.sh
+. "${REPO_ROOT}/lib/tui.sh"
+
+tui_start_timer
+render_subcommand_banner "$(tui_subtitle_for doctor)"
 
 # ---------------------------------------------------------------------------
 # Source lib/doctor.sh (defines check_* functions and DOCTOR_CHECKS registry)
@@ -81,10 +86,10 @@ for _check_fn in ${DOCTOR_CHECKS}; do
 done
 
 _total=$((_pass + _fail))
-log_info "Doctor: ${_pass}/${_total} checks passed."
 
 if [ "${_fail}" -gt 0 ]; then
     exit 1
 fi
 
+log_success "Doctor complete" "${_pass}/${_total} checks passed"
 exit 0

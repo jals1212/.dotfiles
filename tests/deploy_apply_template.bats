@@ -19,10 +19,11 @@ setup() {
     SANDBOX_HOME="$(mktemp -d)"
     export HOME="${SANDBOX_HOME}"
 
-    # Create a minimal target file with template tokens
-    mkdir -p "${HOME}/.config/zsh"
+    # Create a minimal target file with template tokens.
+    # Path must match one of deploy_apply_template's hardcoded targets
+    # (lib/deploy.sh _dat_files); ${HOME}/.zshrc is the simplest.
     printf 'theme=DOTS_THEME flavor=DOTS_FLAVOR combo=DOTS_THEME_FLAVOR\n' \
-        > "${HOME}/.config/zsh/.zshrc"
+        > "${HOME}/.zshrc"
 }
 
 teardown() {
@@ -32,26 +33,26 @@ teardown() {
 @test "deploy_apply_template substitutes theme and flavor tokens" {
     deploy_apply_template "${REPO_ROOT}" kanagawa dragon ""
 
-    result="$(cat "${HOME}/.config/zsh/.zshrc")"
+    result="$(cat "${HOME}/.zshrc")"
     [ "${result}" = "theme=kanagawa flavor=dragon combo=kanagawa/dragon" ]
 }
 
 @test "deploy_apply_template is idempotent on second run" {
     deploy_apply_template "${REPO_ROOT}" kanagawa dragon ""
-    first="$(cat "${HOME}/.config/zsh/.zshrc")"
+    first="$(cat "${HOME}/.zshrc")"
 
     deploy_apply_template "${REPO_ROOT}" kanagawa dragon ""
-    second="$(cat "${HOME}/.config/zsh/.zshrc")"
+    second="$(cat "${HOME}/.zshrc")"
 
     [ "${first}" = "${second}" ]
 }
 
 @test "deploy_apply_template supports catppuccin flavor" {
     printf 'theme=DOTS_THEME flavor=DOTS_FLAVOR combo=DOTS_THEME_FLAVOR\n' \
-        > "${HOME}/.config/zsh/.zshrc"
+        > "${HOME}/.zshrc"
 
     deploy_apply_template "${REPO_ROOT}" catppuccin mocha ""
 
-    result="$(cat "${HOME}/.config/zsh/.zshrc")"
+    result="$(cat "${HOME}/.zshrc")"
     [ "${result}" = "theme=catppuccin flavor=mocha combo=catppuccin/mocha" ]
 }

@@ -4,6 +4,7 @@
 SH_FILES := $(shell find . -name '*.sh' \
 	-not -path './tmp/*' \
 	-not -path './openspec/*' \
+	-not -path './.backups/*' \
 	-not -path './.git/*')
 
 # ---------------------------------------------------------------------------
@@ -14,6 +15,7 @@ lint:
 		find . -name '*.sh' \
 			-not -path './tmp/*' \
 			-not -path './openspec/*' \
+			-not -path './.backups/*' \
 			-not -path './.git/*' \
 			-exec shellcheck --shell=sh {} +; \
 		shellcheck --shell=sh dots; \
@@ -45,4 +47,4 @@ e2e:
 # clean — remove generated / ephemeral artifacts
 # ---------------------------------------------------------------------------
 clean:
-	rm -rf .backups/ *.bak .dots-selection.local.json
+	rm -rf .backups/ *.bak

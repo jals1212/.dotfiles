@@ -1,10 +1,6 @@
 # Aliases, functions, and shell keybindings
 
-Repo-owned zsh customizations sourced from `~/.zshrc`. Sources:
-
-- [`home/.config/zsh/aliases.zsh`](../home/.config/zsh/aliases.zsh)
-- [`home/.config/zsh/functions.zsh`](../home/.config/zsh/functions.zsh)
-- [`home/.config/zsh/keymaps.zsh`](../home/.config/zsh/keymaps.zsh)
+Shell shortcuts available after applying the dotfiles.
 
 Tool-level keybindings (tmux, Ghostty, AeroSpace, Neovim) live in [keymaps.md](keymaps.md). For the tools themselves see [tools.md](tools.md).
 
@@ -16,7 +12,7 @@ Zsh expands [global aliases](https://zsh.sourceforge.io/Doc/Release/Shell-Gramma
 - `NO` → `>/dev/null` — silence stdout.
 - `NUL` → `>/dev/null 2>&1` — silence both.
 - `J` → `| jq` — pipe to [jq](https://jqlang.org/manual/) (`curl ... J '.data'`).
-- `C` → `| pbcopy` — copy output to macOS clipboard (`pwd C`). Linux swap commented in source.
+- `C` → `| pbcopy` — copy output to macOS clipboard (`pwd C`). On Linux, use the platform clipboard command instead.
 
 ## Modern command replacements
 
@@ -62,7 +58,7 @@ Session quick-management. Prefix is `Ctrl-a` (full key table in [keymaps.md](key
 ## Dotfiles helpers
 
 - `dots` → `cd ~/.dotfiles && nvim` — open the repo in Neovim.
-- `dotsync` → `~/.dotfiles/dots` — call the dispatcher from anywhere. Subcommands documented in [install.md](install.md#interactive-subcommands).
+- `dotsync` → run `./dots` from anywhere. Subcommands documented in [install.md](install.md#everyday-commands).
 
 ## fzf previews
 
@@ -71,7 +67,6 @@ Session quick-management. Prefix is `Ctrl-a` (full key table in [keymaps.md](key
 
 ## Functions
 
-Source: [`functions.zsh`](../home/.config/zsh/functions.zsh).
 
 ### `cdf`
 
@@ -87,7 +82,7 @@ Zle widget bound to `Ctrl-X Ctrl-L`. Clears the visible screen and scrollback bu
 
 ## Shell keybindings
 
-Source: [`keymaps.zsh`](../home/.config/zsh/keymaps.zsh). [Zle](https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html) is in Emacs mode (`bindkey -e`).
+[Zle](https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html) is in Emacs mode.
 
 - `Alt-w` (`\ew`) → `kill-region` — cut between mark and point.
 - `Ctrl-_` (`^_`) → `undo` — undo last edit.

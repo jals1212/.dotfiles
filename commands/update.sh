@@ -1,7 +1,10 @@
 #!/bin/sh
-# commands/update.sh — re-deploy unconditionally using current selection
+# commands/update.sh — update theme/tool selection + full deploy
 # POSIX sh. Invoked by the dots dispatcher or directly.
-# Identical to apply except: no backup step, no hash gating.
+#
+# The wizard runs in-process: pickers feed shell variables which then drive
+# the deploy pipeline (backup → deploy → manifest). There is no transitory
+# selection file.
 
 set -eu
 
@@ -9,83 +12,137 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots update - re-deploy dotfiles unconditionally\n\n' >&2
+    printf 'dots update - update theme/tool selection + full deploy\n\n' >&2
     printf 'USAGE\n' >&2
-    printf '  ./dots update\n\n' >&2
-    printf 'Reads manifest.json, deploys the payload unconditionally, and refreshes manifest.json.\n' >&2
-    printf "Does NOT create a backup. Use './dots apply' for a backup-before-deploy flow.\n" >&2
+    printf '  ./dots update [--yes] [--theme=NAME] [--flavor=NAME] [--tools=A,B]\n\n' >&2
+    printf 'BEHAVIOR\n' >&2
+    printf '  Runs the gum-backed wizard (pre-populated from manifest.json if\n' >&2
+    printf '  present, otherwise from hardcoded defaults), then executes the\n' >&2
+    printf '  full deploy pipeline (backup → deploy → manifest).\n\n' >&2
+    printf '  No transitory file is written between wizard and deploy.\n\n' >&2
+    printf 'FLAGS\n' >&2
+    printf '  --yes    Non-interactive: skip pickers, use pre-populated values,\n' >&2
+    printf '           and run the deploy pipeline immediately.\n' >&2
+    printf '  --theme, --flavor, --tools override pre-populated values.\n' >&2
     exit 0
 fi
 
 # ---------------------------------------------------------------------------
-# Compute REPO_ROOT
+# Compute REPO_ROOT and source libs
 # ---------------------------------------------------------------------------
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export REPO_ROOT
 
-# ---------------------------------------------------------------------------
-# Source libs
-# ---------------------------------------------------------------------------
 # shellcheck source=lib/log.sh
 . "${REPO_ROOT}/lib/log.sh"
 # shellcheck source=lib/detect.sh
 . "${REPO_ROOT}/lib/detect.sh"
 # shellcheck source=lib/select.sh
 . "${REPO_ROOT}/lib/select.sh"
+# shellcheck source=lib/tui.sh
+. "${REPO_ROOT}/lib/tui.sh"
+# shellcheck source=lib/backup.sh
+. "${REPO_ROOT}/lib/backup.sh"
 # shellcheck source=lib/deploy.sh
 . "${REPO_ROOT}/lib/deploy.sh"
 # shellcheck source=lib/manifest.sh
 . "${REPO_ROOT}/lib/manifest.sh"
 
+tui_start_timer
+render_subcommand_banner "$(tui_subtitle_for update)"
+
 # ---------------------------------------------------------------------------
-# Read selection from manifest (authoritative post-apply state)
+# Parse flags
 # ---------------------------------------------------------------------------
-_manifest="${REPO_ROOT}/manifest.json"
-if [ ! -f "${_manifest}" ]; then
-    log_error "manifest.json not found. Run: ./dots apply first."
-    exit 1
+_yes=0
+_explicit=0
+_arg_theme=""
+_arg_flavor=""
+_arg_tools_csv=""
+for _arg in "$@"; do
+    case "${_arg}" in
+        --yes|-y) _yes=1 ;;
+        --theme=*) _arg_theme="${_arg#--theme=}"; _explicit=1 ;;
+        --flavor=*) _arg_flavor="${_arg#--flavor=}"; _explicit=1 ;;
+        --tools=*) _arg_tools_csv="${_arg#--tools=}"; _explicit=1 ;;
+        --*)
+            log_error "Unknown flag: ${_arg}"
+            exit 1
+            ;;
+    esac
+done
+if [ "${YES:-0}" = "1" ]; then
+    _yes=1
 fi
 
-if ! command -v jq >/dev/null 2>&1; then
-    log_error "jq is required but not found on PATH. Run: brew install jq"
-    exit 1
+# ---------------------------------------------------------------------------
+# Pre-populate from manifest (post-apply state) or hardcoded defaults
+# ---------------------------------------------------------------------------
+_current="$(read_current_selection "${REPO_ROOT}")"
+_cur_theme="$(printf '%s' "${_current}" | awk '{print $1}')"
+_cur_flavor="$(printf '%s' "${_current}" | awk '{print $2}')"
+_cur_tools_csv="$(printf '%s' "${_current}" | awk '{print $3}')"
+
+# ---------------------------------------------------------------------------
+# Determine final theme/flavor/tools — wizard or pre-populated
+# ---------------------------------------------------------------------------
+if [ "${_yes}" -eq 1 ] || [ "${_explicit}" -eq 1 ] || ! [ -t 0 ]; then
+    _theme="${_arg_theme:-${_cur_theme}}"
+    _flavor="${_arg_flavor:-${_cur_flavor}}"
+    _tools_csv="${_arg_tools_csv:-${_cur_tools_csv}}"
+    log_info "Non-interactive: ${_theme}/${_flavor} + tools=${_tools_csv}"
+else
+    log_step "Selecting theme..."
+    _theme="$(select_theme "${REPO_ROOT}" "${_cur_theme}")"
+
+    log_step "Selecting flavor..."
+    _flavor_default=""
+    [ "${_theme}" = "${_cur_theme}" ] && _flavor_default="${_cur_flavor}"
+    _flavor="$(select_flavor "${REPO_ROOT}" "${_theme}" "${_flavor_default}")"
+
+    log_step "Selecting tools..."
+    _tools_nl="$(select_tools "${REPO_ROOT}" "${_cur_tools_csv}" "${_theme}")"
+    _tools_csv="$(printf '%s' "${_tools_nl}" | tr '\n' ',' | sed 's/,$//')"
+
+    if ! confirm_apply "${_theme}" "${_flavor}" "${_tools_csv}"; then
+        log_warn "Update cancelled. No backup or deploy performed."
+        exit 1
+    fi
 fi
 
-_theme="$(jq -r '.theme  // empty' "${_manifest}")"
-_flavor="$(jq -r '.flavor // empty' "${_manifest}")"
-_accent="$(jq -r '.accent // empty' "${_manifest}")"
-
-if [ -z "${_theme}" ] || [ -z "${_flavor}" ]; then
-    log_error "Manifest missing 'theme' or 'flavor'. Re-run: ./dots apply."
-    exit 1
-fi
-
-_accent="${_accent:-mauve}"
-_tools_csv="$(jq -r '.tools | join(",")' "${_manifest}")"
-
+# ---------------------------------------------------------------------------
+# Validate
+# ---------------------------------------------------------------------------
 log_step "Validating selection: theme=${_theme} flavor=${_flavor}"
 validate_theme  "${REPO_ROOT}" "${_theme}"
 validate_flavor "${REPO_ROOT}" "${_theme}" "${_flavor}"
-validate_accent "${REPO_ROOT}" "${_theme}" "${_accent}"
 validate_tools  "${_tools_csv}"
 log_info "Selection valid."
 
 # ---------------------------------------------------------------------------
-# Deploy (no backup — update is unconditional)
+# Backup existing configs
+# ---------------------------------------------------------------------------
+log_step "Creating backup of existing managed configs..."
+backup_create "${REPO_ROOT}"
+
+# ---------------------------------------------------------------------------
+# Deploy
 # ---------------------------------------------------------------------------
 log_step "Deploying home payload..."
 deploy_copy_home "${REPO_ROOT}"
 
 log_step "Applying template substitution..."
-deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}" "${_accent}"
+deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}"
 
 log_step "Materializing theme assets..."
-deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}" "${_accent}"
+deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}"
 
 log_step "Building bat cache..."
 deploy_bat_cache
 
-# Inject BAT_THEME block. Bat theme is materialized as dots.tmTheme.
+# Inject BAT_THEME block into deployed .zshrc.
+# Bat theme is materialized as dots.tmTheme by deploy_theme_assets; the env var
+# stays stable across flavor switches.
 _zshrc="${HOME}/.zshrc"
 if [ -f "${_zshrc}" ]; then
     log_step "Injecting BAT_THEME block into ${_zshrc}..."
@@ -93,11 +150,14 @@ if [ -f "${_zshrc}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Write manifest (refresh deployed_at)
+# Write manifest
 # ---------------------------------------------------------------------------
 log_step "Writing manifest..."
 _hash="$(source_hash "${REPO_ROOT}")"
 manifest_write "${REPO_ROOT}/manifest.json" \
-    "${_theme}" "${_flavor}" "${_accent}" "${_tools_csv}" "${_hash}"
+    "${_theme}" "${_flavor}" "${_tools_csv}" "${_hash}"
 
-log_info "Update complete. Theme: ${_theme}/${_flavor}"
+log_success "Update complete" \
+    "theme=${_theme}/${_flavor}" \
+    "tools=${_tools_csv}" \
+    "manifest=${REPO_ROOT}/manifest.json"

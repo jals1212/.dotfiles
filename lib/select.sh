@@ -5,6 +5,14 @@
 
 # shellcheck source=lib/log.sh
 # shellcheck source=lib/detect.sh
+# shellcheck source=lib/header.sh
+
+if ! command -v _header_color_code >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/lib/header.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/lib/header.sh"
+    fi
+fi
 
 # ---------------------------------------------------------------------------
 # Internal constants
@@ -17,13 +25,23 @@ _SELECT_TOOLS="zsh tmux nvim ghostty oh-my-posh atuin zoxide"
 # Hardcoded defaults consumed when no manifest exists (fresh clone).
 _SELECT_DEFAULT_THEME="kanagawa"
 _SELECT_DEFAULT_FLAVOR="dragon"
-_SELECT_DEFAULT_ACCENT="mauve"
 _SELECT_DEFAULT_TOOLS_CSV="zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide"
+
+# ---------------------------------------------------------------------------
+# _styled_header <text> [theme]
+#   Returns a gum-styled picker header using the active/theme accent colour.
+# ---------------------------------------------------------------------------
+_styled_header() {
+    _sh_text="${1:?_styled_header: text required}"
+    _sh_theme="${2:-kanagawa}"
+    _check_gum
+    gum style --foreground "$(_header_color_code "${_sh_theme}")" "${_sh_text}"
+}
 
 # ---------------------------------------------------------------------------
 # read_current_selection <repo_root>
 #   Returns the current "selection state" as a single space-separated line:
-#       <theme> <flavor> <accent> <tools_csv>
+#       <theme> <flavor> <tools_csv>
 #   Source of truth (in order):
 #     1. ${repo_root}/manifest.json (post-apply state) when present and valid.
 #     2. Hardcoded defaults from this file.
@@ -36,18 +54,16 @@ read_current_selection() {
     if [ -f "${_rcs_manifest}" ] && jq empty "${_rcs_manifest}" 2>/dev/null; then
         _rcs_theme="$(jq -r '.theme // empty' "${_rcs_manifest}")"
         _rcs_flavor="$(jq -r '.flavor // empty' "${_rcs_manifest}")"
-        _rcs_accent="$(jq -r '.accent // empty' "${_rcs_manifest}")"
         _rcs_tools="$(jq -r '.tools | join(",") // empty' "${_rcs_manifest}")"
         if [ -n "${_rcs_theme}" ] && [ -n "${_rcs_flavor}" ] && [ -n "${_rcs_tools}" ]; then
-            printf '%s %s %s %s\n' "${_rcs_theme}" "${_rcs_flavor}" "${_rcs_accent:-${_SELECT_DEFAULT_ACCENT}}" "${_rcs_tools}"
+            printf '%s %s %s\n' "${_rcs_theme}" "${_rcs_flavor}" "${_rcs_tools}"
             return 0
         fi
     fi
 
-    printf '%s %s %s %s\n' \
+    printf '%s %s %s\n' \
         "${_SELECT_DEFAULT_THEME}" \
         "${_SELECT_DEFAULT_FLAVOR}" \
-        "${_SELECT_DEFAULT_ACCENT}" \
         "${_SELECT_DEFAULT_TOOLS_CSV}"
 }
 
@@ -94,27 +110,6 @@ validate_flavor() {
         _vf_valid="$(find "${_vf_theme_dir}" -maxdepth 1 -name '*.json' -exec basename {} .json \; 2>/dev/null | sort | tr '\n' ' ')"
         log_error "Unknown flavor '${_vf_flavor}' for theme '${_vf_theme}'. Valid flavors: ${_vf_valid}"
         exit 1
-    fi
-}
-
-# ---------------------------------------------------------------------------
-# validate_accent <repo_root> <theme> <accent>
-#   When theme=catppuccin: verifies that assets/themes/atuin/catppuccin/<accent>.toml exists.
-#   For other themes: accent is unconstrained (defaults to mauve); always passes.
-#   Exits 1 with log_error on failure.
-# ---------------------------------------------------------------------------
-validate_accent() {
-    _va_root="${1}"
-    _va_theme="${2}"
-    _va_accent="${3}"
-
-    if [ "${_va_theme}" = "catppuccin" ]; then
-        _va_accent_dir="${_va_root}/assets/themes/atuin/catppuccin"
-        if [ ! -f "${_va_accent_dir}/${_va_accent}.toml" ]; then
-            _va_valid="$(find "${_va_accent_dir}" -maxdepth 1 -name '*.toml' -exec basename {} .toml \; 2>/dev/null | sort | tr '\n' ' ')"
-            log_error "Unknown accent '${_va_accent}' for catppuccin. Valid accents: ${_va_valid}"
-            exit 1
-        fi
     fi
 }
 
@@ -187,8 +182,9 @@ select_theme() {
         _st_selected_arg="--selected=${_st_current}"
     fi
 
+    _st_header="$(_styled_header "Select a theme:" "${_st_current:-kanagawa}")"
     # shellcheck disable=SC2086
-    _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "Select a theme:" ${_st_selected_arg})"
+    _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "${_st_header}" ${_st_selected_arg})"
     if [ -z "${_st_chosen}" ]; then
         log_error "No theme selected. Exiting."
         exit 1
@@ -224,57 +220,15 @@ select_flavor() {
         _sf_selected_arg="--selected=${_sf_current}"
     fi
 
+    _sf_header="$(_styled_header "Select a flavor for ${_sf_theme}:" "${_sf_theme}")"
     # shellcheck disable=SC2086
-    _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "Select a flavor for ${_sf_theme}:" ${_sf_selected_arg})"
+    _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "${_sf_header}" ${_sf_selected_arg})"
     if [ -z "${_sf_chosen}" ]; then
         log_error "No flavor selected. Exiting."
         exit 1
     fi
 
     printf '%s' "${_sf_chosen}"
-}
-
-# ---------------------------------------------------------------------------
-# select_accent <repo_root> <theme>
-#   When theme=catppuccin: presents gum choose over atuin accent toml files.
-#   For other themes: emits 'mauve' silently and returns 0 without prompting.
-#   Prints chosen accent to stdout.
-# ---------------------------------------------------------------------------
-select_accent() {
-    _sa_root="${1}"
-    _sa_theme="${2}"
-    _sa_current="${3:-}"
-
-    if [ "${_sa_theme}" != "catppuccin" ]; then
-        printf 'mauve'
-        return 0
-    fi
-
-    _check_gum
-
-    _sa_accent_dir="${_sa_root}/assets/themes/atuin/catppuccin"
-
-    # Collect accent names (toml basenames without .toml extension, sorted)
-    _sa_accents="$(find "${_sa_accent_dir}" -maxdepth 1 -name '*.toml' -exec basename {} .toml \; 2>/dev/null | sort)"
-
-    if [ -z "${_sa_accents}" ]; then
-        log_error "No accent files found in ${_sa_accent_dir}"
-        exit 1
-    fi
-
-    _sa_selected_arg=""
-    if [ -n "${_sa_current}" ]; then
-        _sa_selected_arg="--selected=${_sa_current}"
-    fi
-
-    # shellcheck disable=SC2086
-    _sa_chosen="$(printf '%s\n' ${_sa_accents} | gum choose --header "Select an accent color:" ${_sa_selected_arg})"
-    if [ -z "${_sa_chosen}" ]; then
-        log_error "No accent selected. Exiting."
-        exit 1
-    fi
-
-    printf '%s' "${_sa_chosen}"
 }
 
 # ---------------------------------------------------------------------------
@@ -287,16 +241,18 @@ select_accent() {
 select_tools() {
     _stl_root="${1}"
     _stl_current_csv="${2:-${_SELECT_DEFAULT_TOOLS_CSV}}"
+    _stl_theme="${3:-kanagawa}"
     # repo_root unused directly here but kept for signature consistency
     : "${_stl_root}"
 
     _check_gum
 
     while true; do
+        _stl_header="$(_styled_header "Select tools to install (SPACE to toggle, ENTER to confirm):" "${_stl_theme}")"
         # shellcheck disable=SC2086
         _stl_chosen="$(printf '%s\n' ${_SELECT_TOOLS} | \
             gum choose --no-limit \
-                --header "Select tools to install (SPACE to toggle, ENTER to confirm):" \
+                --header "${_stl_header}" \
                 --selected="${_stl_current_csv}")"
 
         if [ -z "${_stl_chosen}" ]; then
@@ -315,7 +271,18 @@ select_tools() {
 #   Returns 0 on yes, 1 on no/cancel.
 # ---------------------------------------------------------------------------
 confirm_apply() {
+    _ca_theme="${1:?confirm_apply: theme required}"
+    _ca_flavor="${2:?confirm_apply: flavor required}"
+    _ca_tools_csv="${3:?confirm_apply: tools_csv required}"
+
     _check_gum
+    gum style \
+        --border rounded \
+        --border-foreground "$(_header_color_code "${_ca_theme}")" \
+        --padding "1 2" \
+        --bold \
+        "Selection summary
+Theme: ${_ca_theme}/${_ca_flavor}
+Tools: ${_ca_tools_csv}"
     gum confirm "Apply selection?"
 }
-

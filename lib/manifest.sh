@@ -45,16 +45,15 @@ source_hash() {
     printf '%s\n' "${_sh_result}"
 }
 
-# manifest_write <path> <theme> <flavor> <accent> <tools_csv> <source_hash>
+# manifest_write <path> <theme> <flavor> <tools_csv> <source_hash>
 #   Writes manifest.json atomically with stable key order.
 #   Version is always "2.0.0".
 manifest_write() {
     _mw_path="${1:?manifest_write: path required}"
     _mw_theme="${2:?manifest_write: theme required}"
     _mw_flavor="${3:?manifest_write: flavor required}"
-    _mw_accent="${4:?manifest_write: accent required}"
-    _mw_tools_csv="${5:?manifest_write: tools_csv required}"
-    _mw_source_hash="${6:?manifest_write: source_hash required}"
+    _mw_tools_csv="${4:?manifest_write: tools_csv required}"
+    _mw_source_hash="${5:?manifest_write: source_hash required}"
 
     _mw_applied_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     _mw_tmp="${_mw_path}.tmp.$$"
@@ -68,7 +67,6 @@ manifest_write() {
         --arg version     "2.0.0" \
         --arg theme       "${_mw_theme}" \
         --arg flavor      "${_mw_flavor}" \
-        --arg accent      "${_mw_accent}" \
         --argjson tools   "${_mw_tools_json}" \
         --arg source_hash "${_mw_source_hash}" \
         --arg applied_at  "${_mw_applied_at}" \
@@ -76,7 +74,6 @@ manifest_write() {
             version:     $version,
             theme:       $theme,
             flavor:      $flavor,
-            accent:      $accent,
             tools:       $tools,
             source_hash: $source_hash,
             applied_at:  $applied_at

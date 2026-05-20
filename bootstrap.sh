@@ -1,10 +1,10 @@
 #!/bin/sh
 # bootstrap.sh — Dotfiles first-run bootstrap entry point
 # POSIX sh, set -eu.
-# Usage: ./bootstrap.sh [--yes] [--theme=NAME] [--flavor=NAME] [--accent=NAME] [--tools=LIST]
+# Usage: ./bootstrap.sh [--yes] [--theme=NAME] [--flavor=NAME] [--tools=LIST]
 #
 # Flow: header → OS detect → Linux deps (if needed) → Homebrew install →
-#       brew bundle → `./dots select` (which runs the full deploy pipeline).
+#       brew bundle → `./dots update` (which configures and deploys).
 
 set -eu
 
@@ -32,7 +32,6 @@ export REPO_ROOT
 YES=0
 THEME=""
 FLAVOR=""
-ACCENT=""
 TOOLS=""
 
 export NONINTERACTIVE=0
@@ -50,7 +49,6 @@ Options:
   --yes              Non-interactive mode; skip all prompts, use manifest or hardcoded defaults.
   --theme=NAME       Set theme without prompting. Supported: kanagawa, catppuccin.
   --flavor=NAME      Set flavor without prompting (e.g. dragon, mocha).
-  --accent=NAME      Set accent without prompting (catppuccin only, e.g. mauve).
   --tools=A,B,C      Comma-separated tools to deploy without prompting.
   -h, --help         Show this help and exit.
 
@@ -73,9 +71,6 @@ while [ $# -gt 0 ]; do
             ;;
         --flavor=*)
             FLAVOR="${1#--flavor=}"
-            ;;
-        --accent=*)
-            ACCENT="${1#--accent=}"
             ;;
         --tools=*)
             TOOLS="${1#--tools=}"
@@ -133,8 +128,8 @@ load_brew_shellenv
 brew_bundle_install "${REPO_ROOT}/Brewfile"
 
 # ---------------------------------------------------------------------------
-# 7. Run ./dots select — wizard + full deploy pipeline in one step.
-# With --yes plus all theme/flavor/tools flags, select skips prompts.
+# 7. Run ./dots update — config + full deploy pipeline in one step.
+# With --yes plus all theme/flavor/tools flags, update skips prompts.
 # ---------------------------------------------------------------------------
 if [ ! -x "${REPO_ROOT}/dots" ]; then
     log_error "${REPO_ROOT}/dots dispatcher is missing or not executable."
@@ -144,9 +139,8 @@ fi
 _yes_arg=""
 [ "${YES}" = "1" ] && _yes_arg="--yes"
 
-"${REPO_ROOT}/dots" select \
+"${REPO_ROOT}/dots" update \
     ${_yes_arg} \
     ${THEME:+--theme="${THEME}"} \
     ${FLAVOR:+--flavor="${FLAVOR}"} \
-    ${ACCENT:+--accent="${ACCENT}"} \
     ${TOOLS:+--tools="${TOOLS}"}

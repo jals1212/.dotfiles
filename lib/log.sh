@@ -40,3 +40,8 @@ log_error() {
 log_step() {
     _log_line 141 '[STEP]' "${*}"
 }
+
+# log_ok <message>    — positive checkpoint (green, ANSI 76)
+log_ok() {
+    _log_line 76 '[OK]' "${*}"
+}

@@ -8,12 +8,13 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots sync - re-deploy when source hash differs from manifest\n\n' >&2
+    printf 'dots sync - apply existing manifest config\n\n' >&2
     printf 'USAGE\n' >&2
     printf '  ./dots sync [--force]\n\n' >&2
     printf 'FLAGS\n' >&2
     printf '  --force   Re-deploy even when hashes match.\n\n' >&2
-    printf 'Compares current source hash against manifest.json. If they match\n' >&2
+    printf 'Reads theme/tools from manifest.json and compares the current\n' >&2
+    printf 'source hash against manifest.json. If they match\n' >&2
     printf 'and --force is not set, prints "already current" and exits 0.\n' >&2
     exit 0
 fi
@@ -33,10 +34,15 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/detect.sh"
 # shellcheck source=lib/select.sh
 . "${REPO_ROOT}/lib/select.sh"
+# shellcheck source=lib/tui.sh
+. "${REPO_ROOT}/lib/tui.sh"
 # shellcheck source=lib/deploy.sh
 . "${REPO_ROOT}/lib/deploy.sh"
 # shellcheck source=lib/manifest.sh
 . "${REPO_ROOT}/lib/manifest.sh"
+
+tui_start_timer
+render_subcommand_banner "$(tui_subtitle_for sync)"
 
 # ---------------------------------------------------------------------------
 # Parse flags
@@ -53,7 +59,7 @@ done
 # ---------------------------------------------------------------------------
 _manifest="${REPO_ROOT}/manifest.json"
 if [ ! -f "${_manifest}" ]; then
-    log_error "manifest.json not found. Run: ./dots apply first."
+    log_error "manifest.json not found. Run: ./dots update first."
     exit 1
 fi
 
@@ -69,7 +75,7 @@ _manifest_hash="$(manifest_read_field "${_manifest}" "source_hash")"
 _current_hash="$(source_hash "${REPO_ROOT}")"
 
 if [ "${_current_hash}" = "${_manifest_hash}" ] && [ "${_force}" -eq 0 ]; then
-    log_info "already current (hash=${_current_hash})"
+    log_success "Sync complete" "already current"
     exit 0
 fi
 
@@ -86,19 +92,16 @@ fi
 # ---------------------------------------------------------------------------
 _theme="$(jq -r '.theme  // empty' "${_manifest}")"
 _flavor="$(jq -r '.flavor // empty' "${_manifest}")"
-_accent="$(jq -r '.accent // empty' "${_manifest}")"
 
 if [ -z "${_theme}" ] || [ -z "${_flavor}" ]; then
-    log_error "Manifest missing 'theme' or 'flavor'. Re-run: ./dots apply."
+    log_error "Manifest missing 'theme' or 'flavor'. Re-run: ./dots update."
     exit 1
 fi
 
-_accent="${_accent:-mauve}"
 _tools_csv="$(jq -r '.tools | join(",")' "${_manifest}")"
 
 validate_theme  "${REPO_ROOT}" "${_theme}"
 validate_flavor "${REPO_ROOT}" "${_theme}" "${_flavor}"
-validate_accent "${REPO_ROOT}" "${_theme}" "${_accent}"
 validate_tools  "${_tools_csv}"
 
 # ---------------------------------------------------------------------------
@@ -108,10 +111,10 @@ log_step "Deploying home payload..."
 deploy_copy_home "${REPO_ROOT}"
 
 log_step "Applying template substitution..."
-deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}" "${_accent}"
+deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}"
 
 log_step "Materializing theme assets..."
-deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}" "${_accent}"
+deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}"
 
 log_step "Building bat cache..."
 deploy_bat_cache
@@ -129,6 +132,9 @@ fi
 log_step "Writing manifest..."
 _new_hash="$(source_hash "${REPO_ROOT}")"
 manifest_write "${REPO_ROOT}/manifest.json" \
-    "${_theme}" "${_flavor}" "${_accent}" "${_tools_csv}" "${_new_hash}"
+    "${_theme}" "${_flavor}" "${_tools_csv}" "${_new_hash}"
 
-log_info "Reload complete. Theme: ${_theme}/${_flavor}"
+log_success "Sync complete" \
+    "source_hash=${_new_hash}" \
+    "theme=${_theme}/${_flavor}" \
+    "manifest=${REPO_ROOT}/manifest.json"

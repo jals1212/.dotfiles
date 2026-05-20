@@ -1,14 +1,13 @@
 # Install Guide
 
-## Prerequisites
+## Requirements
 
-**macOS**: `curl` only. Git is picked up via Xcode Command Line Tools or installed automatically by Homebrew.
+- macOS: `curl`
+- Linux: `curl`, `git`, and `sudo`
 
-**Linux**: `curl`, `git`, and `sudo`. The bootstrap installs build-essential (or equivalent) and Homebrew via `sudo` before running the Brewfile.
+No Go or Docker is required for normal use.
 
-No Go or Docker required for a standard install.
-
-## Bootstrap
+## First install
 
 ```sh
 git clone <repo> ~/.dotfiles
@@ -16,14 +15,12 @@ cd ~/.dotfiles
 ./bootstrap.sh
 ```
 
-`bootstrap.sh` orchestrates:
+What to expect:
 
-1. OS/arch detection.
-2. Linux system deps (`apt-get` / `dnf` / `pacman` — build-essential, curl, git, unzip, fontconfig).
-3. Homebrew install (if missing).
-4. `brew bundle --file=Brewfile`.
-5. Interactive theme/tool wizard (`./dots select`).
-6. Deploy (`./dots apply`).
+1. Required packages are installed.
+2. The `update` flow opens so you can choose theme/tools.
+3. Your config is deployed.
+4. A backup is created before deployment when existing managed files are present.
 
 ## Non-interactive install
 
@@ -31,103 +28,105 @@ cd ~/.dotfiles
 ./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
 ```
 
-Supported flags: `--yes`, `--theme`, `--flavor`, `--accent`, `--tools`.
+Supported flags:
 
-With `--yes`, `./dots select --yes` skips the pickers, uses values from `manifest.json` (or hardcoded defaults if no manifest), and runs the full deploy pipeline immediately.
-
-## Selection lifecycle
-
-There is no selection file. `./dots select` runs the wizard and the deploy pipeline in one step. The single durable record of a deployed selection is `manifest.json`.
-
-**Sources of truth:**
-
-- `manifest.json` — written by `./dots select`, `./dots apply`, `./dots update`, and `./dots sync` after every successful deploy. Holds theme/flavor/accent/tools plus `source_hash` and `applied_at`.
-- Hardcoded defaults in `lib/select.sh` (`_SELECT_DEFAULT_THEME=kanagawa`, etc.) — used only when no manifest exists yet (fresh clone).
-
-**Schema of the deployed state (as serialized in `manifest.json`):**
-
-```json
-{
-  "version": "2.0.0",
-  "theme": "kanagawa",
-  "flavor": "dragon",
-  "accent": "mauve",
-  "tools": ["zsh", "tmux", "nvim", "ghostty", "oh-my-posh", "atuin", "zoxide"],
-  "source_hash": "<64-hex>",
-  "applied_at": "<ISO 8601 UTC>"
-}
+```sh
+--yes
+--theme=kanagawa|catppuccin
+--flavor=dragon|wave|lotus|latte|frappe|macchiato|mocha
+--accent=mauve|blue|green|peach|pink|red|yellow
+--tools=zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide
 ```
 
-**Fields (selection portion):**
+## Everyday commands
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `theme` | string | Theme family. Valid: `kanagawa`, `catppuccin`. |
-| `flavor` | string | Variant within the family (see below). |
-| `accent` | string | Accent color (catppuccin only). Valid: `mauve`, `blue`, `green`, `peach`, `pink`, `red`, `yellow`. Ignored for kanagawa. |
-| `tools` | array of strings | Tools to deploy. Valid members: `zsh`, `tmux`, `nvim`, `ghostty`, `oh-my-posh`, `atuin`, `zoxide`. |
+Run `./dots` for the visual menu. On first run, if no config has been applied yet, `./dots` starts `update` automatically.
 
-**Valid themes and flavors:**
+| Command | Use when you want to... |
+| --- | --- |
+| `./dots` | Open the visual action menu. |
+| `./dots update` | Change theme/tools and apply immediately. |
+| `./dots sync` | Re-apply the current config. |
+| `./dots sync --force` | Re-apply even when nothing appears to have changed. |
+| `./dots backup` | Create a backup now. |
+| `./dots restore` | Pick a backup visually, newest first. |
+| `./dots restore --latest` | Restore the newest backup directly. |
+| `./dots restore PATH` | Restore a specific backup. |
+| `./dots doctor` | Check whether the install looks healthy. |
+| `./dots uninstall` | Remove managed config files. |
+
+In scripts or CI, use an explicit subcommand such as `./dots sync`; the initialized no-argument menu is interactive-only.
+
+## Themes
+
+Supported themes:
 
 | Theme | Flavors |
 | --- | --- |
-| `kanagawa` | `wave`, `dragon`, `lotus` |
+| `kanagawa` | `dragon`, `lotus`, `wave` |
 | `catppuccin` | `latte`, `frappe`, `macchiato`, `mocha` |
 
-`./dots select` and `./dots apply` reject unknown themes, flavors, accents, or tools (no matching asset) with a non-zero exit.
+Change theme interactively:
 
-## Interactive subcommands
+```sh
+./dots update
+```
 
-| Command | Description |
-| --- | --- |
-| `./dots select` | Wizard + full deploy in one step. Interactive entry for any change. |
-| `./dots apply` | Non-interactive replay of the deploy pipeline using state from `manifest.json` (or defaults). |
-| `./dots update` | Re-deploy from `manifest.json` without source-hash check or backup. |
-| `./dots sync` | Re-deploy from `manifest.json` only when source hash differs; `--force` skips the check. |
-| `./dots doctor` | Non-mutating health checks on deployed dotfiles. |
-| `./dots restore --latest` | Restore the newest backup from `.backups/`. |
-| `./dots uninstall` | Remove managed payload and `manifest.json`. |
+Change theme non-interactively:
 
-## Doctor
+```sh
+./dots update --yes --theme=catppuccin --flavor=mocha --accent=mauve
+```
+
+## Backup and restore
+
+Create a backup:
+
+```sh
+./dots backup
+```
+
+Restore visually:
+
+```sh
+./dots restore
+```
+
+Restore the newest backup without the picker:
+
+```sh
+./dots restore --latest
+```
+
+Restore a specific backup:
+
+```sh
+./dots restore .backups/2026-05-19T12-00-00Z
+```
+
+## Health check
+
+After install or updates:
 
 ```sh
 ./dots doctor
-./dots doctor --help
 ```
 
-`doctor` runs local, non-mutating health checks against deployed dotfiles. Checks cover required paths, Oh My Posh JSON syntax, config-content markers (tmux prefix, Ghostty theme block, BAT_THEME), and Homebrew presence.
+If doctor reports a problem, try:
 
-Doctor does not install dependencies, repair files, or perform network calls. Run it after install/update/sync to catch config drift.
-
-## Sync vs update
-
-Use `sync` when you only want to apply repo source drift (hash changed). Use `update` for unconditional target repair.
-
-## Backups and manifest
-
-Before deploying, `apply` creates a timestamped backup:
-
-```text
-<repo>/.backups/<YYYY-MM-DDTHH-MM-SSZ>/
+```sh
+./dots sync --force
+./dots doctor
 ```
 
-A `manifest.json` at the repo root records:
-
-- `deployed_at`
-- `version`
-- `theme`
-- `flavor`
-- `accent`
-- `source_hash`
-
-## Post-install checks
+## Post-install
 
 ```sh
 exec zsh
 ./dots doctor
-which oh-my-posh
-bat --config-dir
-nvim
 ```
 
-Tmux uses `Ctrl-a` as prefix. Install/update tmux plugins with `Ctrl-a I` after opening a session.
+Then:
+
+1. Open tmux and install plugins with `Ctrl-a I`.
+2. Open Neovim; plugins install on first launch.

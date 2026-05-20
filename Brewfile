@@ -30,6 +30,9 @@ brew "gping"
 # ── Interactive / TUI helpers ─────────────────────────
 brew "gum"
 
+# ── Test runner ──────────────────────────────────────
+brew "bats-core"
+
 # ── Fonts ────────────────────────────────────────────
 cask "font-iosevka-term-nerd-font" if OS.mac?
 

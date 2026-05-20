@@ -35,6 +35,11 @@ export REPO_ROOT
 . "${REPO_ROOT}/lib/log.sh"
 # shellcheck source=lib/detect.sh
 . "${REPO_ROOT}/lib/detect.sh"
+# shellcheck source=lib/tui.sh
+. "${REPO_ROOT}/lib/tui.sh"
+
+tui_start_timer
+render_subcommand_banner "$(tui_subtitle_for uninstall)"
 
 # ---------------------------------------------------------------------------
 # Parse flags
@@ -97,24 +102,36 @@ fi
 # Remove managed paths
 # ---------------------------------------------------------------------------
 log_step "Removing managed config paths from \$HOME..."
+_removed_count_file="$(mktemp)"
+printf '0\n' > "${_removed_count_file}"
 _managed_paths | while IFS= read -r _path; do
     if [ -e "${_path}" ] || [ -L "${_path}" ]; then
         rm -rf "${_path}"
+        _removed_count="$(cat "${_removed_count_file}")"
+        _removed_count=$((_removed_count + 1))
+        printf '%s\n' "${_removed_count}" > "${_removed_count_file}"
         log_info "Removed: ${_path}"
     else
         log_info "Not present (skip): ${_path}"
     fi
 done
+_removed_count="$(cat "${_removed_count_file}")"
+rm -f "${_removed_count_file}"
 
 # ---------------------------------------------------------------------------
 # Remove manifest.json
 # ---------------------------------------------------------------------------
 _manifest="${REPO_ROOT}/manifest.json"
+_manifest_status="not present"
 if [ -f "${_manifest}" ]; then
     rm -f "${_manifest}"
+    _manifest_status="removed"
     log_info "Removed: ${_manifest}"
 else
     log_info "manifest.json not present (skip)."
 fi
 
-log_info "Uninstall complete. Run './dots restore --latest' to recover prior state."
+log_success "Uninstall complete" \
+    "removed_paths=${_removed_count}" \
+    "manifest=${_manifest_status}" \
+    "restore=./dots restore --latest"
