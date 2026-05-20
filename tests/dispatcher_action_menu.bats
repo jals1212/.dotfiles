@@ -6,11 +6,17 @@ REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 
 setup() {
     SANDBOX="$(mktemp -d)"
+    TEST_HOME="${SANDBOX}/home"
+    mkdir -p "${TEST_HOME}" "${TEST_HOME}/.config" "${TEST_HOME}/.cache"
+    export HOME="${TEST_HOME}"
+    export XDG_CONFIG_HOME="${TEST_HOME}/.config"
+    export XDG_CACHE_HOME="${TEST_HOME}/.cache"
     REPO_COPY="${SANDBOX}/repo"
     mkdir -p "${REPO_COPY}"
     tar -C "${REPO_ROOT}" \
         --exclude='.git' \
         --exclude='.backups' \
+        --exclude='.grit' \
         --exclude='.opencode' \
         --exclude='tmp' \
         --exclude='orchestra' \

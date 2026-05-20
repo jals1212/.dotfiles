@@ -89,17 +89,17 @@ linux_deps() {
     if has_command apt-get; then
         _apt_flags="-y"
         ${_sudo} apt-get update -y
-        ${_sudo} apt-get install ${_apt_flags} build-essential curl git unzip fontconfig
+        ${_sudo} apt-get install ${_apt_flags} build-essential curl git unzip fontconfig zsh
     elif has_command dnf; then
         _dnf_flags="-y"
-        ${_sudo} dnf install ${_dnf_flags} @development-tools curl file git wget unzip fontconfig
+        ${_sudo} dnf install ${_dnf_flags} @development-tools curl file git wget unzip fontconfig zsh
     elif has_command pacman; then
         _pacman_flags="--needed"
         if [ "${NONINTERACTIVE:-0}" = "1" ]; then
             _pacman_flags="${_pacman_flags} --noconfirm"
         fi
         # shellcheck disable=SC2086
-        ${_sudo} pacman -S ${_pacman_flags} base-devel curl file git wget unzip fontconfig
+        ${_sudo} pacman -S ${_pacman_flags} base-devel curl file git wget unzip fontconfig zsh
     else
         log_warn "No known package manager found (apt-get / dnf / pacman). Skipping Linux deps."
     fi

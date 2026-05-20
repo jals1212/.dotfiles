@@ -5,7 +5,7 @@
 # Assertions per task 8.5:
 #   - brew --version exits 0
 #   - ./dots doctor exits 0
-#   - idempotency: second ./dots apply produces no manifest hash change
+#   - idempotency: second ./dots sync produces no manifest hash change
 set -eu
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -44,8 +44,8 @@ docker run --rm \
     # Idempotency: capture source_hash before second apply
     hash_before="$(jq -r .source_hash manifest.json 2>/dev/null || printf none)"
 
-    # Second apply: must be no-op (hash unchanged, no errors)
-    ./dots apply
+    # Second sync: must be no-op (hash unchanged, no errors)
+    ./dots sync
 
     hash_after="$(jq -r .source_hash manifest.json 2>/dev/null || printf none)"
 
