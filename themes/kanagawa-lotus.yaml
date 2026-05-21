@@ -1,0 +1,18 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/kanagawa/lotus.json
+    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/kanagawa/Kanagawa-lotus.tmTheme
+    ~/.config/eza/themes/dots.sh: assets/themes/eza/kanagawa/lotus.txt
+    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/kanagawa/lotus.sh
+    ~/.config/lazygit/config.yml: assets/themes/lazygit/kanagawa/lotus.yml
+    ~/.config/bottom/bottom.toml: assets/themes/bottom/kanagawa/lotus.toml
+    ~/.config/ghostty/themes/dots: assets/themes/ghostty/kanagawa/lotus.conf
+    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/kanagawa/lotus.toml
+    ~/.config/dots/theme.sh: assets/themes/zsh/kanagawa-lotus.sh
+    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/kanagawa-lotus.lua

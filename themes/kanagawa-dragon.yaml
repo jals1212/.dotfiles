@@ -1,0 +1,18 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/kanagawa/dragon.json
+    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/kanagawa/Kanagawa-dragon.tmTheme
+    ~/.config/eza/themes/dots.sh: assets/themes/eza/kanagawa/dragon.txt
+    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/kanagawa/dragon.sh
+    ~/.config/lazygit/config.yml: assets/themes/lazygit/kanagawa/dragon.yml
+    ~/.config/bottom/bottom.toml: assets/themes/bottom/kanagawa/dragon.toml
+    ~/.config/ghostty/themes/dots: assets/themes/ghostty/kanagawa/dragon.conf
+    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/kanagawa/dragon.toml
+    ~/.config/dots/theme.sh: assets/themes/zsh/kanagawa-dragon.sh
+    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/kanagawa-dragon.lua

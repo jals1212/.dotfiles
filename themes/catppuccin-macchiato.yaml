@@ -1,0 +1,18 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/catppuccin/macchiato.json
+    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/catppuccin/Catppuccin-macchiato.tmTheme
+    ~/.config/eza/themes/dots.sh: assets/themes/eza/catppuccin/macchiato.txt
+    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/catppuccin/macchiato.sh
+    ~/.config/lazygit/config.yml: assets/themes/lazygit/catppuccin/macchiato.yml
+    ~/.config/bottom/bottom.toml: assets/themes/bottom/catppuccin/macchiato.toml
+    ~/.config/ghostty/themes/dots: assets/themes/ghostty/catppuccin/macchiato.conf
+    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/catppuccin/macchiato.toml
+    ~/.config/dots/theme.sh: assets/themes/zsh/catppuccin-macchiato.sh
+    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/catppuccin-macchiato.lua

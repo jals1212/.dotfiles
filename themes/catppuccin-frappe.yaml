@@ -1,0 +1,18 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/catppuccin/frappe.json
+    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/catppuccin/Catppuccin-frappe.tmTheme
+    ~/.config/eza/themes/dots.sh: assets/themes/eza/catppuccin/frappe.txt
+    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/catppuccin/frappe.sh
+    ~/.config/lazygit/config.yml: assets/themes/lazygit/catppuccin/frappe.yml
+    ~/.config/bottom/bottom.toml: assets/themes/bottom/catppuccin/frappe.toml
+    ~/.config/ghostty/themes/dots: assets/themes/ghostty/catppuccin/frappe.conf
+    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/catppuccin/frappe.toml
+    ~/.config/dots/theme.sh: assets/themes/zsh/catppuccin-frappe.sh
+    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/catppuccin-frappe.lua
