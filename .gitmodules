@@ -1,9 +1,9 @@
-[submodule "dotbot"]
-	path = dotbot
+[submodule "vendor/dotbot"]
+	path = vendor/dotbot
 	url = https://github.com/anishathalye/dotbot.git
-[submodule "plugins/dotbot-brew"]
-	path = plugins/dotbot-brew
+[submodule "vendor/plugins/dotbot-brew"]
+	path = vendor/plugins/dotbot-brew
 	url = https://github.com/d12frosted/dotbot-brew.git
-[submodule "plugins/dotbot-mise"]
-	path = plugins/dotbot-mise
+[submodule "vendor/plugins/dotbot-mise"]
+	path = vendor/plugins/dotbot-mise
 	url = https://github.com/s0cks/dotbot-mise.git
