@@ -20,6 +20,12 @@ BASEDIR="$(cd "$(dirname "$SELF")" && pwd)"
 
 CONFIG="${1:-install.conf.yaml}"
 
+# Ensure brew install locations are on PATH so dotbot-brew finds `brew`
+# after the shell directive installs it (Python subprocesses inherit PATH
+# from this wrapper, not from in-run shell directive exports).
+PATH="/opt/homebrew/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:${PATH}"
+export PATH
+
 # ── Preflight ──────────────────────────────────────────────────────────────
 
 if ! command -v python3 >/dev/null 2>&1; then
