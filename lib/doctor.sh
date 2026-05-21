@@ -1,225 +1,296 @@
 #!/bin/sh
-# lib/doctor.sh — doctor check primitives and concrete health checks
+# lib/doctor.sh — non-mutating health checks for the dotbot model
 # POSIX sh. Source this file; do not execute directly.
-# Callers must have set REPO_ROOT and sourced lib/log.sh.
+# Caller MUST have sourced lib/log.sh and exported REPO_ROOT.
 
 # ---------------------------------------------------------------------------
-# Primitives
+# Internal helpers
 # ---------------------------------------------------------------------------
 
-# check_file <path> <label>
-#   Pass when <path> is a regular file; fail otherwise.
-#   Returns 0 on pass, 1 on fail.
-check_file() {
-    _cf_path="${1:?check_file: path required}"
-    _cf_label="${2:?check_file: label required}"
+# _doc_pass <label>
+_doc_pass() { _log_line 76 '[PASS]' "${1}"; }
+# _doc_fail <label> <reason>
+_doc_fail() { _log_line 196 '[FAIL]' "${1}: ${2}"; }
+# _doc_warn <label> <message>
+_doc_warn() { _log_line 214 '[WARN]' "${1}: ${2}"; }
+# _doc_skip <label> <reason>
+_doc_skip() { _log_line 250 '[SKIP]' "${1}: ${2}"; }
 
-    if [ -f "${_cf_path}" ]; then
-        _log_line 82 '[PASS]' "${_cf_label}"
+# check_command <label> <cmd>
+check_command() {
+    if command -v "${2}" >/dev/null 2>&1; then
+        _doc_pass "${1} present"
         return 0
-    else
-        _log_line 196 '[FAIL]' "${_cf_label}: file missing (${_cf_path})"
-        return 1
     fi
+    _doc_fail "${1} present" "command not found: ${2}"
+    return 1
 }
 
-# check_contains <path> <needle> <label>
-#   Pass when <path> exists and contains the fixed string <needle>.
-#   Returns 0 on pass, 1 on fail.
-check_contains() {
-    _cc_path="${1:?check_contains: path required}"
-    _cc_needle="${2:?check_contains: needle required}"
-    _cc_label="${3:?check_contains: label required}"
+# check_symlink_into_repo <label> <path>
+#   Pass: <path> exists, is a symlink, target resolves under $REPO_ROOT.
+check_symlink_into_repo() {
+    _cs_label="${1}"
+    _cs_path="${2}"
+    if [ ! -e "${_cs_path}" ] && [ ! -L "${_cs_path}" ]; then
+        _doc_fail "${_cs_label}" "missing: ${_cs_path}"
+        return 1
+    fi
+    if [ ! -L "${_cs_path}" ]; then
+        _doc_fail "${_cs_label}" "not a symlink: ${_cs_path} (run ./dots update to repair)"
+        return 1
+    fi
+    _cs_target="$(readlink -f "${_cs_path}" 2>/dev/null || true)"
+    case "${_cs_target}" in
+        "${REPO_ROOT}"/*) _doc_pass "${_cs_label}"; return 0 ;;
+        *) _doc_fail "${_cs_label}" "target outside repo: ${_cs_target}"; return 1 ;;
+    esac
+}
 
-    if [ ! -f "${_cc_path}" ]; then
-        _log_line 196 '[FAIL]' "${_cc_label}: file missing (${_cc_path})"
+# check_contains <label> <path> <needle>
+check_contains() {
+    _cc_label="${1}"; _cc_path="${2}"; _cc_needle="${3}"
+    if [ ! -r "${_cc_path}" ]; then
+        _doc_fail "${_cc_label}" "unreadable: ${_cc_path}"
         return 1
     fi
     if grep -qF -- "${_cc_needle}" "${_cc_path}"; then
-        _log_line 82 '[PASS]' "${_cc_label}"
+        _doc_pass "${_cc_label}"
         return 0
-    else
-        _log_line 196 '[FAIL]' "${_cc_label}: '${_cc_needle}' not found in ${_cc_path}"
+    fi
+    _doc_fail "${_cc_label}" "missing marker '${_cc_needle}' in ${_cc_path}"
+    return 1
+}
+
+# check_json_via_symlink <label> <path>
+check_json_via_symlink() {
+    _cj_label="${1}"; _cj_path="${2}"
+    if ! command -v jq >/dev/null 2>&1; then
+        _doc_skip "${_cj_label}" "jq not installed"
+        return 0
+    fi
+    _cj_target="$(readlink -f "${_cj_path}" 2>/dev/null || true)"
+    if [ ! -f "${_cj_target}" ]; then
+        _doc_fail "${_cj_label}" "broken symlink: ${_cj_path}"
         return 1
     fi
+    if jq -e . "${_cj_target}" >/dev/null 2>&1; then
+        _doc_pass "${_cj_label}"
+        return 0
+    fi
+    _doc_fail "${_cj_label}" "invalid JSON: ${_cj_target}"
+    return 1
 }
 
-# check_json <path> <label>
-#   Pass when <path> exists and is valid JSON (jq empty).
-#   Returns 0 on pass, 1 on fail.
-check_json() {
-    _cj_path="${1:?check_json: path required}"
-    _cj_label="${2:?check_json: label required}"
+# ---------------------------------------------------------------------------
+# Command availability
+# ---------------------------------------------------------------------------
+check_brew()    { check_command "Homebrew" brew; }
+check_zsh()     { check_command "zsh" zsh; }
+check_tmux()    { check_command "tmux" tmux; }
+check_nvim()    { check_command "neovim" nvim; }
+check_git()     { check_command "git" git; }
+check_jq()      { check_command "jq" jq; }
+check_gum()     { check_command "gum" gum; }
+check_python3() { check_command "python3" python3; }
 
-    if [ ! -f "${_cj_path}" ]; then
-        _log_line 196 '[FAIL]' "${_cj_label}: file missing (${_cj_path})"
+# ---------------------------------------------------------------------------
+# Submodule presence
+# ---------------------------------------------------------------------------
+check_dotbot_submodule() {
+    if [ -x "${REPO_ROOT}/dotbot/bin/dotbot" ]; then
+        _doc_pass "dotbot submodule"
+        return 0
+    fi
+    _doc_fail "dotbot submodule" "missing dotbot/bin/dotbot (run: git submodule update --init --recursive)"
+    return 1
+}
+check_dotbot_brew_plugin() {
+    if [ -f "${REPO_ROOT}/plugins/dotbot-brew/brew.py" ]; then
+        _doc_pass "dotbot-brew plugin"
+        return 0
+    fi
+    _doc_fail "dotbot-brew plugin" "missing plugins/dotbot-brew/brew.py"
+    return 1
+}
+check_dotbot_mise_plugin() {
+    if [ -f "${REPO_ROOT}/plugins/dotbot-mise/mise.py" ]; then
+        _doc_pass "dotbot-mise plugin"
+        return 0
+    fi
+    _doc_fail "dotbot-mise plugin" "missing plugins/dotbot-mise/mise.py"
+    return 1
+}
+
+# ---------------------------------------------------------------------------
+# Required deployed paths (symlinks into repo)
+# ---------------------------------------------------------------------------
+check_zshrc_link()    { check_symlink_into_repo ".zshrc symlink"    "${HOME}/.zshrc"; }
+check_zprofile_link() { check_symlink_into_repo ".zprofile symlink" "${HOME}/.zprofile"; }
+check_zshenv_link()   { check_symlink_into_repo ".zshenv symlink"   "${HOME}/.zshenv"; }
+check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "${HOME}/.config/nvim/init.lua"; }
+check_tmux_link()     { check_symlink_into_repo "tmux config"       "${HOME}/.config/tmux/tmux.conf"; }
+check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "${HOME}/.config/ghostty/config"; }
+check_atuin_link()    { check_symlink_into_repo "atuin config"      "${HOME}/.config/atuin/config.toml"; }
+check_mise_link()     { check_symlink_into_repo "mise config"       "${HOME}/.config/mise/config.toml"; }
+
+# ---------------------------------------------------------------------------
+# Theme symlinks (managed by per-theme dotbot config)
+# ---------------------------------------------------------------------------
+check_ompo_theme_link()    { check_symlink_into_repo "oh-my-posh theme" "${HOME}/.config/oh-my-posh/config.json"; }
+check_bat_theme_link()     { check_symlink_into_repo "bat theme"        "${HOME}/.config/bat/themes/dots.tmTheme"; }
+check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "${HOME}/.config/fzf/themes/dots.sh"; }
+check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "${HOME}/.config/eza/themes/dots.sh"; }
+check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "${HOME}/.config/lazygit/config.yml"; }
+check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "${HOME}/.config/bottom/bottom.toml"; }
+check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "${HOME}/.config/ghostty/themes/dots"; }
+check_atuin_theme_link()   { check_symlink_into_repo "atuin theme"      "${HOME}/.config/atuin/themes/dots.toml"; }
+check_zsh_theme_link()     { check_symlink_into_repo "zsh theme.sh"     "${HOME}/.config/dots/theme.sh"; }
+check_nvim_theme_link()    { check_symlink_into_repo "nvim dots-theme"  "${HOME}/.config/nvim/lua/dots-theme.lua"; }
+
+# ---------------------------------------------------------------------------
+# Theme symlinks agreement
+# ---------------------------------------------------------------------------
+check_theme_symlinks_agree() {
+    _ctsa_label="theme symlinks agreement"
+    _ctsa_expected=""
+    _ctsa_disagreed=""
+    for _ctsa_link in \
+        "${HOME}/.config/oh-my-posh/config.json" \
+        "${HOME}/.config/atuin/themes/dots.toml" \
+        "${HOME}/.config/bottom/bottom.toml" \
+        "${HOME}/.config/lazygit/config.yml"
+    do
+        [ -L "${_ctsa_link}" ] || continue
+        _ctsa_t="$(readlink -f "${_ctsa_link}" 2>/dev/null || true)"
+        _ctsa_key="$(printf '%s' "${_ctsa_t}" | sed -n 's|.*assets/themes/[^/]*/\([^/]*\)/\([^.]*\)\..*|\1/\2|p')"
+        [ -n "${_ctsa_key}" ] || continue
+        if [ -z "${_ctsa_expected}" ]; then
+            _ctsa_expected="${_ctsa_key}"
+        elif [ "${_ctsa_key}" != "${_ctsa_expected}" ]; then
+            _ctsa_disagreed="${_ctsa_disagreed} ${_ctsa_link}=${_ctsa_key}"
+        fi
+    done
+    if [ -z "${_ctsa_expected}" ]; then
+        _doc_skip "${_ctsa_label}" "no theme symlinks resolved"
+        return 0
+    fi
+    if [ -n "${_ctsa_disagreed}" ]; then
+        _doc_fail "${_ctsa_label}" "expected=${_ctsa_expected} but disagree:${_ctsa_disagreed}"
         return 1
     fi
-    if jq empty "${_cj_path}" 2>/dev/null; then
-        _log_line 82 '[PASS]' "${_cj_label}"
-        return 0
-    else
-        _log_line 196 '[FAIL]' "${_cj_label}: invalid JSON (${_cj_path})"
-        return 1
-    fi
-}
-
-# check_command <name> <label>
-#   Pass when <name> is found on PATH.
-#   Returns 0 on pass, 1 on fail.
-check_command() {
-    _cmd_name="${1:?check_command: name required}"
-    _cmd_label="${2:?check_command: label required}"
-
-    if command -v "${_cmd_name}" >/dev/null 2>&1; then
-        _log_line 82 '[PASS]' "${_cmd_label}"
-        return 0
-    else
-        _log_line 196 '[FAIL]' "${_cmd_label}: command not found (${_cmd_name})"
-        return 1
-    fi
+    _doc_pass "${_ctsa_label} (${_ctsa_expected})"
+    return 0
 }
 
 # ---------------------------------------------------------------------------
-# Concrete checks — required commands (task 6.2, 6.3)
+# Content markers
 # ---------------------------------------------------------------------------
-
-check_brew() {
-    check_command brew "Homebrew installed"
-}
-
-check_zsh() {
-    check_command zsh "zsh installed"
-}
-
-check_tmux() {
-    check_command tmux "tmux installed"
-}
-
-check_nvim() {
-    check_command nvim "nvim installed"
-}
-
-check_git() {
-    check_command git "git installed"
-}
-
-check_jq() {
-    check_command jq "jq installed"
-}
-
-check_gum() {
-    check_command gum "gum installed"
-}
-
-# ---------------------------------------------------------------------------
-# Concrete checks — manifest (task 6.2)
-# ---------------------------------------------------------------------------
-
-check_manifest_exists() {
-    check_file "${REPO_ROOT}/manifest.json" "Manifest exists (post-apply)"
-}
-
-check_manifest_json() {
-    check_json "${REPO_ROOT}/manifest.json" "Manifest is valid JSON"
-}
-
-# ---------------------------------------------------------------------------
-# Concrete check — source hash drift (task 6.2)
-# ---------------------------------------------------------------------------
-
-# check_source_hash_match
-#   Compares the current computed source_hash with the value stored in manifest.
-#   Warns (non-fatal) on drift; fails only when manifest is present with a hash
-#   that does not match.
-check_source_hash_match() {
-    _cshm_label="Source hash matches manifest"
-    _cshm_manifest="${REPO_ROOT}/manifest.json"
-
-    if [ ! -f "${_cshm_manifest}" ]; then
-        _log_line 214 '[SKIP]' "${_cshm_label}: no manifest (run ./dots update first)"
-        return 0
-    fi
-
-    # Source manifest.sh to get source_hash helper (detect.sh already sourced by caller)
-    if [ -f "${REPO_ROOT}/lib/manifest.sh" ]; then
-        # shellcheck source=lib/manifest.sh
-        . "${REPO_ROOT}/lib/manifest.sh"
-    fi
-
-    _cshm_stored="$(manifest_read_field "${_cshm_manifest}" source_hash)"
-    if [ -z "${_cshm_stored}" ]; then
-        _log_line 214 '[SKIP]' "${_cshm_label}: no source_hash field in manifest"
-        return 0
-    fi
-
-    _cshm_current="$(source_hash "${REPO_ROOT}")"
-    if [ "${_cshm_current}" = "${_cshm_stored}" ]; then
-        _log_line 82 '[PASS]' "${_cshm_label}"
-        return 0
-    else
-        _log_line 214 '[WARN]' "${_cshm_label}: drift detected (stored=${_cshm_stored} current=${_cshm_current})"
-        return 1
-    fi
-}
-
-# ---------------------------------------------------------------------------
-# Concrete checks — content markers (task 6.4)
-# ---------------------------------------------------------------------------
-
 check_tmux_prefix() {
-    check_contains "${HOME}/.config/tmux/tmux.conf" \
-        "set -g prefix C-a" \
-        "tmux prefix is C-a"
+    check_contains "tmux prefix C-a" "${HOME}/.config/tmux/tmux.conf" 'set -g prefix C-a'
 }
-
-check_ghostty_theme() {
-    check_contains "${HOME}/.config/ghostty/config" \
-        "theme = dots" \
-        "ghostty theme = dots"
+check_ghostty_theme_marker() {
+    check_contains "ghostty theme = dots" "${HOME}/.config/ghostty/config" 'theme = dots'
 }
-
-# check_bat_theme_block
-#   Checks that both the begin and end sentinels for the BAT_THEME apply_block
-#   are present in $HOME/.zshrc, and that the block contains the canonical
-#   `export BAT_THEME="dots"` literal.
-check_bat_theme_block() {
-    _zshrc="${HOME}/.zshrc"
-    _cbt_ok=0
-
-    check_contains "${_zshrc}" \
-        "# dots:bat-theme begin" \
-        "BAT_THEME block begin sentinel in .zshrc" || _cbt_ok=1
-
-    check_contains "${_zshrc}" \
-        "# dots:bat-theme end" \
-        "BAT_THEME block end sentinel in .zshrc" || _cbt_ok=1
-
-    check_contains "${_zshrc}" \
-        'export BAT_THEME="dots"' \
-        'BAT_THEME="dots" literal in .zshrc' || _cbt_ok=1
-
-    return "${_cbt_ok}"
+check_bat_theme_export() {
+    check_contains 'BAT_THEME literal' "${HOME}/.zshrc" 'export BAT_THEME="dots"'
 }
-
-check_bat_theme_dst() {
-    check_file "${HOME}/.config/bat/themes/dots.tmTheme" \
-        "bat dots.tmTheme deployed"
-}
-
-check_fzf_theme_dst() {
-    check_file "${HOME}/.config/fzf/themes/dots.sh" \
-        "fzf themes/dots.sh deployed"
-}
-
-check_eza_theme_dst() {
-    check_file "${HOME}/.config/eza/themes/dots.sh" \
-        "eza themes/dots.sh deployed"
+check_atuin_static_name() {
+    check_contains 'atuin name = "dots"' "${HOME}/.config/atuin/config.toml" 'name = "dots"'
 }
 
 # ---------------------------------------------------------------------------
-# Registry — space-separated list consumed by commands/doctor.sh
+# Tmux fenced block
 # ---------------------------------------------------------------------------
-# shellcheck disable=SC2034
-DOCTOR_CHECKS="check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_manifest_exists check_manifest_json check_source_hash_match check_tmux_prefix check_ghostty_theme check_bat_theme_block check_bat_theme_dst check_fzf_theme_dst check_eza_theme_dst"
+check_tmux_fence() {
+    _ctf_label="tmux fenced theme block"
+    _ctf_conf="${HOME}/.config/tmux/tmux.conf"
+    if [ ! -r "${_ctf_conf}" ]; then
+        _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
+        return 1
+    fi
+    _ctf_open=$(grep -c '^# >>> dots:theme >>>$' "${_ctf_conf}" 2>/dev/null || printf '0')
+    _ctf_close=$(grep -c '^# <<< dots:theme <<<$' "${_ctf_conf}" 2>/dev/null || printf '0')
+    if [ "${_ctf_open}" = 1 ] && [ "${_ctf_close}" = 1 ]; then
+        if grep -q 'set -g @ukiyo-theme' "${_ctf_conf}"; then
+            _doc_pass "${_ctf_label}"
+            return 0
+        fi
+        _doc_fail "${_ctf_label}" "fences present but no @ukiyo-theme line between them"
+        return 1
+    fi
+    _doc_fail "${_ctf_label}" "expected exactly one open + one close fence (got open=${_ctf_open}, close=${_ctf_close})"
+    return 1
+}
+
+# ---------------------------------------------------------------------------
+# Slim manifest validation
+# ---------------------------------------------------------------------------
+check_manifest_exists() {
+    if [ -f "${REPO_ROOT}/manifest.json" ]; then
+        _doc_pass "manifest.json exists"
+        return 0
+    fi
+    _doc_fail "manifest.json exists" "missing (run ./dots update)"
+    return 1
+}
+check_manifest_slim_schema() {
+    _cms_label="manifest slim schema"
+    _cms_m="${REPO_ROOT}/manifest.json"
+    [ -f "${_cms_m}" ] || { _doc_skip "${_cms_label}" "no manifest"; return 0; }
+    if ! command -v jq >/dev/null 2>&1; then
+        _doc_skip "${_cms_label}" "jq not installed"
+        return 0
+    fi
+    if ! jq -e . "${_cms_m}" >/dev/null 2>&1; then
+        _doc_fail "${_cms_label}" "invalid JSON"
+        return 1
+    fi
+    _cms_keys="$(jq -r 'keys | join(",")' "${_cms_m}")"
+    case "${_cms_keys}" in
+        "applied_at,flavor,theme,version") ;;
+        *)
+            if printf '%s' "${_cms_keys}" | grep -q 'source_hash\|deployed_at'; then
+                _doc_fail "${_cms_label}" "legacy keys present: ${_cms_keys}"
+            else
+                _doc_fail "${_cms_label}" "key set mismatch: got ${_cms_keys}; expected applied_at,flavor,theme,version"
+            fi
+            return 1
+            ;;
+    esac
+    _cms_theme="$(jq -r '.theme' "${_cms_m}")"
+    _cms_flavor="$(jq -r '.flavor' "${_cms_m}")"
+    case "${_cms_theme}" in
+        kanagawa|catppuccin) ;;
+        *) _doc_fail "${_cms_label}" "theme not whitelisted: ${_cms_theme}"; return 1 ;;
+    esac
+    case "${_cms_theme}:${_cms_flavor}" in
+        kanagawa:dragon|kanagawa:lotus|kanagawa:wave) ;;
+        catppuccin:frappe|catppuccin:latte|catppuccin:macchiato|catppuccin:mocha) ;;
+        *) _doc_fail "${_cms_label}" "flavor invalid for theme: ${_cms_theme}/${_cms_flavor}"; return 1 ;;
+    esac
+    _doc_pass "${_cms_label} (${_cms_theme}/${_cms_flavor})"
+    return 0
+}
+check_manifest_oh_my_posh_json() {
+    check_json_via_symlink "oh-my-posh JSON" "${HOME}/.config/oh-my-posh/config.json"
+}
+
+# ---------------------------------------------------------------------------
+# Stale dotbot-backup warning (non-fatal)
+# ---------------------------------------------------------------------------
+check_stale_backups() {
+    _csb_label="stale dotbot-backup files"
+    _csb_count=$(find "${HOME}" -type f -name '*.dotbot-backup.*' -mtime +29 2>/dev/null | wc -l | tr -d ' ')
+    if [ "${_csb_count:-0}" -gt 0 ]; then
+        _doc_warn "${_csb_label}" "${_csb_count} file(s) older than 30 days (run ./dots clean)"
+    else
+        _doc_pass "${_csb_label}"
+    fi
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_nvim_link check_tmux_link check_ghostty_link check_atuin_link check_mise_link check_ompo_theme_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_atuin_theme_link check_zsh_theme_link check_nvim_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_theme_export check_atuin_static_name check_tmux_fence check_manifest_exists check_manifest_slim_schema check_manifest_oh_my_posh_json check_stale_backups"
 export DOCTOR_CHECKS
