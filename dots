@@ -33,12 +33,13 @@ _dots_help() {
     printf 'USAGE\n' >&2
     printf '  ./dots <subcommand> [flags]\n\n' >&2
     printf 'SUBCOMMANDS\n' >&2
-    printf '  update      Configure theme/tools, then deploy immediately.\n' >&2
-    printf '  sync        Apply/reconcile existing manifest config (or --force).\n' >&2
-    printf '  backup      Create an explicit backup of managed dotfiles.\n' >&2
-    printf '  restore     Restore a backup: --latest or an explicit path.\n' >&2
-    printf '  uninstall   Remove managed config files and manifest.json.\n' >&2
-    printf '  doctor      Non-mutating health checks on deployed dotfiles.\n' >&2
+    printf '  update      Run ./install (base dotbot) then apply active theme.\n' >&2
+    printf '  sync        Re-run base dotbot + reapply manifest theme.\n' >&2
+    printf '  theme       Switch the active theme/flavor.\n' >&2
+    printf '  doctor      Non-mutating health checks.\n' >&2
+    printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n' >&2
+    printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n' >&2
+    printf '  uninstall   Remove every dotbot-managed symlink and manifest.\n' >&2
     printf '  help        Show this message.\n\n' >&2
     printf 'FLAGS (per subcommand)\n' >&2
     printf '  --help / -h   Show subcommand usage.\n\n' >&2
@@ -59,9 +60,10 @@ _dots_run() {
     case "${_drun_cmd}" in
         update)    sh "${REPO_ROOT}/commands/update.sh"    "$@" ;;
         sync)      sh "${REPO_ROOT}/commands/sync.sh"      "$@" ;;
-        backup)    sh "${REPO_ROOT}/commands/backup.sh"    "$@" ;;
+        theme)     sh "${REPO_ROOT}/commands/theme.sh"     "$@" ;;
         doctor)    sh "${REPO_ROOT}/commands/doctor.sh"    "$@" ;;
-        restore)   sh "${REPO_ROOT}/commands/restore.sh"   "$@" ;;
+        clean)     sh "${REPO_ROOT}/commands/clean.sh"     "$@" ;;
+        upgrade)   sh "${REPO_ROOT}/commands/upgrade.sh"   "$@" ;;
         uninstall) sh "${REPO_ROOT}/commands/uninstall.sh" "$@" ;;
         help|-h|--help) _dots_help ;;
         quit) return 0 ;;

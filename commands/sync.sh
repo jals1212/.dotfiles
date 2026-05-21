@@ -1,140 +1,83 @@
 #!/bin/sh
-# commands/sync.sh — re-deploy only when source hash has drifted (or --force)
+# commands/sync.sh — re-run base dotbot + reapply manifest theme
 # POSIX sh. Invoked by the dots dispatcher or directly.
-
 set -eu
 
 # ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots sync - apply existing manifest config\n\n' >&2
+_sync_usage() {
+    printf 'dots sync - re-run base dotbot + reapply manifest theme\n\n' >&2
     printf 'USAGE\n' >&2
-    printf '  ./dots sync [--force]\n\n' >&2
+    printf '  ./dots sync\n\n' >&2
+    printf 'BEHAVIOR\n' >&2
+    printf '  Reads theme/flavor from manifest.json, runs ./install (base dotbot\n' >&2
+    printf '  config, idempotent), then calls theme_apply with the recorded theme.\n' >&2
+    printf '  Requires manifest.json to be present; run ./dots update first.\n\n' >&2
     printf 'FLAGS\n' >&2
-    printf '  --force   Re-deploy even when hashes match.\n\n' >&2
-    printf 'Reads theme/tools from manifest.json and compares the current\n' >&2
-    printf 'source hash against manifest.json. If they match\n' >&2
-    printf 'and --force is not set, prints "already current" and exits 0.\n' >&2
+    printf '  --help / -h   Show this message.\n' >&2
+}
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    _sync_usage
     exit 0
 fi
 
 # ---------------------------------------------------------------------------
-# Compute REPO_ROOT
+# Compute REPO_ROOT and source libs
 # ---------------------------------------------------------------------------
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export REPO_ROOT
 
-# ---------------------------------------------------------------------------
-# Source libs
-# ---------------------------------------------------------------------------
 # shellcheck source=lib/log.sh
 . "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/detect.sh
-. "${REPO_ROOT}/lib/detect.sh"
-# shellcheck source=lib/select.sh
-. "${REPO_ROOT}/lib/select.sh"
 # shellcheck source=lib/tui.sh
 . "${REPO_ROOT}/lib/tui.sh"
-# shellcheck source=lib/deploy.sh
-. "${REPO_ROOT}/lib/deploy.sh"
-# shellcheck source=lib/manifest.sh
-. "${REPO_ROOT}/lib/manifest.sh"
+# shellcheck source=lib/header.sh
+. "${REPO_ROOT}/lib/header.sh"
+# shellcheck source=lib/dotbot.sh
+. "${REPO_ROOT}/lib/dotbot.sh"
+# shellcheck source=lib/theme.sh
+. "${REPO_ROOT}/lib/theme.sh"
 
 tui_start_timer
 render_subcommand_banner "$(tui_subtitle_for sync)"
 
 # ---------------------------------------------------------------------------
-# Parse flags
+# Check manifest exists (theme_current also checks, but give clear error here)
 # ---------------------------------------------------------------------------
-_force=0
-for _arg in "$@"; do
-    case "${_arg}" in
-        --force) _force=1 ;;
-    esac
-done
-
-# ---------------------------------------------------------------------------
-# Check manifest exists
-# ---------------------------------------------------------------------------
-_manifest="${REPO_ROOT}/manifest.json"
-if [ ! -f "${_manifest}" ]; then
-    log_error "manifest.json not found. Run: ./dots update first."
-    exit 1
-fi
-
-if ! command -v jq >/dev/null 2>&1; then
-    log_error "jq is required but not found on PATH. Run: brew install jq"
+if [ ! -f "${REPO_ROOT}/manifest.json" ]; then
+    log_error "no manifest; run ./dots update first"
     exit 1
 fi
 
 # ---------------------------------------------------------------------------
-# Compare hashes
+# Read theme/flavor from manifest
 # ---------------------------------------------------------------------------
-_manifest_hash="$(manifest_read_field "${_manifest}" "source_hash")"
-_current_hash="$(source_hash "${REPO_ROOT}")"
-
-if [ "${_current_hash}" = "${_manifest_hash}" ] && [ "${_force}" -eq 0 ]; then
-    log_success "Sync complete" "already current"
-    exit 0
-fi
-
-if [ "${_force}" -eq 1 ]; then
-    log_step "Force flag set — redeploying unconditionally."
-else
-    log_step "Source hash differs — redeploying."
-    log_info "  manifest: ${_manifest_hash}"
-    log_info "  current:  ${_current_hash}"
-fi
+_sync_pair="$(theme_current)" || exit 1
+_sync_theme="$(printf '%s' "${_sync_pair}" | awk '{print $1}')"
+_sync_flavor="$(printf '%s' "${_sync_pair}" | awk '{print $2}')"
 
 # ---------------------------------------------------------------------------
-# Read selection from manifest (authoritative)
+# Base dotbot run
 # ---------------------------------------------------------------------------
-_theme="$(jq -r '.theme  // empty' "${_manifest}")"
-_flavor="$(jq -r '.flavor // empty' "${_manifest}")"
-
-if [ -z "${_theme}" ] || [ -z "${_flavor}" ]; then
-    log_error "Manifest missing 'theme' or 'flavor'. Re-run: ./dots update."
+log_step "Running base dotbot config..."
+dotbot_base_apply || {
+    log_error "Base dotbot apply failed"
     exit 1
-fi
-
-_tools_csv="$(jq -r '.tools | join(",")' "${_manifest}")"
-
-validate_theme  "${REPO_ROOT}" "${_theme}"
-validate_flavor "${REPO_ROOT}" "${_theme}" "${_flavor}"
-validate_tools  "${_tools_csv}"
+}
 
 # ---------------------------------------------------------------------------
-# Deploy (no backup for sync — same as update semantics)
+# Theme apply
 # ---------------------------------------------------------------------------
-log_step "Deploying home payload..."
-deploy_copy_home "${REPO_ROOT}"
-
-log_step "Applying template substitution..."
-deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}"
-
-log_step "Materializing theme assets..."
-deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}"
-
-log_step "Building bat cache..."
-deploy_bat_cache
-
-# Inject BAT_THEME block. Bat theme is materialized as dots.tmTheme.
-_zshrc="${HOME}/.zshrc"
-if [ -f "${_zshrc}" ]; then
-    log_step "Injecting BAT_THEME block into ${_zshrc}..."
-    apply_block "${_zshrc}" "bat-theme" 'export BAT_THEME="dots"'
-fi
+log_step "Applying theme: ${_sync_theme}/${_sync_flavor}..."
+theme_apply "${_sync_theme}" "${_sync_flavor}" || {
+    log_error "Theme apply failed"
+    exit 1
+}
 
 # ---------------------------------------------------------------------------
-# Update manifest with new hash
+# Success
 # ---------------------------------------------------------------------------
-log_step "Writing manifest..."
-_new_hash="$(source_hash "${REPO_ROOT}")"
-manifest_write "${REPO_ROOT}/manifest.json" \
-    "${_theme}" "${_flavor}" "${_tools_csv}" "${_new_hash}"
-
 log_success "Sync complete" \
-    "source_hash=${_new_hash}" \
-    "theme=${_theme}/${_flavor}" \
-    "manifest=${REPO_ROOT}/manifest.json"
+    "${_sync_theme}/${_sync_flavor}"

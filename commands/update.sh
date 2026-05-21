@@ -1,29 +1,34 @@
 #!/bin/sh
-# commands/update.sh — update theme/tool selection + full deploy
+# commands/update.sh — full deploy: base dotbot + theme switcher
 # POSIX sh. Invoked by the dots dispatcher or directly.
-#
-# The wizard runs in-process: pickers feed shell variables which then drive
-# the deploy pipeline (backup → deploy → manifest). There is no transitory
-# selection file.
-
 set -eu
 
 # ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots update - update theme/tool selection + full deploy\n\n' >&2
+_update_usage() {
+    printf 'dots update - full deploy: ./install (base dotbot) + theme switcher\n\n' >&2
     printf 'USAGE\n' >&2
-    printf '  ./dots update [--yes] [--theme=NAME] [--flavor=NAME] [--tools=A,B]\n\n' >&2
+    printf '  ./dots update [--yes] [--theme=NAME] [--flavor=NAME] [--pull]\n\n' >&2
     printf 'BEHAVIOR\n' >&2
-    printf '  Runs the gum-backed wizard (pre-populated from manifest.json if\n' >&2
-    printf '  present, otherwise from hardcoded defaults), then executes the\n' >&2
-    printf '  full deploy pipeline (backup → deploy → manifest).\n\n' >&2
-    printf '  No transitory file is written between wizard and deploy.\n\n' >&2
+    printf '  Runs ./install (base dotbot config), then applies the active or\n' >&2
+    printf '  selected theme. Theme/flavor are read from manifest.json when\n' >&2
+    printf '  present; flags override; hardcoded defaults apply on first run.\n\n' >&2
     printf 'FLAGS\n' >&2
-    printf '  --yes    Non-interactive: skip pickers, use pre-populated values,\n' >&2
-    printf '           and run the deploy pipeline immediately.\n' >&2
-    printf '  --theme, --flavor, --tools override pre-populated values.\n' >&2
+    printf '  --yes             Non-interactive: skip pickers, apply immediately.\n' >&2
+    printf '  --theme=NAME      Override active theme (e.g. kanagawa, catppuccin).\n' >&2
+    printf '  --flavor=NAME     Override active flavor (e.g. dragon, mocha).\n' >&2
+    printf '  --pull            Run git pull --ff-only against upstream before\n' >&2
+    printf '                    invoking dotbot. Aborts on non-fast-forward or\n' >&2
+    printf '                    missing upstream; does not touch the remote otherwise.\n' >&2
+    printf '  --help / -h       Show this message.\n\n' >&2
+    printf 'NOTE\n' >&2
+    printf '  --tools is not accepted. Managed packages are declared in Brewfile\n' >&2
+    printf '  and home/.config/mise/config.toml.\n' >&2
+}
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    _update_usage
     exit 0
 fi
 
@@ -35,18 +40,18 @@ export REPO_ROOT
 
 # shellcheck source=lib/log.sh
 . "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/detect.sh
-. "${REPO_ROOT}/lib/detect.sh"
-# shellcheck source=lib/select.sh
-. "${REPO_ROOT}/lib/select.sh"
 # shellcheck source=lib/tui.sh
 . "${REPO_ROOT}/lib/tui.sh"
-# shellcheck source=lib/backup.sh
-. "${REPO_ROOT}/lib/backup.sh"
-# shellcheck source=lib/deploy.sh
-. "${REPO_ROOT}/lib/deploy.sh"
-# shellcheck source=lib/manifest.sh
-. "${REPO_ROOT}/lib/manifest.sh"
+# shellcheck source=lib/header.sh
+. "${REPO_ROOT}/lib/header.sh"
+# shellcheck source=lib/dotbot.sh
+. "${REPO_ROOT}/lib/dotbot.sh"
+# shellcheck source=lib/theme.sh
+. "${REPO_ROOT}/lib/theme.sh"
+# shellcheck source=lib/select.sh
+. "${REPO_ROOT}/lib/select.sh"
+# shellcheck source=lib/detect.sh
+. "${REPO_ROOT}/lib/detect.sh"
 
 tui_start_timer
 render_subcommand_banner "$(tui_subtitle_for update)"
@@ -55,109 +60,126 @@ render_subcommand_banner "$(tui_subtitle_for update)"
 # Parse flags
 # ---------------------------------------------------------------------------
 _yes=0
-_explicit=0
 _arg_theme=""
 _arg_flavor=""
-_arg_tools_csv=""
+_do_pull=0
+
 for _arg in "$@"; do
     case "${_arg}" in
-        --yes|-y) _yes=1 ;;
-        --theme=*) _arg_theme="${_arg#--theme=}"; _explicit=1 ;;
-        --flavor=*) _arg_flavor="${_arg#--flavor=}"; _explicit=1 ;;
-        --tools=*) _arg_tools_csv="${_arg#--tools=}"; _explicit=1 ;;
+        --yes|-y)    _yes=1 ;;
+        --pull)      _do_pull=1 ;;
+        --theme=*)   _arg_theme="${_arg#--theme=}" ;;
+        --flavor=*)  _arg_flavor="${_arg#--flavor=}" ;;
+        --tools=*)
+            log_error "--tools is not accepted. Managed packages are declared in Brewfile and home/.config/mise/config.toml."
+            exit 2
+            ;;
+        --help|-h)
+            _update_usage
+            exit 0
+            ;;
         --*)
             log_error "Unknown flag: ${_arg}"
             exit 1
             ;;
     esac
 done
+
 if [ "${YES:-0}" = "1" ]; then
     _yes=1
 fi
 
 # ---------------------------------------------------------------------------
-# Pre-populate from manifest (post-apply state) or hardcoded defaults
+# --pull: fast-forward pull before any dotbot work
 # ---------------------------------------------------------------------------
-_current="$(read_current_selection "${REPO_ROOT}")"
-_cur_theme="$(printf '%s' "${_current}" | awk '{print $1}')"
-_cur_flavor="$(printf '%s' "${_current}" | awk '{print $2}')"
-_cur_tools_csv="$(printf '%s' "${_current}" | awk '{print $3}')"
+if [ "${_do_pull}" -eq 1 ]; then
+    # Detect detached HEAD
+    if ! git -C "${REPO_ROOT}" symbolic-ref -q HEAD >/dev/null 2>&1; then
+        # Fallback: check via branch --show-current (git >= 2.22)
+        _cur_branch="$(git -C "${REPO_ROOT}" branch --show-current 2>/dev/null || printf '')"
+        if [ -z "${_cur_branch}" ]; then
+            log_error "--pull requires a branch with an upstream; current HEAD is detached"
+            exit 1
+        fi
+    fi
 
-# ---------------------------------------------------------------------------
-# Determine final theme/flavor/tools — wizard or pre-populated
-# ---------------------------------------------------------------------------
-if [ "${_yes}" -eq 1 ] || [ "${_explicit}" -eq 1 ] || ! [ -t 0 ]; then
-    _theme="${_arg_theme:-${_cur_theme}}"
-    _flavor="${_arg_flavor:-${_cur_flavor}}"
-    _tools_csv="${_arg_tools_csv:-${_cur_tools_csv}}"
-    log_info "Non-interactive: ${_theme}/${_flavor} + tools=${_tools_csv}"
-else
-    log_step "Selecting theme..."
-    _theme="$(select_theme "${REPO_ROOT}" "${_cur_theme}")"
+    # Detect missing upstream
+    if ! git -C "${REPO_ROOT}" rev-parse --abbrev-ref "@{upstream}" >/dev/null 2>&1; then
+        log_error "no upstream configured; set one via: git branch --set-upstream-to=<remote>/<branch>"
+        exit 1
+    fi
 
-    log_step "Selecting flavor..."
-    _flavor_default=""
-    [ "${_theme}" = "${_cur_theme}" ] && _flavor_default="${_cur_flavor}"
-    _flavor="$(select_flavor "${REPO_ROOT}" "${_theme}" "${_flavor_default}")"
-
-    log_step "Selecting tools..."
-    _tools_nl="$(select_tools "${REPO_ROOT}" "${_cur_tools_csv}" "${_theme}")"
-    _tools_csv="$(printf '%s' "${_tools_nl}" | tr '\n' ',' | sed 's/,$//')"
-
-    if ! confirm_apply "${_theme}" "${_flavor}" "${_tools_csv}"; then
-        log_warn "Update cancelled. No backup or deploy performed."
+    log_step "Pulling upstream changes (--ff-only)..."
+    if ! git -C "${REPO_ROOT}" pull --ff-only; then
+        log_error "git pull --ff-only failed; resolve divergence before running update"
         exit 1
     fi
 fi
 
 # ---------------------------------------------------------------------------
-# Validate
+# Read active theme/flavor from manifest (slim schema) or fall back to defaults
 # ---------------------------------------------------------------------------
-log_step "Validating selection: theme=${_theme} flavor=${_flavor}"
-validate_theme  "${REPO_ROOT}" "${_theme}"
-validate_flavor "${REPO_ROOT}" "${_theme}" "${_flavor}"
-validate_tools  "${_tools_csv}"
-log_info "Selection valid."
+_active_theme="kanagawa"
+_active_flavor="dragon"
 
-# ---------------------------------------------------------------------------
-# Backup existing configs
-# ---------------------------------------------------------------------------
-log_step "Creating backup of existing managed configs..."
-backup_create "${REPO_ROOT}"
+_manifest_pair="$(theme_current 2>/dev/null || printf '')"
+if [ -n "${_manifest_pair}" ]; then
+    _active_theme="$(printf '%s' "${_manifest_pair}" | awk '{print $1}')"
+    _active_flavor="$(printf '%s' "${_manifest_pair}" | awk '{print $2}')"
+fi
 
-# ---------------------------------------------------------------------------
-# Deploy
-# ---------------------------------------------------------------------------
-log_step "Deploying home payload..."
-deploy_copy_home "${REPO_ROOT}"
-
-log_step "Applying template substitution..."
-deploy_apply_template "${REPO_ROOT}" "${_theme}" "${_flavor}"
-
-log_step "Materializing theme assets..."
-deploy_theme_assets "${REPO_ROOT}" "${_theme}" "${_flavor}"
-
-log_step "Building bat cache..."
-deploy_bat_cache
-
-# Inject BAT_THEME block into deployed .zshrc.
-# Bat theme is materialized as dots.tmTheme by deploy_theme_assets; the env var
-# stays stable across flavor switches.
-_zshrc="${HOME}/.zshrc"
-if [ -f "${_zshrc}" ]; then
-    log_step "Injecting BAT_THEME block into ${_zshrc}..."
-    apply_block "${_zshrc}" "bat-theme" 'export BAT_THEME="dots"'
+# Apply flag overrides
+if [ -n "${_arg_theme}" ]; then
+    _active_theme="${_arg_theme}"
+fi
+if [ -n "${_arg_flavor}" ]; then
+    _active_flavor="${_arg_flavor}"
 fi
 
 # ---------------------------------------------------------------------------
-# Write manifest
+# Interactive selection (TTY, no --yes)
 # ---------------------------------------------------------------------------
-log_step "Writing manifest..."
-_hash="$(source_hash "${REPO_ROOT}")"
-manifest_write "${REPO_ROOT}/manifest.json" \
-    "${_theme}" "${_flavor}" "${_tools_csv}" "${_hash}"
+if [ "${_yes}" -eq 0 ] && [ -t 0 ] && [ -t 1 ]; then
+    # Summary card
+    gum style \
+        --border rounded \
+        --border-foreground "$(_header_color_code "${_active_theme}")" \
+        --padding "1 2" \
+        --bold \
+        "Current selection
+Theme:  ${_active_theme}
+Flavor: ${_active_flavor}"
 
+    _active_theme="$(select_theme "${REPO_ROOT}" "${_active_theme}")"
+    _active_flavor="$(select_flavor "${REPO_ROOT}" "${_active_theme}" "${_active_flavor}")"
+
+    if ! gum confirm "Apply selection?"; then
+        log_warn "Update cancelled."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Base dotbot run
+# ---------------------------------------------------------------------------
+log_step "Running base dotbot config..."
+dotbot_base_apply || {
+    log_error "Base dotbot apply failed"
+    exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Theme apply
+# ---------------------------------------------------------------------------
+log_step "Applying theme: ${_active_theme}/${_active_flavor}..."
+theme_apply "${_active_theme}" "${_active_flavor}" || {
+    log_error "Theme apply failed"
+    exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Success
+# ---------------------------------------------------------------------------
+_ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log_success "Update complete" \
-    "theme=${_theme}/${_flavor}" \
-    "tools=${_tools_csv}" \
-    "manifest=${REPO_ROOT}/manifest.json"
+    "${_active_theme}/${_active_flavor} applied at ${_ts}"
