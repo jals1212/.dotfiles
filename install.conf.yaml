@@ -102,3 +102,24 @@
     command: command -v bat >/dev/null 2>&1 && bat cache --build || true
     stdout: true
     stderr: true
+
+# ── Cleanup ────────────────────────────────────────────────────────────────────
+# dotbot --only clean removes symlinks whose target doesn't exist under these
+# directories. Invoked by ./dots clean.
+- clean:
+    - ~
+    - ~/.config/zsh
+    - ~/.config/nvim
+    - ~/.config/tmux
+    - ~/.config/ghostty
+    - ~/.config/atuin
+    - ~/.config/atuin/themes
+    - ~/.config/aerospace
+    - ~/.config/mise
+    - ~/.config/dots
+    - ~/.config/oh-my-posh
+    - ~/.config/bat/themes
+    - ~/.config/eza/themes
+    - ~/.config/fzf/themes
+    - ~/.config/lazygit
+    - ~/.config/bottom
