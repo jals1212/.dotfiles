@@ -1,5 +1,5 @@
 # Dotfiles — Ghostty Terminal
-# Theme: DOTS_THEME/DOTS_FLAVOR
+# Theme: linked via ~/.config/ghostty/themes/dots (managed by ./dots theme)
 # Font: IosevkaTerm NF
 
 # ── Font ──────────────────────────────────────────────

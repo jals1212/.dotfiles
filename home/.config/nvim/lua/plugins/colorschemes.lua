@@ -1,70 +1,35 @@
--- Theme is selected by the dots installer. Keep source defaults usable before deploy.
-local selected_theme = "DOTS_THEME"
-local selected_flavor = "DOTS_FLAVOR"
+-- colorschemes.lua — load active theme via ~/.config/nvim/lua/dots-theme.lua
+-- (linked by the per-theme dotbot config; see themes/<theme>-<flavor>.yaml).
 
-if selected_theme == "DOTS_THEME" or selected_theme == "" then
-  selected_theme = "kanagawa"
+local ok, dots = pcall(require, "dots-theme")
+if not ok then
+  -- Fallback for first-run or broken link: pick a sane default.
+  dots = {
+    theme = "kanagawa",
+    flavor = "dragon",
+    plugin = "rebelot/kanagawa.nvim",
+    colorscheme = "kanagawa-dragon",
+  }
 end
-if selected_flavor == "DOTS_FLAVOR" or selected_flavor == "" then
-  selected_flavor = selected_theme == "catppuccin" and "mocha" or "dragon"
-end
-
-local lazyvim_colorscheme = selected_theme == "catppuccin" and "catppuccin" or "kanagawa"
 
 return {
   {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = lazyvim_colorscheme,
-    },
-  },
-  {
-    "catppuccin/nvim",
-    name = "catppuccin",
+    dots.plugin,
+    lazy = false,
     priority = 1000,
-    enabled = function()
-      return selected_theme == "catppuccin"
+    opts = function()
+      -- Plugin-specific opts. Most plugins accept { flavour = ... } or
+      -- the equivalent. Adjust here if a future plugin needs different
+      -- key names; the table reaches every supported variant.
+      return { flavour = dots.flavor, flavor = dots.flavor }
     end,
-    config = function()
-      require("catppuccin").setup({
-        flavour = selected_flavor,
-        transparent_background = false,
-        term_colors = true,
-        integrations = {
-          cmp = true,
-          gitsigns = true,
-          neo_tree = true,
-          telescope = true,
-          treesitter = true,
-          which_key = true,
-        },
-      })
-      vim.cmd.colorscheme("catppuccin")
-    end,
-  },
-  {
-    "rebelot/kanagawa.nvim",
-    priority = 1000,
-    enabled = function()
-      return selected_theme == "kanagawa"
-    end,
-    config = function()
-      require("kanagawa").setup({
-        compile = false,
-        undercurl = true,
-        commentStyle = { italic = true },
-        keywordStyle = { italic = true },
-        statementStyle = { bold = true },
-        transparent = false,
-        dimInactive = false,
-        terminalColors = true,
-        theme = selected_flavor,
-        background = {
-          dark = selected_flavor == "dragon" and "dragon" or "wave",
-          light = "lotus",
-        },
-      })
-      vim.cmd.colorscheme("kanagawa")
+    config = function(_, opts)
+      local plugin_name = dots.plugin:match("([^/]+)$"):gsub("%.nvim$", "")
+      local mod_ok, mod = pcall(require, plugin_name)
+      if mod_ok and mod.setup then
+        mod.setup(opts)
+      end
+      pcall(vim.cmd, "colorscheme " .. dots.colorscheme)
     end,
   },
 }

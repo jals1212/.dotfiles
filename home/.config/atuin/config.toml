@@ -1,5 +1,5 @@
 # Dotfiles — Atuin
-# Theme: DOTS_THEME/DOTS_FLAVOR
+# Theme: linked via ~/.config/atuin/themes/dots.toml (managed by ./dots theme)
 
 [theme]
 name = "dots"
