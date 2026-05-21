@@ -84,7 +84,7 @@ Run `./dots update` to install. Run `./dots upgrade` to prune removed versions.
 
 ## Documentation
 
-- [Install guide](docs/install.md) — install, update, sync, backup, restore, doctor, uninstall.
+- [Install guide](docs/install.md) — install, update, sync, theme, doctor, clean, upgrade, uninstall.
 - [Tools](docs/tools.md) — common usage for managed CLI tools.
 - [Aliases](docs/aliases.md) — shell aliases and functions.
 - [Plugins](docs/plugins.md) — zsh/tmux plugin usage.
