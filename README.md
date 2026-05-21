@@ -11,18 +11,20 @@ Default theme: `kanagawa/dragon`.
 ## Quick Start
 
 ```sh
-git clone --recurse-submodules <repo> ~/.dotfiles
+git clone <repo> ~/.dotfiles
 cd ~/.dotfiles
-./bootstrap.sh
+./dots
 ```
 
-If you cloned without `--recurse-submodules`, bootstrap will initialize the submodules for you.
+`./dots` is the only entry point you need. On a fresh machine it auto-detects missing prerequisites and bootstraps them (Linux build deps via apt/dnf/pacman, Xcode CLT on macOS, submodule init) before invoking dotbot.
 
 Non-interactive:
 
 ```sh
-./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
+./dots update --yes --theme=kanagawa --flavor=dragon
 ```
+
+The `./bootstrap.sh` script still exists as a thin alias for `./dots update --yes` — prefer `./dots` for everyday use.
 
 ## Lifecycle
 

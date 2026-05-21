@@ -16,39 +16,41 @@ Homebrew is **not** a prerequisite — `./install` installs it via a dotbot `she
 ## First install
 
 ```sh
-git clone --recurse-submodules <repo> ~/.dotfiles
+git clone <repo> ~/.dotfiles
 cd ~/.dotfiles
-./bootstrap.sh
+./dots
 ```
 
-If you forgot `--recurse-submodules`, bootstrap initializes the submodules for you.
+`./dots` is the only command you need. On a fresh machine it auto-bootstraps:
 
-What happens:
-
-1. `bootstrap.sh` ensures `python3` + `git` + Linux build deps.
-2. `git submodule update --init --recursive` materializes `dotbot/`, `plugins/dotbot-brew/`, `plugins/dotbot-mise/`.
-3. `./dots update --yes` invokes `./install`, which runs dotbot against `install.conf.yaml`:
+1. Detects missing `python3` / `git` / Linux build deps and installs them via `apt-get`, `dnf`, or `pacman` (Linux) or triggers `xcode-select --install` (macOS).
+2. Runs `git submodule update --init --recursive` to materialize `dotbot/`, `plugins/dotbot-brew/`, `plugins/dotbot-mise/`.
+3. Sees that `manifest.json` is absent → auto-runs `update --yes` with hardcoded defaults (kanagawa/dragon).
+4. Invokes `./install` (the dotbot wrapper), which runs dotbot against `install.conf.yaml`:
    - `shell:` installs Homebrew if missing.
    - `brewfile:` runs `brew bundle --file=Brewfile`.
    - `create:` ensures every `~/.config/<app>/` parent exists.
    - `link:` creates every symlink from `$HOME` into the repo.
    - `mise:` runs `mise install`.
    - `shell:` rebuilds the bat cache.
-4. The theme switcher applies the active theme (or `kanagawa/dragon` on first run).
-5. Existing regular files in `$HOME` are moved to `<path>.dotbot-backup.<timestamp>` before being replaced by symlinks (dotbot `backup: true` default).
+5. The theme switcher applies kanagawa/dragon.
+6. Existing regular files in `$HOME` are moved to `<path>.dotbot-backup.<timestamp>` before being replaced by symlinks (dotbot `backup: true` default).
+
+`./bootstrap.sh` still exists as a thin backward-compat alias for `./dots update --yes "$@"`. The auto-bootstrap lives in `lib/bootstrap.sh` and is invoked from `lib/dotbot.sh:dotbot_check_submodules`, so any command that touches dotbot (update, sync, theme, clean, upgrade) triggers it on a fresh machine.
 
 ## Non-interactive install
 
 ```sh
-./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
+./dots update --yes --theme=kanagawa --flavor=dragon
 ```
 
-Supported flags on `bootstrap.sh`:
+Supported flags on `./dots update`:
 
 ```sh
---yes                      # skip confirmation prompts in ./dots update
+--yes                      # skip confirmation prompts
 --theme=kanagawa|catppuccin
 --flavor=dragon|lotus|wave|frappe|latte|macchiato|mocha
+--pull                     # git pull --ff-only before invoking dotbot
 ```
 
 The `--tools` flag is **removed**. Managed packages are declared in `Brewfile` (brew formulae/casks/taps) and `home/.config/mise/config.toml` (runtime versions). Edit those files and re-run `./dots update`.

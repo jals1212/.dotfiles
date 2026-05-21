@@ -5,10 +5,19 @@
 
 # ---------------------------------------------------------------------------
 # dotbot_check_submodules
-#   Verify dotbot and plugin submodules are initialized.
-#   Returns 0 if all present, 1 with log_error if any are missing.
+#   Ensure dotbot and plugin submodules are initialized (auto-bootstraps the
+#   chicken-and-egg prereqs on a fresh machine via lib/bootstrap.sh), then
+#   verifies the entry points are reachable. Returns 0 if all present, 1
+#   with log_error if any are missing after the bootstrap attempt.
 # ---------------------------------------------------------------------------
 dotbot_check_submodules() {
+    # Auto-bootstrap python3 + git + Linux build deps + submodules on first run.
+    if [ -f "${REPO_ROOT}/lib/bootstrap.sh" ]; then
+        # shellcheck source=lib/bootstrap.sh
+        . "${REPO_ROOT}/lib/bootstrap.sh"
+        bootstrap_ensure
+    fi
+
     _dcs_ok=1
 
     if [ ! -x "${REPO_ROOT}/dotbot/bin/dotbot" ]; then
