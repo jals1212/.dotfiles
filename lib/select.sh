@@ -1,7 +1,10 @@
 #!/bin/sh
-# lib/select.sh — interactive selection helpers (gum-backed)
+# lib/select.sh — interactive theme/flavor picker helpers (gum-backed)
 # POSIX sh. Source this file; do not execute directly.
 # Requires: gum (brew install gum), jq.
+#
+# The tools picker was removed in migrate-to-dotbot: managed packages live in
+# Brewfile and home/.config/mise/config.toml, not in a per-run picker.
 
 # shellcheck source=lib/log.sh
 # shellcheck source=lib/detect.sh
@@ -15,17 +18,10 @@ if ! command -v _header_color_code >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Internal constants
-# ---------------------------------------------------------------------------
-
-# Canonical list of managed tools (order = presentation + stable JSON order).
-# Order matches the spec-mandated default: zsh tmux nvim ghostty oh-my-posh atuin zoxide.
-_SELECT_TOOLS="zsh tmux nvim ghostty oh-my-posh atuin zoxide"
-
 # Hardcoded defaults consumed when no manifest exists (fresh clone).
+# ---------------------------------------------------------------------------
 _SELECT_DEFAULT_THEME="kanagawa"
 _SELECT_DEFAULT_FLAVOR="dragon"
-_SELECT_DEFAULT_TOOLS_CSV="zsh,tmux,nvim,ghostty,oh-my-posh,atuin,zoxide"
 
 # ---------------------------------------------------------------------------
 # _styled_header <text> [theme]
@@ -41,11 +37,10 @@ _styled_header() {
 # ---------------------------------------------------------------------------
 # read_current_selection <repo_root>
 #   Returns the current "selection state" as a single space-separated line:
-#       <theme> <flavor> <tools_csv>
+#       <theme> <flavor>
 #   Source of truth (in order):
-#     1. ${repo_root}/manifest.json (post-apply state) when present and valid.
+#     1. ${repo_root}/manifest.json (slim schema) when present and valid.
 #     2. Hardcoded defaults from this file.
-#   No transitory selection file exists — the manifest is the only durable state.
 # ---------------------------------------------------------------------------
 read_current_selection() {
     _rcs_repo="${1:?read_current_selection: repo_root required}"
@@ -54,17 +49,13 @@ read_current_selection() {
     if [ -f "${_rcs_manifest}" ] && jq empty "${_rcs_manifest}" 2>/dev/null; then
         _rcs_theme="$(jq -r '.theme // empty' "${_rcs_manifest}")"
         _rcs_flavor="$(jq -r '.flavor // empty' "${_rcs_manifest}")"
-        _rcs_tools="$(jq -r '.tools | join(",") // empty' "${_rcs_manifest}")"
-        if [ -n "${_rcs_theme}" ] && [ -n "${_rcs_flavor}" ] && [ -n "${_rcs_tools}" ]; then
-            printf '%s %s %s\n' "${_rcs_theme}" "${_rcs_flavor}" "${_rcs_tools}"
+        if [ -n "${_rcs_theme}" ] && [ -n "${_rcs_flavor}" ]; then
+            printf '%s %s\n' "${_rcs_theme}" "${_rcs_flavor}"
             return 0
         fi
     fi
 
-    printf '%s %s %s\n' \
-        "${_SELECT_DEFAULT_THEME}" \
-        "${_SELECT_DEFAULT_FLAVOR}" \
-        "${_SELECT_DEFAULT_TOOLS_CSV}"
+    printf '%s %s\n' "${_SELECT_DEFAULT_THEME}" "${_SELECT_DEFAULT_FLAVOR}"
 }
 
 # ---------------------------------------------------------------------------
@@ -73,207 +64,118 @@ read_current_selection() {
 # ---------------------------------------------------------------------------
 _check_gum() {
     if ! command -v gum >/dev/null 2>&1; then
-        log_error "gum is required but not found on PATH. Run: brew install gum"
+        log_error "gum is required (install with: brew install gum)."
         exit 1
     fi
 }
 
 # ---------------------------------------------------------------------------
-# validate_theme <repo_root> <theme>
-#   Verifies that assets/themes/oh-my-posh/<theme>/ exists.
-#   Exits 1 with log_error listing valid themes on failure.
+# validate_theme <theme>
+#   Confirms <theme> is one of the supported themes.
 # ---------------------------------------------------------------------------
 validate_theme() {
-    _vt_root="${1}"
-    _vt_theme="${2}"
-    _vt_themes_dir="${_vt_root}/assets/themes/oh-my-posh"
-
-    if [ ! -d "${_vt_themes_dir}/${_vt_theme}" ]; then
-        _vt_valid="$(find "${_vt_themes_dir}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort | tr '\n' ' ')"
-        log_error "Unknown theme '${_vt_theme}'. Valid themes: ${_vt_valid}"
-        exit 1
-    fi
+    _vt_theme="${1}"
+    case "${_vt_theme}" in
+        kanagawa|catppuccin) return 0 ;;
+        *)
+            log_error "Unknown theme: ${_vt_theme}. Supported: kanagawa, catppuccin"
+            exit 1
+            ;;
+    esac
 }
 
 # ---------------------------------------------------------------------------
-# validate_flavor <repo_root> <theme> <flavor>
-#   Verifies that assets/themes/oh-my-posh/<theme>/<flavor>.json exists.
-#   Exits 1 with log_error listing valid flavors on failure.
+# validate_flavor <theme> <flavor>
+#   Confirms <flavor> is valid for the given theme.
 # ---------------------------------------------------------------------------
 validate_flavor() {
-    _vf_root="${1}"
-    _vf_theme="${2}"
-    _vf_flavor="${3}"
-    _vf_theme_dir="${_vf_root}/assets/themes/oh-my-posh/${_vf_theme}"
-
-    if [ ! -f "${_vf_theme_dir}/${_vf_flavor}.json" ]; then
-        _vf_valid="$(find "${_vf_theme_dir}" -maxdepth 1 -name '*.json' -exec basename {} .json \; 2>/dev/null | sort | tr '\n' ' ')"
-        log_error "Unknown flavor '${_vf_flavor}' for theme '${_vf_theme}'. Valid flavors: ${_vf_valid}"
-        exit 1
-    fi
-}
-
-# ---------------------------------------------------------------------------
-# validate_tools <tools_csv>
-#   Validates each tool in the comma-separated list against the canonical seven.
-#   Exits 1 with log_error on any unknown tool.
-# ---------------------------------------------------------------------------
-validate_tools() {
-    _vtl_csv="${1}"
-    # Convert CSV to newline-separated for iteration
-    _vtl_list="$(printf '%s' "${_vtl_csv}" | tr ',' '\n')"
-
-    _vtl_unknown=""
-    # Iterate over CSV by temporarily splitting on commas.
-    # We replace commas with newlines so the POSIX for-loop can iterate.
-    _vtl_oldifs="${IFS}"
-    IFS=","
-    for _vtl_tool in ${_vtl_csv}; do
-        IFS="${_vtl_oldifs}"
-        # Trim leading/trailing whitespace
-        _vtl_tool="$(printf '%s' "${_vtl_tool}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        [ -z "${_vtl_tool}" ] && IFS="," && continue
-
-        _vtl_found=0
-        # _SELECT_TOOLS is space-separated; default IFS handles split
-        for _vtl_known in ${_SELECT_TOOLS}; do
-            if [ "${_vtl_tool}" = "${_vtl_known}" ]; then
-                _vtl_found=1
-                break
-            fi
-        done
-
-        if [ "${_vtl_found}" -eq 0 ]; then
-            _vtl_unknown="${_vtl_unknown} ${_vtl_tool}"
-        fi
-        IFS=","
-    done
-    IFS="${_vtl_oldifs}"
-
-    if [ -n "${_vtl_unknown}" ]; then
-        log_error "Unknown tool(s):${_vtl_unknown}. Valid tools: ${_SELECT_TOOLS}"
-        exit 1
-    fi
+    _vf_theme="${1}"
+    _vf_flavor="${2}"
+    case "${_vf_theme}:${_vf_flavor}" in
+        kanagawa:dragon|kanagawa:lotus|kanagawa:wave) return 0 ;;
+        catppuccin:frappe|catppuccin:latte|catppuccin:macchiato|catppuccin:mocha) return 0 ;;
+        *)
+            log_error "Invalid flavor ${_vf_flavor} for theme ${_vf_theme}."
+            exit 1
+            ;;
+    esac
 }
 
 # ---------------------------------------------------------------------------
 # select_theme <repo_root> [current_theme]
-#   Presents a gum choose picker over available themes.
-#   If current_theme is provided and matches an available theme, gum pre-focuses it.
-#   Prints chosen theme to stdout.
+#   Presents a gum choose picker over available themes (derived from
+#   assets/themes/oh-my-posh/). Pre-focuses current_theme when provided.
 # ---------------------------------------------------------------------------
 select_theme() {
     _st_root="${1}"
     _st_current="${2:-}"
     _st_themes_dir="${_st_root}/assets/themes/oh-my-posh"
 
-    _check_gum
-
-    # Collect available themes (directory basenames, sorted)
-    _st_themes="$(find "${_st_themes_dir}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort)"
-
-    if [ -z "${_st_themes}" ]; then
-        log_error "No themes found in ${_st_themes_dir}"
+    if [ ! -d "${_st_themes_dir}" ]; then
+        log_error "Themes directory missing: ${_st_themes_dir}"
         exit 1
     fi
+
+    _check_gum
+
+    _st_themes="$(find "${_st_themes_dir}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)"
+    _st_header_text="Select theme:"
+    _st_header="$(_styled_header "${_st_header_text}" "${_st_current:-kanagawa}")"
 
     _st_selected_arg=""
     if [ -n "${_st_current}" ]; then
         _st_selected_arg="--selected=${_st_current}"
     fi
 
-    _st_header="$(_styled_header "Select a theme:" "${_st_current:-kanagawa}")"
     # shellcheck disable=SC2086
     _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "${_st_header}" ${_st_selected_arg})"
-    if [ -z "${_st_chosen}" ]; then
-        log_error "No theme selected. Exiting."
-        exit 1
-    fi
 
+    [ -z "${_st_chosen}" ] && exit 130
     printf '%s' "${_st_chosen}"
 }
 
 # ---------------------------------------------------------------------------
 # select_flavor <repo_root> <theme> [current_flavor]
-#   Presents a gum choose picker over available flavors for the given theme.
-#   If current_flavor is provided and matches, gum pre-focuses it.
-#   Prints chosen flavor to stdout.
+#   Presents a gum choose picker over flavors for the given theme (derived
+#   from assets/themes/oh-my-posh/<theme>/*.json).
 # ---------------------------------------------------------------------------
 select_flavor() {
     _sf_root="${1}"
-    _sf_theme="${2}"
+    _sf_theme="${2:?select_flavor: theme required}"
     _sf_current="${3:-}"
-    _sf_theme_dir="${_sf_root}/assets/themes/oh-my-posh/${_sf_theme}"
+    _sf_dir="${_sf_root}/assets/themes/oh-my-posh/${_sf_theme}"
+
+    if [ ! -d "${_sf_dir}" ]; then
+        log_error "Theme directory missing: ${_sf_dir}"
+        exit 1
+    fi
 
     _check_gum
 
-    # Collect flavor names (JSON basenames without .json extension, sorted)
-    _sf_flavors="$(find "${_sf_theme_dir}" -maxdepth 1 -name '*.json' -exec basename {} .json \; 2>/dev/null | sort)"
-
-    if [ -z "${_sf_flavors}" ]; then
-        log_error "No flavors found for theme '${_sf_theme}' in ${_sf_theme_dir}"
-        exit 1
-    fi
+    _sf_flavors="$(find "${_sf_dir}" -mindepth 1 -maxdepth 1 -type f -name '*.json' -exec basename {} .json \; | sort)"
+    _sf_header_text="Select flavor for ${_sf_theme}:"
+    _sf_header="$(_styled_header "${_sf_header_text}" "${_sf_theme}")"
 
     _sf_selected_arg=""
     if [ -n "${_sf_current}" ]; then
         _sf_selected_arg="--selected=${_sf_current}"
     fi
 
-    _sf_header="$(_styled_header "Select a flavor for ${_sf_theme}:" "${_sf_theme}")"
     # shellcheck disable=SC2086
     _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "${_sf_header}" ${_sf_selected_arg})"
-    if [ -z "${_sf_chosen}" ]; then
-        log_error "No flavor selected. Exiting."
-        exit 1
-    fi
 
+    [ -z "${_sf_chosen}" ] && exit 130
     printf '%s' "${_sf_chosen}"
 }
 
 # ---------------------------------------------------------------------------
-# select_tools <repo_root>
-#   Presents a gum choose --no-limit picker over the seven managed tools.
-#   All seven are pre-selected by default.
-#   Prints chosen tools as newline-separated list to stdout.
-#   Re-prompts if user selects no tools (at least one required).
-# ---------------------------------------------------------------------------
-select_tools() {
-    _stl_root="${1}"
-    _stl_current_csv="${2:-${_SELECT_DEFAULT_TOOLS_CSV}}"
-    _stl_theme="${3:-kanagawa}"
-    # repo_root unused directly here but kept for signature consistency
-    : "${_stl_root}"
-
-    _check_gum
-
-    while true; do
-        _stl_header="$(_styled_header "Select tools to install (SPACE to toggle, ENTER to confirm):" "${_stl_theme}")"
-        # shellcheck disable=SC2086
-        _stl_chosen="$(printf '%s\n' ${_SELECT_TOOLS} | \
-            gum choose --no-limit \
-                --header "${_stl_header}" \
-                --selected="${_stl_current_csv}")"
-
-        if [ -z "${_stl_chosen}" ]; then
-            log_warn "At least one tool must be selected. Please try again."
-        else
-            break
-        fi
-    done
-
-    printf '%s' "${_stl_chosen}"
-}
-
-# ---------------------------------------------------------------------------
-# confirm_apply
-#   Presents a gum confirm prompt before writing the selection.
-#   Returns 0 on yes, 1 on no/cancel.
+# confirm_apply <theme> <flavor>
+#   Presents a gum-styled summary card listing theme + flavor and prompts
+#   the operator to confirm. Returns 0 on yes, 1 on no/cancel.
 # ---------------------------------------------------------------------------
 confirm_apply() {
     _ca_theme="${1:?confirm_apply: theme required}"
     _ca_flavor="${2:?confirm_apply: flavor required}"
-    _ca_tools_csv="${3:?confirm_apply: tools_csv required}"
 
     _check_gum
     gum style \
@@ -282,7 +184,7 @@ confirm_apply() {
         --padding "1 2" \
         --bold \
         "Selection summary
-Theme: ${_ca_theme}/${_ca_flavor}
-Tools: ${_ca_tools_csv}"
+Theme: ${_ca_theme}
+Flavor: ${_ca_flavor}"
     gum confirm "Apply selection?"
 }

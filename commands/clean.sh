@@ -71,37 +71,42 @@ render_subcommand_banner "Clean"
 # ---------------------------------------------------------------------------
 log_step "Phase 1: dead-symlink sweep"
 
-_dead_count=0
+# Enumerate broken symlinks under managed directories. This count is used
+# for the summary and (in --dry-run) for the would-remove listing.
+_dead_tmpfile="$(mktemp)"
+for _dir in \
+    "${HOME}" \
+    "${HOME}/.config/zsh" \
+    "${HOME}/.config/nvim" \
+    "${HOME}/.config/tmux" \
+    "${HOME}/.config/ghostty" \
+    "${HOME}/.config/atuin" \
+    "${HOME}/.config/atuin/themes" \
+    "${HOME}/.config/aerospace" \
+    "${HOME}/.config/mise" \
+    "${HOME}/.config/dots" \
+    "${HOME}/.config/oh-my-posh" \
+    "${HOME}/.config/bat/themes" \
+    "${HOME}/.config/eza/themes" \
+    "${HOME}/.config/fzf/themes" \
+    "${HOME}/.config/lazygit" \
+    "${HOME}/.config/bottom"
+do
+    [ -d "${_dir}" ] || continue
+    find "${_dir}" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r _link; do
+        [ -e "${_link}" ] || printf '%s\n' "${_link}"
+    done
+done > "${_dead_tmpfile}"
+
+_dead_count=$(wc -l < "${_dead_tmpfile}" | tr -d ' ')
 
 if [ "${_dry_run}" = 1 ]; then
-    log_info "dry-run: enumerating broken symlinks under managed dirs"
-    for _dir in \
-        "${HOME}" \
-        "${HOME}/.config/zsh" \
-        "${HOME}/.config/nvim" \
-        "${HOME}/.config/tmux" \
-        "${HOME}/.config/ghostty" \
-        "${HOME}/.config/atuin" \
-        "${HOME}/.config/atuin/themes" \
-        "${HOME}/.config/aerospace" \
-        "${HOME}/.config/mise" \
-        "${HOME}/.config/dots" \
-        "${HOME}/.config/oh-my-posh" \
-        "${HOME}/.config/bat/themes" \
-        "${HOME}/.config/eza/themes" \
-        "${HOME}/.config/fzf/themes" \
-        "${HOME}/.config/lazygit" \
-        "${HOME}/.config/bottom"
-    do
-        [ -d "${_dir}" ] || continue
-        find "${_dir}" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r _link; do
-            if [ ! -e "${_link}" ]; then
-                printf 'would-remove: %s\n' "${_link}"
-            fi
-        done
-    done
+    while IFS= read -r _link; do
+        [ -n "${_link}" ] || continue
+        printf 'would-remove: %s\n' "${_link}"
+    done < "${_dead_tmpfile}"
 else
-    dotbot_check_submodules || exit 1
+    dotbot_check_submodules || { rm -f "${_dead_tmpfile}"; exit 1; }
     python3 "${REPO_ROOT}/dotbot/bin/dotbot" \
         --plugin "${REPO_ROOT}/plugins/dotbot-brew/brew.py" \
         --plugin "${REPO_ROOT}/plugins/dotbot-mise/mise.py" \
@@ -109,6 +114,7 @@ else
         -c "${REPO_ROOT}/install.conf.yaml" \
         --only clean
 fi
+rm -f "${_dead_tmpfile}"
 
 # ---------------------------------------------------------------------------
 # Phase 2 — stale dotbot-backup prune
@@ -144,7 +150,7 @@ fi
 # Summary
 # ---------------------------------------------------------------------------
 if [ "${_dry_run}" = 1 ]; then
-    log_success "Clean (dry-run)" "would prune ${_stale_count} stale backup(s); see output above for broken symlink candidates"
+    log_success "Clean (dry-run)" "would remove ${_dead_count} dead symlink(s) + prune ${_stale_count} stale backup(s)"
 else
     log_success "Clean complete" "removed ${_dead_count} dead symlink(s) + ${_stale_count} stale backup(s)"
 fi
