@@ -1,0 +1,52 @@
+#!/usr/bin/env sh
+# install — dotbot wrapper
+# Resolves the dotfiles directory from the script's own location and invokes
+# dotbot with the dotbot-brew and dotbot-mise plugins.
+# Usage: ./install [config.yaml]  (default: install.conf.yaml)
+
+set -e
+
+# Resolve BASEDIR to the directory containing this script, following symlinks.
+SELF="$0"
+while [ -L "$SELF" ]; do
+  SELF_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+  SELF="$(readlink "$SELF")"
+  case "$SELF" in
+    /*) ;;
+    *) SELF="${SELF_DIR}/${SELF}" ;;
+  esac
+done
+BASEDIR="$(cd "$(dirname "$SELF")" && pwd)"
+
+CONFIG="${1:-install.conf.yaml}"
+
+# ── Preflight ──────────────────────────────────────────────────────────────
+
+if ! command -v python3 >/dev/null 2>&1; then
+  printf 'error: python3 not found on PATH.\n' >&2
+  printf '  macOS:          xcode-select --install\n' >&2
+  printf '  Debian/Ubuntu:  sudo apt-get install -y python3\n' >&2
+  printf '  Fedora:         sudo dnf install -y python3\n' >&2
+  exit 1
+fi
+
+if [ ! -x "${BASEDIR}/dotbot/bin/dotbot" ]; then
+  printf 'error: dotbot submodule not initialized.\n' >&2
+  printf '  Run: git submodule update --init --recursive\n' >&2
+  exit 1
+fi
+
+if [ ! -f "${BASEDIR}/plugins/dotbot-brew/brew.py" ] || \
+   [ ! -f "${BASEDIR}/plugins/dotbot-mise/mise.py" ]; then
+  printf 'error: plugin submodules not initialized.\n' >&2
+  printf '  Run: git submodule update --init --recursive\n' >&2
+  exit 1
+fi
+
+# ── Invoke dotbot ──────────────────────────────────────────────────────────
+
+python3 "${BASEDIR}/dotbot/bin/dotbot" \
+  --plugin "${BASEDIR}/plugins/dotbot-brew/brew.py" \
+  --plugin "${BASEDIR}/plugins/dotbot-mise/mise.py" \
+  -d "${BASEDIR}" \
+  -c "${BASEDIR}/${CONFIG}"
