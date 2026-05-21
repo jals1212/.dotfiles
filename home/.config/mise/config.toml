@@ -1,0 +1,8 @@
+# mise — Polyglot version manager config
+# Operators: add tools to the [tools] block below. Examples:
+#   node = "lts"
+#   python = "3.12"
+#   go = "latest"
+# Run `./dots update` (or `./dots upgrade` to prune removed versions) after edits.
+
+[tools]

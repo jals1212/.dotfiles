@@ -1,0 +1,104 @@
+# ── Defaults ──────────────────────────────────────────────────────────────────
+# force + backup: first run on an existing tar-copy install displaces regular
+# files to <target>.dotbot-backup.<timestamp> before symlinking.
+# relink: idempotent re-runs replace stale/wrong symlinks without error.
+# create: parent directories are created on demand.
+# canonicalize: false so that dotbot resolves relative to BASEDIR, not realpath.
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      backup: true
+      canonicalize: false
+
+# ── Pre-flight ─────────────────────────────────────────────────────────────────
+# Install Homebrew when missing.  Interactive (no NONINTERACTIVE=1) per §1.7.
+# The shell directive is a no-op when brew is already on PATH.
+- shell:
+  - description: Install Homebrew if missing
+    command: |
+      if ! command -v brew >/dev/null 2>&1; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      fi
+    stderr: true
+    stdout: true
+
+# ── Brew ───────────────────────────────────────────────────────────────────────
+# dotbot-brew plugin: runs `brew bundle --file=Brewfile`.
+# Path is resolved relative to BASEDIR (set by ./install via -d).
+- brewfile:
+  - Brewfile
+
+# ── Parent directories ─────────────────────────────────────────────────────────
+# Ensure every ~/.config/<app>/ directory exists before the link block runs.
+- create:
+  - ~/.config/zsh
+  - ~/.config/nvim
+  - ~/.config/tmux
+  - ~/.config/ghostty
+  - ~/.config/atuin
+  - ~/.config/atuin/themes
+  - ~/.config/aerospace
+  - ~/.config/mise
+  - ~/.config/dots
+  - ~/.config/oh-my-posh
+  - ~/.config/bat/themes
+  - ~/.config/eza/themes
+  - ~/.config/fzf/themes
+  - ~/.config/lazygit
+  - ~/.config/bottom
+
+# ── Symlinks ───────────────────────────────────────────────────────────────────
+# Every non-theme file under home/ mapped to its $HOME counterpart.
+# Entries inherit the defaults block above unless overridden per-entry.
+# OS-conditional entries use if: (shell predicate; zero exit = proceed).
+- link:
+    # Shell entry points
+    ~/.zshrc: home/.zshrc
+    ~/.zprofile: home/.zprofile
+    ~/.zshenv: home/.zshenv
+
+    # Zsh config fragments
+    ~/.config/zsh/aliases.zsh: home/.config/zsh/aliases.zsh
+    ~/.config/zsh/functions.zsh: home/.config/zsh/functions.zsh
+    ~/.config/zsh/keymaps.zsh: home/.config/zsh/keymaps.zsh
+
+    # Neovim — single files + lua directory link
+    ~/.config/nvim/init.lua: home/.config/nvim/init.lua
+    ~/.config/nvim/lazyvim.json: home/.config/nvim/lazyvim.json
+    ~/.config/nvim/lua: home/.config/nvim/lua
+
+    # Tmux
+    ~/.config/tmux/tmux.conf: home/.config/tmux/tmux.conf
+
+    # Ghostty — config file + shaders directory link
+    ~/.config/ghostty/config: home/.config/ghostty/config
+    ~/.config/ghostty/shaders: home/.config/ghostty/shaders
+
+    # Atuin
+    ~/.config/atuin/config.toml: home/.config/atuin/config.toml
+
+    # Mise — linked before the mise: directive so mise install reads the XDG path
+    ~/.config/mise/config.toml: home/.config/mise/config.toml
+
+    # Aerospace — macOS only (if: predicate prevents link on Linux)
+    ~/.config/aerospace/aerospace.toml:
+      path: home/.config/aerospace/aerospace.toml
+      if: '[ "$(uname)" = Darwin ]'
+
+# ── Mise ───────────────────────────────────────────────────────────────────────
+# dotbot-mise plugin: runs `mise install`.
+# The plugin ignores YAML data; empty list satisfies the key.
+# Ordering: brewfile: has already installed mise; link: has already established
+# ~/.config/mise/config.toml so mise install finds its XDG-default config.
+- mise: []
+
+# ── Post-link ──────────────────────────────────────────────────────────────────
+# Build bat's binary cache after all symlinks are in place.
+# Guarded: no-op when bat is absent (|| true prevents dotbot aborting the run).
+- shell:
+  - description: Build bat cache (no-op when bat is absent)
+    command: command -v bat >/dev/null 2>&1 && bat cache --build || true
+    stdout: true
+    stderr: true
