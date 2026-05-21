@@ -74,6 +74,8 @@ log_step "Phase 1: dead-symlink sweep"
 # Enumerate broken symlinks under managed directories. This count is used
 # for the summary and (in --dry-run) for the would-remove listing.
 _dead_tmpfile="$(mktemp)"
+_clean_cleanup() { rm -f "${_dead_tmpfile:-}" "${_tmpfile:-}"; }
+trap _clean_cleanup EXIT
 for _dir in \
     "${HOME}" \
     "${HOME}/.config/zsh" \
@@ -106,7 +108,7 @@ if [ "${_dry_run}" = 1 ]; then
         printf 'would-remove: %s\n' "${_link}"
     done < "${_dead_tmpfile}"
 else
-    dotbot_check_submodules || { rm -f "${_dead_tmpfile}"; exit 1; }
+    dotbot_check_submodules || exit 1
     python3 "${REPO_ROOT}/dotbot/bin/dotbot" \
         --plugin "${REPO_ROOT}/plugins/dotbot-brew/brew.py" \
         --plugin "${REPO_ROOT}/plugins/dotbot-mise/mise.py" \
@@ -114,7 +116,6 @@ else
         -c "${REPO_ROOT}/install.conf.yaml" \
         --only clean
 fi
-rm -f "${_dead_tmpfile}"
 
 # ---------------------------------------------------------------------------
 # Phase 2 — stale dotbot-backup prune
@@ -128,7 +129,7 @@ fi
 
 _stale_count=0
 _tmpfile="$(mktemp)"
-trap 'rm -f "${_tmpfile}"' EXIT
+# _clean_cleanup (trap set in Phase 1) already covers ${_tmpfile}.
 
 find "${HOME}" -type f -name '*.dotbot-backup.*' -mtime "${_mtime_arg}" 2>/dev/null > "${_tmpfile}" || true
 
