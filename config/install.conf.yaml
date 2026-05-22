@@ -25,10 +25,10 @@
     stdout: true
 
 # ── Brew ───────────────────────────────────────────────────────────────────────
-# dotbot-brew plugin: runs `brew bundle --file=Brewfile`.
+# dotbot-brew plugin: runs `brew bundle --file=config/Brewfile`.
 # Path is resolved relative to BASEDIR (set by ./install via -d).
 - brewfile:
-  - Brewfile
+  - config/Brewfile
 
 # ── Parent directories ─────────────────────────────────────────────────────────
 # Ensure every ~/.config/<app>/ directory exists before the link block runs.
@@ -55,36 +55,36 @@
 # OS-conditional entries use if: (shell predicate; zero exit = proceed).
 - link:
     # Shell entry points
-    ~/.zshrc: home/.zshrc
-    ~/.zprofile: home/.zprofile
-    ~/.zshenv: home/.zshenv
+    ~/.zshrc: content/home/.zshrc
+    ~/.zprofile: content/home/.zprofile
+    ~/.zshenv: content/home/.zshenv
 
     # Zsh config fragments
-    ~/.config/zsh/aliases.zsh: home/.config/zsh/aliases.zsh
-    ~/.config/zsh/functions.zsh: home/.config/zsh/functions.zsh
-    ~/.config/zsh/keymaps.zsh: home/.config/zsh/keymaps.zsh
+    ~/.config/zsh/aliases.zsh: content/home/.config/zsh/aliases.zsh
+    ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
+    ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
 
     # Neovim — single files + lua directory link
-    ~/.config/nvim/init.lua: home/.config/nvim/init.lua
-    ~/.config/nvim/lazyvim.json: home/.config/nvim/lazyvim.json
-    ~/.config/nvim/lua: home/.config/nvim/lua
+    ~/.config/nvim/init.lua: content/home/.config/nvim/init.lua
+    ~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json
+    ~/.config/nvim/lua: content/home/.config/nvim/lua
 
     # Tmux
-    ~/.config/tmux/tmux.conf: home/.config/tmux/tmux.conf
+    ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
 
     # Ghostty — config file + shaders directory link
-    ~/.config/ghostty/config: home/.config/ghostty/config
-    ~/.config/ghostty/shaders: home/.config/ghostty/shaders
+    ~/.config/ghostty/config: content/home/.config/ghostty/config
+    ~/.config/ghostty/shaders: content/home/.config/ghostty/shaders
 
     # Atuin
-    ~/.config/atuin/config.toml: home/.config/atuin/config.toml
+    ~/.config/atuin/config.toml: content/home/.config/atuin/config.toml
 
     # Mise — linked before the mise: directive so mise install reads the XDG path
-    ~/.config/mise/config.toml: home/.config/mise/config.toml
+    ~/.config/mise/config.toml: content/home/.config/mise/config.toml
 
     # Aerospace — macOS only (if: predicate prevents link on Linux)
     ~/.config/aerospace/aerospace.toml:
-      path: home/.config/aerospace/aerospace.toml
+      path: content/home/.config/aerospace/aerospace.toml
       if: '[ "$(uname)" = Darwin ]'
 
 # ── Mise ───────────────────────────────────────────────────────────────────────

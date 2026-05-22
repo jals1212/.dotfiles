@@ -52,17 +52,17 @@ esac
 # ---------------------------------------------------------------------------
 # Compute REPO_ROOT
 # ---------------------------------------------------------------------------
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
-# shellcheck source=lib/header.sh
-. "${REPO_ROOT}/lib/header.sh"
-# shellcheck source=lib/dotbot.sh
-. "${REPO_ROOT}/lib/dotbot.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
+# shellcheck source=src/lib/header.sh
+. "${REPO_ROOT}/src/lib/header.sh"
+# shellcheck source=src/lib/dotbot.sh
+. "${REPO_ROOT}/src/lib/dotbot.sh"
 
 render_subcommand_banner "Clean"
 
@@ -109,11 +109,11 @@ if [ "${_dry_run}" = 1 ]; then
     done < "${_dead_tmpfile}"
 else
     dotbot_check_submodules || exit 1
-    python3 "${REPO_ROOT}/dotbot/bin/dotbot" \
-        --plugin "${REPO_ROOT}/plugins/dotbot-brew/brew.py" \
-        --plugin "${REPO_ROOT}/plugins/dotbot-mise/mise.py" \
+    python3 "${REPO_ROOT}/vendor/dotbot/bin/dotbot" \
+        --plugin "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" \
+        --plugin "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" \
         -d "${REPO_ROOT}" \
-        -c "${REPO_ROOT}/install.conf.yaml" \
+        -c "${REPO_ROOT}/config/install.conf.yaml" \
         --only clean
 fi
 

@@ -11,9 +11,9 @@
 bootstrap_check() {
     command -v python3 >/dev/null 2>&1 || return 1
     command -v git >/dev/null 2>&1 || return 1
-    [ -x "${REPO_ROOT}/dotbot/bin/dotbot" ] || return 1
-    [ -f "${REPO_ROOT}/plugins/dotbot-brew/brew.py" ] || return 1
-    [ -f "${REPO_ROOT}/plugins/dotbot-mise/mise.py" ] || return 1
+    [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ] || return 1
+    [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] || return 1
+    [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ] || return 1
     return 0
 }
 
@@ -66,9 +66,9 @@ bootstrap_install_prereqs() {
 #   submodule entry point is missing.
 # ---------------------------------------------------------------------------
 bootstrap_init_submodules() {
-    if [ -x "${REPO_ROOT}/dotbot/bin/dotbot" ] \
-        && [ -f "${REPO_ROOT}/plugins/dotbot-brew/brew.py" ] \
-        && [ -f "${REPO_ROOT}/plugins/dotbot-mise/mise.py" ]; then
+    if [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ] \
+        && [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] \
+        && [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
         return 0
     fi
     log_step "Initializing git submodules (dotbot + plugins)"

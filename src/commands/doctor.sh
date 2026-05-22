@@ -44,18 +44,18 @@ fi
 # ---------------------------------------------------------------------------
 # Compute REPO_ROOT
 # ---------------------------------------------------------------------------
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
 # ---------------------------------------------------------------------------
 # Source base libs
 # ---------------------------------------------------------------------------
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/detect.sh
-. "${REPO_ROOT}/lib/detect.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/detect.sh
+. "${REPO_ROOT}/src/lib/detect.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
 
 tui_start_timer
 render_subcommand_banner "$(tui_subtitle_for doctor)"
@@ -63,7 +63,7 @@ render_subcommand_banner "$(tui_subtitle_for doctor)"
 # ---------------------------------------------------------------------------
 # Source lib/doctor.sh (defines check_* functions and DOCTOR_CHECKS registry)
 # ---------------------------------------------------------------------------
-_doctor_lib="${REPO_ROOT}/lib/doctor.sh"
+_doctor_lib="${REPO_ROOT}/src/lib/doctor.sh"
 if [ ! -f "${_doctor_lib}" ]; then
     log_error "lib/doctor.sh missing"
     exit 1

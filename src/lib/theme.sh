@@ -8,16 +8,16 @@
 # Internal: ensure log helpers are available
 # ---------------------------------------------------------------------------
 if ! command -v log_error >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/lib/log.sh" ]; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/log.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/lib/log.sh"
+        . "${REPO_ROOT}/src/lib/log.sh"
     fi
 fi
 
 if ! command -v dotbot_theme_apply >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/lib/dotbot.sh" ]; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/dotbot.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/lib/dotbot.sh"
+        . "${REPO_ROOT}/src/lib/dotbot.sh"
     fi
 fi
 
@@ -27,12 +27,12 @@ fi
 
 # _th_index_path — print the absolute path to themes/index.yaml
 _th_index_path() {
-    printf '%s/themes/index.yaml' "${REPO_ROOT:?REPO_ROOT required}"
+    printf '%s/content/themes/index.yaml' "${REPO_ROOT:?REPO_ROOT required}"
 }
 
 # _th_tmux_conf_path — print the absolute path to the repo tmux.conf
 _th_tmux_conf_path() {
-    printf '%s/home/.config/tmux/tmux.conf' "${REPO_ROOT:?REPO_ROOT required}"
+    printf '%s/content/home/.config/tmux/tmux.conf' "${REPO_ROOT:?REPO_ROOT required}"
 }
 
 # _th_manifest_path — print the absolute path to manifest.json

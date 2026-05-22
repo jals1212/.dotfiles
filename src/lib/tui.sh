@@ -3,13 +3,13 @@
 # POSIX sh. Source this file; do not execute directly.
 # Requires: lib/log.sh, lib/header.sh, jq, gum.
 
-# shellcheck source=lib/log.sh
-# shellcheck source=lib/header.sh
+# shellcheck source=src/lib/log.sh
+# shellcheck source=src/lib/header.sh
 
 if ! command -v render_header >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/lib/header.sh" ]; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/header.sh"
     fi
 fi
 

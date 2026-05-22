@@ -38,28 +38,28 @@ fi
 # ---------------------------------------------------------------------------
 # REPO_ROOT resolution
 # ---------------------------------------------------------------------------
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
 # ---------------------------------------------------------------------------
 # Source dependencies
 # ---------------------------------------------------------------------------
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
 
-if [ -f "${REPO_ROOT}/lib/header.sh" ]; then
-    # shellcheck source=lib/header.sh
-    . "${REPO_ROOT}/lib/header.sh"
+if [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
+    # shellcheck source=src/lib/header.sh
+    . "${REPO_ROOT}/src/lib/header.sh"
 fi
 
-# shellcheck source=lib/dotbot.sh
-. "${REPO_ROOT}/lib/dotbot.sh"
-# shellcheck source=lib/theme.sh
-. "${REPO_ROOT}/lib/theme.sh"
-# shellcheck source=lib/select.sh
-. "${REPO_ROOT}/lib/select.sh"
+# shellcheck source=src/lib/dotbot.sh
+. "${REPO_ROOT}/src/lib/dotbot.sh"
+# shellcheck source=src/lib/theme.sh
+. "${REPO_ROOT}/src/lib/theme.sh"
+# shellcheck source=src/lib/select.sh
+. "${REPO_ROOT}/src/lib/select.sh"
 
 # ---------------------------------------------------------------------------
 # --current flag (early exit before banner)

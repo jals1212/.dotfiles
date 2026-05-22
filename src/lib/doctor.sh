@@ -97,7 +97,7 @@ check_python3() { check_command "python3" python3; }
 # Submodule presence
 # ---------------------------------------------------------------------------
 check_dotbot_submodule() {
-    if [ -x "${REPO_ROOT}/dotbot/bin/dotbot" ]; then
+    if [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ]; then
         _doc_pass "dotbot submodule"
         return 0
     fi
@@ -105,7 +105,7 @@ check_dotbot_submodule() {
     return 1
 }
 check_dotbot_brew_plugin() {
-    if [ -f "${REPO_ROOT}/plugins/dotbot-brew/brew.py" ]; then
+    if [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ]; then
         _doc_pass "dotbot-brew plugin"
         return 0
     fi
@@ -113,7 +113,7 @@ check_dotbot_brew_plugin() {
     return 1
 }
 check_dotbot_mise_plugin() {
-    if [ -f "${REPO_ROOT}/plugins/dotbot-mise/mise.py" ]; then
+    if [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
         _doc_pass "dotbot-mise plugin"
         return 0
     fi
@@ -162,7 +162,7 @@ check_theme_symlinks_agree() {
     do
         [ -L "${_ctsa_link}" ] || continue
         _ctsa_t="$(readlink -f "${_ctsa_link}" 2>/dev/null || true)"
-        _ctsa_key="$(printf '%s' "${_ctsa_t}" | sed -n 's|.*assets/themes/[^/]*/\([^/]*\)/\([^.]*\)\..*|\1/\2|p')"
+        _ctsa_key="$(printf '%s' "${_ctsa_t}" | sed -n 's|.*content/assets/palettes/[^/]*/\([^/]*\)/\([^.]*\)\..*|\1/\2|p')"
         [ -n "${_ctsa_key}" ] || continue
         if [ -z "${_ctsa_expected}" ]; then
             _ctsa_expected="${_ctsa_key}"

@@ -6,13 +6,13 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/kanagawa/wave.json
-    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/kanagawa/Kanagawa-wave.tmTheme
-    ~/.config/eza/themes/dots.sh: assets/themes/eza/kanagawa/wave.txt
-    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/kanagawa/wave.sh
-    ~/.config/lazygit/config.yml: assets/themes/lazygit/kanagawa/wave.yml
-    ~/.config/bottom/bottom.toml: assets/themes/bottom/kanagawa/wave.toml
-    ~/.config/ghostty/themes/dots: assets/themes/ghostty/kanagawa/wave.conf
-    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/kanagawa/wave.toml
-    ~/.config/dots/theme.sh: assets/themes/zsh/kanagawa-wave.sh
-    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/kanagawa-wave.lua
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/kanagawa/wave.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/kanagawa/Kanagawa-wave.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/kanagawa/wave.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/kanagawa/wave.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/kanagawa/wave.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/wave.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/wave.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/kanagawa/wave.toml
+    ~/.config/dots/theme.sh: content/assets/palettes/zsh/kanagawa-wave.sh
+    ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/kanagawa-wave.lua

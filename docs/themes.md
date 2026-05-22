@@ -26,7 +26,7 @@ Show active theme:
 ## What the switcher does
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
-2. Runs the per-theme dotbot config (`themes/<theme>-<flavor>.yaml`) which re-links 10 per-app theme files from `assets/themes/<app>/...` to `$HOME`.
+2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 10 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
 3. Rewrites the tmux fenced block (`# >>> dots:theme >>>` … `# <<< dots:theme <<<`) in `home/.config/tmux/tmux.conf` so tmux-ukiyo's `@ukiyo-theme` matches the new pair.
 4. Runs `bat cache --build` (skipped when bat is absent).
 5. If a tmux server is running, runs `tmux source-file ~/.tmux.conf` so the new fenced block takes effect.

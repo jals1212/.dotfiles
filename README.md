@@ -24,7 +24,7 @@ Non-interactive:
 ./dots update --yes --theme=kanagawa --flavor=dragon
 ```
 
-The `./bootstrap.sh` script still exists as a thin alias for `./dots update --yes` — prefer `./dots` for everyday use.
+`./dots` is the only entry point. `bootstrap.sh` is removed — no compat alias.
 
 ## Lifecycle
 
@@ -59,7 +59,7 @@ If `@ukiyo-theme` does not refresh in an active tmux session after a switch, run
 ## How it works
 
 - **Symlinks via dotbot**: `install.conf.yaml` declares every base file under `home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
-- **Theme symlinks**: each `themes/<theme>-<flavor>.yaml` re-links 10 theme files from `assets/themes/<app>/...` to `$HOME`. Theme switch = retarget those symlinks.
+- **Theme symlinks**: each `content/themes/<theme>-<flavor>.yaml` re-links 10 theme files from `content/assets/palettes/<app>/...` to `$HOME`. Theme switch = retarget those symlinks.
 - **Tmux fence**: `home/.config/tmux/tmux.conf` contains a `# >>> dots:theme >>>` / `# <<< dots:theme <<<` block holding the `@ukiyo-theme` line. The theme switcher rewrites between the fences.
 - **Atuin**: `home/.config/atuin/config.toml` declares static `[theme] name = "dots"`. The atuin theme palette is delivered via the per-theme dotbot symlink `~/.config/atuin/themes/dots.toml`.
 - **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
@@ -67,9 +67,9 @@ If `@ukiyo-theme` does not refresh in an active tmux session after a switch, run
 
 ## Adding a new theme
 
-1. Add the asset files under `assets/themes/<app>/<theme>/<flavor>.<ext>` for every app.
-2. Create `themes/<theme>-<flavor>.yaml` mirroring an existing one.
-3. Add the pair to `themes/index.yaml`.
+1. Add the asset files under `content/assets/palettes/<app>/<theme>/<flavor>.<ext>` for every app.
+2. Create `content/themes/<theme>-<flavor>.yaml` mirroring an existing one.
+3. Add the pair to `content/themes/index.yaml`.
 4. Test with `./dots theme <theme> <flavor>`.
 
 ## Adding a mise tool

@@ -44,15 +44,15 @@ done
 # ---------------------------------------------------------------------------
 # Compute REPO_ROOT
 # ---------------------------------------------------------------------------
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
-# shellcheck source=lib/header.sh
-. "${REPO_ROOT}/lib/header.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
+# shellcheck source=src/lib/header.sh
+. "${REPO_ROOT}/src/lib/header.sh"
 
 render_subcommand_banner "Upgrade"
 
@@ -109,9 +109,9 @@ log_step "Phase 2: brew bundle cleanup"
 
 if command -v brew >/dev/null 2>&1; then
     if [ "${_dry_run}" = 1 ]; then
-        brew bundle cleanup --file="${REPO_ROOT}/Brewfile" || true
+        brew bundle cleanup --file="${REPO_ROOT}/config/Brewfile" || true
     else
-        brew bundle cleanup --force --file="${REPO_ROOT}/Brewfile" || true
+        brew bundle cleanup --force --file="${REPO_ROOT}/config/Brewfile" || true
     fi
 else
     log_warn "brew not found; skipping bundle cleanup"

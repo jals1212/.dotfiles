@@ -12,25 +12,25 @@
 # ---------------------------------------------------------------------------
 dotbot_check_submodules() {
     # Auto-bootstrap python3 + git + Linux build deps + submodules on first run.
-    if [ -f "${REPO_ROOT}/lib/bootstrap.sh" ]; then
-        # shellcheck source=lib/bootstrap.sh
-        . "${REPO_ROOT}/lib/bootstrap.sh"
+    if [ -f "${REPO_ROOT}/src/lib/bootstrap.sh" ]; then
+        # shellcheck source=src/lib/bootstrap.sh
+        . "${REPO_ROOT}/src/lib/bootstrap.sh"
         bootstrap_ensure
     fi
 
     _dcs_ok=1
 
-    if [ ! -x "${REPO_ROOT}/dotbot/bin/dotbot" ]; then
+    if [ ! -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ]; then
         log_error "dotbot submodule not initialized; run: git submodule update --init --recursive"
         _dcs_ok=0
     fi
 
-    if [ ! -f "${REPO_ROOT}/plugins/dotbot-brew/brew.py" ]; then
+    if [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ]; then
         log_error "dotbot-brew plugin missing; run: git submodule update --init --recursive"
         _dcs_ok=0
     fi
 
-    if [ ! -f "${REPO_ROOT}/plugins/dotbot-mise/mise.py" ]; then
+    if [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
         log_error "dotbot-mise plugin missing; run: git submodule update --init --recursive"
         _dcs_ok=0
     fi
@@ -46,7 +46,7 @@ dotbot_check_submodules() {
 dotbot_base_apply() {
     dotbot_check_submodules || return 1
     log_step "Running base dotbot config (install.conf.yaml)"
-    "${REPO_ROOT}/install"
+    "${REPO_ROOT}/src/install"
 }
 
 # ---------------------------------------------------------------------------
@@ -60,12 +60,12 @@ dotbot_theme_apply() {
 
     dotbot_check_submodules || return 1
 
-    _dta_config="${REPO_ROOT}/themes/${_dta_theme}-${_dta_flavor}.yaml"
+    _dta_config="${REPO_ROOT}/content/themes/${_dta_theme}-${_dta_flavor}.yaml"
     if [ ! -f "${_dta_config}" ]; then
         log_error "Per-theme config not found: themes/${_dta_theme}-${_dta_flavor}.yaml"
         return 1
     fi
 
     log_step "Applying theme config: themes/${_dta_theme}-${_dta_flavor}.yaml"
-    "${REPO_ROOT}/install" "themes/${_dta_theme}-${_dta_flavor}.yaml"
+    "${REPO_ROOT}/src/install" "themes/${_dta_theme}-${_dta_flavor}.yaml"
 }

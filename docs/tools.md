@@ -112,4 +112,4 @@ TUI primitives used by `./dots`: `gum choose` for the action menu and update wiz
 
 ## Themes
 
-Theme deployment covered in [themes.md](themes.md). Override flavor with `./dots update` or `./bootstrap.sh --yes --theme=<family> --flavor=<flavor>`.
+Theme deployment covered in [themes.md](themes.md). Switch theme with `./dots theme <family> <flavor>` (or `./dots update --yes --theme=<family> --flavor=<flavor>` to also rerun the base config).

@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
-# install — dotbot wrapper
-# Resolves the dotfiles directory from the script's own location and invokes
-# dotbot with the dotbot-brew and dotbot-mise plugins.
-# Usage: ./install [config.yaml]  (default: install.conf.yaml)
+# src/install — dotbot wrapper
+# Resolves REPO_ROOT (one level up from this script) and invokes dotbot with
+# the dotbot-brew and dotbot-mise plugins. Usage: src/install [config.yaml]
+# (default: config/install.conf.yaml, resolved relative to REPO_ROOT).
 
 set -e
 
-# Resolve BASEDIR to the directory containing this script, following symlinks.
+# Resolve SELF following symlinks, then REPO_ROOT (one level up from src/).
 SELF="$0"
 while [ -L "$SELF" ]; do
   SELF_DIR="$(cd "$(dirname "$SELF")" && pwd)"
@@ -16,9 +16,9 @@ while [ -L "$SELF" ]; do
     *) SELF="${SELF_DIR}/${SELF}" ;;
   esac
 done
-BASEDIR="$(cd "$(dirname "$SELF")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
 
-CONFIG="${1:-install.conf.yaml}"
+CONFIG="${1:-${REPO_ROOT}/config/install.conf.yaml}"
 
 # Ensure brew install locations are on PATH so dotbot-brew finds `brew`
 # after the shell directive installs it (Python subprocesses inherit PATH
@@ -36,14 +36,14 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -x "${BASEDIR}/dotbot/bin/dotbot" ]; then
+if [ ! -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ]; then
   printf 'error: dotbot submodule not initialized.\n' >&2
   printf '  Run: git submodule update --init --recursive\n' >&2
   exit 1
 fi
 
-if [ ! -f "${BASEDIR}/plugins/dotbot-brew/brew.py" ] || \
-   [ ! -f "${BASEDIR}/plugins/dotbot-mise/mise.py" ]; then
+if [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] || \
+   [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
   printf 'error: plugin submodules not initialized.\n' >&2
   printf '  Run: git submodule update --init --recursive\n' >&2
   exit 1
@@ -51,8 +51,8 @@ fi
 
 # ── Invoke dotbot ──────────────────────────────────────────────────────────
 
-python3 "${BASEDIR}/dotbot/bin/dotbot" \
-  --plugin "${BASEDIR}/plugins/dotbot-brew/brew.py" \
-  --plugin "${BASEDIR}/plugins/dotbot-mise/mise.py" \
-  -d "${BASEDIR}" \
-  -c "${BASEDIR}/${CONFIG}"
+python3 "${REPO_ROOT}/vendor/dotbot/bin/dotbot" \
+  --plugin "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" \
+  --plugin "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" \
+  -d "${REPO_ROOT}" \
+  -c "${CONFIG}"

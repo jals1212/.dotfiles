@@ -6,13 +6,13 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/catppuccin/macchiato.json
-    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/catppuccin/Catppuccin-macchiato.tmTheme
-    ~/.config/eza/themes/dots.sh: assets/themes/eza/catppuccin/macchiato.txt
-    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/catppuccin/macchiato.sh
-    ~/.config/lazygit/config.yml: assets/themes/lazygit/catppuccin/macchiato.yml
-    ~/.config/bottom/bottom.toml: assets/themes/bottom/catppuccin/macchiato.toml
-    ~/.config/ghostty/themes/dots: assets/themes/ghostty/catppuccin/macchiato.conf
-    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/catppuccin/macchiato.toml
-    ~/.config/dots/theme.sh: assets/themes/zsh/catppuccin-macchiato.sh
-    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/catppuccin-macchiato.lua
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/macchiato.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-macchiato.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/macchiato.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/macchiato.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/macchiato.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/macchiato.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/macchiato.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/macchiato.toml
+    ~/.config/dots/theme.sh: content/assets/palettes/zsh/catppuccin-macchiato.sh
+    ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/catppuccin-macchiato.lua

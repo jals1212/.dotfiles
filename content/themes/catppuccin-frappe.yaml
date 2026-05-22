@@ -6,13 +6,13 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: assets/themes/oh-my-posh/catppuccin/frappe.json
-    ~/.config/bat/themes/dots.tmTheme: assets/themes/bat/catppuccin/Catppuccin-frappe.tmTheme
-    ~/.config/eza/themes/dots.sh: assets/themes/eza/catppuccin/frappe.txt
-    ~/.config/fzf/themes/dots.sh: assets/themes/fzf/catppuccin/frappe.sh
-    ~/.config/lazygit/config.yml: assets/themes/lazygit/catppuccin/frappe.yml
-    ~/.config/bottom/bottom.toml: assets/themes/bottom/catppuccin/frappe.toml
-    ~/.config/ghostty/themes/dots: assets/themes/ghostty/catppuccin/frappe.conf
-    ~/.config/atuin/themes/dots.toml: assets/themes/atuin/catppuccin/frappe.toml
-    ~/.config/dots/theme.sh: assets/themes/zsh/catppuccin-frappe.sh
-    ~/.config/nvim/lua/dots-theme.lua: assets/themes/nvim/catppuccin-frappe.lua
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/frappe.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-frappe.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/frappe.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/frappe.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/frappe.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/frappe.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/frappe.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/frappe.toml
+    ~/.config/dots/theme.sh: content/assets/palettes/zsh/catppuccin-frappe.sh
+    ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/catppuccin-frappe.lua

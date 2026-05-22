@@ -6,14 +6,14 @@
 # The tools picker was removed in migrate-to-dotbot: managed packages live in
 # Brewfile and home/.config/mise/config.toml, not in a per-run picker.
 
-# shellcheck source=lib/log.sh
-# shellcheck source=lib/detect.sh
-# shellcheck source=lib/header.sh
+# shellcheck source=src/lib/log.sh
+# shellcheck source=src/lib/detect.sh
+# shellcheck source=src/lib/header.sh
 
 if ! command -v _header_color_code >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/lib/header.sh" ]; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/header.sh"
     fi
 fi
 

@@ -2,7 +2,7 @@
 # dots — POSIX sh dispatcher for the dotfiles manager
 # Usage: ./dots <subcommand> [args...]
 # Run ./dots help for a full command listing.
-# First-run: use ./bootstrap.sh to install dependencies and configure the system.
+# First-run: ./dots itself auto-bootstraps (python3 + git + submodules + brew).
 
 set -eu
 
@@ -15,14 +15,14 @@ export REPO_ROOT
 # ---------------------------------------------------------------------------
 # Source shared libraries.
 # ---------------------------------------------------------------------------
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/detect.sh
-. "${REPO_ROOT}/lib/detect.sh"
-# shellcheck source=lib/header.sh
-. "${REPO_ROOT}/lib/header.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/detect.sh
+. "${REPO_ROOT}/src/lib/detect.sh"
+# shellcheck source=src/lib/header.sh
+. "${REPO_ROOT}/src/lib/header.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
 
 # ---------------------------------------------------------------------------
 # _dots_help
@@ -45,7 +45,7 @@ _dots_help() {
     printf '  --help / -h   Show subcommand usage.\n\n' >&2
     printf 'FIRST RUN\n' >&2
     printf '  ./dots            Auto-runs update when manifest.json is missing.\n' >&2
-    printf '  ./bootstrap.sh    Install dependencies (Homebrew, Brewfile) and run update.\n' >&2
+    printf '  ./dots            Auto-bootstraps on first run (installs python3 + brew).\n' >&2
 }
 
 # ---------------------------------------------------------------------------
@@ -58,13 +58,13 @@ _dots_run() {
     _drun_cmd="${1}"
     shift
     case "${_drun_cmd}" in
-        update)    sh "${REPO_ROOT}/commands/update.sh"    "$@" ;;
-        sync)      sh "${REPO_ROOT}/commands/sync.sh"      "$@" ;;
-        theme)     sh "${REPO_ROOT}/commands/theme.sh"     "$@" ;;
-        doctor)    sh "${REPO_ROOT}/commands/doctor.sh"    "$@" ;;
-        clean)     sh "${REPO_ROOT}/commands/clean.sh"     "$@" ;;
-        upgrade)   sh "${REPO_ROOT}/commands/upgrade.sh"   "$@" ;;
-        uninstall) sh "${REPO_ROOT}/commands/uninstall.sh" "$@" ;;
+        update)    sh "${REPO_ROOT}/src/commands/update.sh"    "$@" ;;
+        sync)      sh "${REPO_ROOT}/src/commands/sync.sh"      "$@" ;;
+        theme)     sh "${REPO_ROOT}/src/commands/theme.sh"     "$@" ;;
+        doctor)    sh "${REPO_ROOT}/src/commands/doctor.sh"    "$@" ;;
+        clean)     sh "${REPO_ROOT}/src/commands/clean.sh"     "$@" ;;
+        upgrade)   sh "${REPO_ROOT}/src/commands/upgrade.sh"   "$@" ;;
+        uninstall) sh "${REPO_ROOT}/src/commands/uninstall.sh" "$@" ;;
         help|-h|--help) _dots_help ;;
         quit) return 0 ;;
         *)
@@ -91,7 +91,7 @@ _dots_pause() {
 # ---------------------------------------------------------------------------
 if [ "$#" -eq 0 ]; then
     if [ ! -f "${REPO_ROOT}/manifest.json" ]; then
-        sh "${REPO_ROOT}/commands/update.sh"
+        sh "${REPO_ROOT}/src/commands/update.sh"
         exit $?
     fi
     if [ -t 0 ] && [ -t 1 ]; then

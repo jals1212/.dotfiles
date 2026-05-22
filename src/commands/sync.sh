@@ -26,19 +26,19 @@ fi
 # ---------------------------------------------------------------------------
 # Compute REPO_ROOT and source libs
 # ---------------------------------------------------------------------------
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
-# shellcheck source=lib/log.sh
-. "${REPO_ROOT}/lib/log.sh"
-# shellcheck source=lib/tui.sh
-. "${REPO_ROOT}/lib/tui.sh"
-# shellcheck source=lib/header.sh
-. "${REPO_ROOT}/lib/header.sh"
-# shellcheck source=lib/dotbot.sh
-. "${REPO_ROOT}/lib/dotbot.sh"
-# shellcheck source=lib/theme.sh
-. "${REPO_ROOT}/lib/theme.sh"
+# shellcheck source=src/lib/log.sh
+. "${REPO_ROOT}/src/lib/log.sh"
+# shellcheck source=src/lib/tui.sh
+. "${REPO_ROOT}/src/lib/tui.sh"
+# shellcheck source=src/lib/header.sh
+. "${REPO_ROOT}/src/lib/header.sh"
+# shellcheck source=src/lib/dotbot.sh
+. "${REPO_ROOT}/src/lib/dotbot.sh"
+# shellcheck source=src/lib/theme.sh
+. "${REPO_ROOT}/src/lib/theme.sh"
 
 tui_start_timer
 render_subcommand_banner "$(tui_subtitle_for sync)"

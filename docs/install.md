@@ -8,8 +8,8 @@ This repo deploys via [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` com
 
 ## Requirements
 
-- macOS: Xcode Command Line Tools (provides `git` + `python3`). `./bootstrap.sh` triggers `xcode-select --install` if missing.
-- Linux: `python3`, `git`, and standard build deps. `./bootstrap.sh` installs them via `apt-get`, `dnf`, or `pacman`.
+- macOS: Xcode Command Line Tools (provides `git` + `python3`). `./dots` triggers `xcode-select --install` automatically if either is missing.
+- Linux: `python3`, `git`, and standard build deps. `./dots` installs them via `apt-get`, `dnf`, or `pacman` automatically on first run.
 
 Homebrew is **not** a prerequisite — `./install` installs it via a dotbot `shell` directive on first run.
 
@@ -36,7 +36,7 @@ cd ~/.dotfiles
 5. The theme switcher applies kanagawa/dragon.
 6. Existing regular files in `$HOME` are moved to `<path>.dotbot-backup.<timestamp>` before being replaced by symlinks (dotbot `backup: true` default).
 
-`./bootstrap.sh` still exists as a thin backward-compat alias for `./dots update --yes "$@"`. The auto-bootstrap lives in `lib/bootstrap.sh` and is invoked from `lib/dotbot.sh:dotbot_check_submodules`, so any command that touches dotbot (update, sync, theme, clean, upgrade) triggers it on a fresh machine.
+`./dots` is the only entry point. There is no `bootstrap.sh`. The auto-bootstrap lives in `src/lib/bootstrap.sh` and is invoked from `src/lib/dotbot.sh:dotbot_check_submodules`, so any subcommand that touches dotbot (update, sync, theme, clean, upgrade) triggers it on a fresh machine.
 
 ## Non-interactive install
 

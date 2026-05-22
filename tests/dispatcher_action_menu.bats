@@ -20,6 +20,7 @@ setup() {
         --exclude='.opencode' \
         --exclude='tmp' \
         --exclude='orchestra' \
+        --exclude='vendor' \
         -cf - . | tar -C "${REPO_COPY}" -xf -
     cat > "${REPO_COPY}/manifest.json" <<'JSON'
 {"version":"3.0.0","theme":"kanagawa","flavor":"dragon","applied_at":"2026-01-01T00:00:00Z"}
