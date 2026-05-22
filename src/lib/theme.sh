@@ -48,7 +48,8 @@ _th_tmux_fence_count() {
         printf '0'
         return 0
     fi
-    _tfc_n="$(grep -c '# >>> dots:theme >>>' "${_tfc_file}" 2>/dev/null || printf '0')"
+    _tfc_n="$(grep -c '# >>> dots:theme >>>' "${_tfc_file}" 2>/dev/null || true)"
+    _tfc_n="$(printf '%s\n' "${_tfc_n:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }')"
     printf '%s' "${_tfc_n}"
 }
 
@@ -246,18 +247,18 @@ theme_apply() {
         # Use awk to avoid multiple individual >> redirects.
         _ta_tmp="${_ta_tmux_conf}.theme.tmp"
         awk \
-            -v open="${_ta_fence_open}" \
-            -v close="${_ta_fence_close}" \
+            -v fence_open="${_ta_fence_open}" \
+            -v fence_close="${_ta_fence_close}" \
             -v content="${_ta_theme_line}" \
             '
             !inserted && /^(set -g |run-shell )/ {
-                print open
+                print fence_open
                 print content
-                print close
+                print fence_close
                 inserted=1
             }
             { print }
-            END { if (!inserted) { print open; print content; print close } }
+            END { if (!inserted) { print fence_open; print content; print fence_close } }
             ' "${_ta_tmux_conf}" > "${_ta_tmp}"
         mv "${_ta_tmp}" "${_ta_tmux_conf}"
         _ta_fence_count="$(_th_tmux_fence_count "${_ta_tmux_conf}")"
@@ -272,20 +273,21 @@ theme_apply() {
     # Rewrite fence content in-place using awk (portable BSD+GNU)
     _ta_tmp="${_ta_tmux_conf}.theme.tmp"
     awk \
-        -v open="${_ta_fence_open}" \
-        -v close="${_ta_fence_close}" \
+        -v fence_open="${_ta_fence_open}" \
+        -v fence_close="${_ta_fence_close}" \
         -v content="${_ta_theme_line}" \
         '
-        $0 == open  { print; in_fence=1; next }
-        $0 == close { print content; print; in_fence=0; next }
+        $0 == fence_open  { print; in_fence=1; next }
+        $0 == fence_close { print content; print; in_fence=0; next }
         in_fence    { next }
         { print }
         ' "${_ta_tmux_conf}" > "${_ta_tmp}"
     mv "${_ta_tmp}" "${_ta_tmux_conf}"
 
     # Verify fence integrity after rewrite
-    _ta_open_count="$(grep -c '# >>> dots:theme >>>' "${_ta_tmux_conf}" 2>/dev/null || printf '0')"
-    _ta_close_count="$(grep -c '# <<< dots:theme <<<' "${_ta_tmux_conf}" 2>/dev/null || printf '0')"
+    _ta_open_count="$(_th_tmux_fence_count "${_ta_tmux_conf}")"
+    _ta_close_count="$(grep -c '# <<< dots:theme <<<' "${_ta_tmux_conf}" 2>/dev/null || true)"
+    _ta_close_count="$(printf '%s\n' "${_ta_close_count:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }')"
     if [ "${_ta_open_count}" -ne 1 ] || [ "${_ta_close_count}" -ne 1 ]; then
         log_error "Fence integrity check failed after rewrite (open=${_ta_open_count}, close=${_ta_close_count})"
         return 1

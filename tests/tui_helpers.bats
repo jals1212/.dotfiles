@@ -11,13 +11,13 @@ setup() {
     mkdir -p "${MOCKBIN}"
     export PATH="${MOCKBIN}:${PATH}"
 
-    # shellcheck source=../lib/header.sh
-    . "${REPO_ROOT_REAL}/lib/header.sh"
+    # shellcheck source=../src/lib/header.sh
+    . "${REPO_ROOT_REAL}/src/lib/header.sh"
     render_header() {
         printf 'theme=%s subtitle=%s\n' "$1" "$2"
     }
-    # shellcheck source=../lib/tui.sh
-    . "${REPO_ROOT_REAL}/lib/tui.sh"
+    # shellcheck source=../src/lib/tui.sh
+    . "${REPO_ROOT_REAL}/src/lib/tui.sh"
 }
 
 teardown() {

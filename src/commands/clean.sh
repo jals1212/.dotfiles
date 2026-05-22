@@ -76,24 +76,7 @@ log_step "Phase 1: dead-symlink sweep"
 _dead_tmpfile="$(mktemp)"
 _clean_cleanup() { rm -f "${_dead_tmpfile:-}" "${_tmpfile:-}"; }
 trap _clean_cleanup EXIT
-for _dir in \
-    "${HOME}" \
-    "${HOME}/.config/zsh" \
-    "${HOME}/.config/nvim" \
-    "${HOME}/.config/tmux" \
-    "${HOME}/.config/ghostty" \
-    "${HOME}/.config/atuin" \
-    "${HOME}/.config/atuin/themes" \
-    "${HOME}/.config/aerospace" \
-    "${HOME}/.config/mise" \
-    "${HOME}/.config/dots" \
-    "${HOME}/.config/oh-my-posh" \
-    "${HOME}/.config/bat/themes" \
-    "${HOME}/.config/eza/themes" \
-    "${HOME}/.config/fzf/themes" \
-    "${HOME}/.config/lazygit" \
-    "${HOME}/.config/bottom"
-do
+dotbot_managed_dirs | while IFS= read -r _dir; do
     [ -d "${_dir}" ] || continue
     find "${_dir}" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r _link; do
         [ -e "${_link}" ] || printf '%s\n' "${_link}"
@@ -132,7 +115,11 @@ _stale_count=0
 _tmpfile="$(mktemp)"
 # _clean_cleanup (trap set in Phase 1) already covers ${_tmpfile}.
 
-find "${HOME}" -type f -name '*.dotbot-backup.*' -mtime "${_mtime_arg}" 2>/dev/null > "${_tmpfile}" || true
+: > "${_tmpfile}"
+dotbot_managed_dirs | while IFS= read -r _dir; do
+    [ -d "${_dir}" ] || continue
+    find "${_dir}" -maxdepth 1 -type f -name '*.dotbot-backup.*' -mtime "${_mtime_arg}" 2>/dev/null
+done > "${_tmpfile}"
 
 if [ "${_dry_run}" = 1 ]; then
     while IFS= read -r _path; do

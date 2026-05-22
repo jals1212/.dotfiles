@@ -156,14 +156,14 @@ if [ "${_yes}" -eq 0 ] && [ -t 0 ] && [ -t 1 ]; then
         --border-foreground "$(_header_color_code "${_active_theme}")" \
         --padding "1 2" \
         --bold \
-        "Current selection
+        "Current active theme
 Theme:  ${_active_theme}
 Flavor: ${_active_flavor}"
 
     _active_theme="$(select_theme "${REPO_ROOT}" "${_active_theme}")"
     _active_flavor="$(select_flavor "${REPO_ROOT}" "${_active_theme}" "${_active_flavor}")"
 
-    if ! gum confirm "Apply selection?"; then
+    if ! confirm_apply "${_active_theme}" "${_active_flavor}"; then
         log_warn "Update cancelled."
         exit 1
     fi

@@ -16,6 +16,30 @@ _doc_warn() { _log_line 214 '[WARN]' "${1}: ${2}"; }
 # _doc_skip <label> <reason>
 _doc_skip() { _log_line 250 '[SKIP]' "${1}: ${2}"; }
 
+_doc_managed_dirs() {
+    if ! command -v dotbot_managed_dirs >/dev/null 2>&1; then
+        if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/dotbot.sh" ]; then
+            # shellcheck disable=SC1091
+            . "${REPO_ROOT}/src/lib/dotbot.sh"
+        fi
+    fi
+
+    if command -v dotbot_managed_dirs >/dev/null 2>&1; then
+        dotbot_managed_dirs
+        return $?
+    fi
+
+    _doc_fail "Dotbot-managed directories" "dotbot_managed_dirs unavailable"
+    return 1
+}
+
+_doc_count_lines() {
+    _dcl_pattern="${1:?_doc_count_lines: pattern required}"
+    _dcl_file="${2:?_doc_count_lines: file required}"
+    _dcl_count="$(grep -c "${_dcl_pattern}" "${_dcl_file}" 2>/dev/null || true)"
+    printf '%s\n' "${_dcl_count:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }'
+}
+
 # check_command <label> <cmd>
 check_command() {
     if command -v "${2}" >/dev/null 2>&1; then
@@ -208,8 +232,8 @@ check_tmux_fence() {
         _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
         return 1
     fi
-    _ctf_open=$(grep -c '^# >>> dots:theme >>>$' "${_ctf_conf}" 2>/dev/null || printf '0')
-    _ctf_close=$(grep -c '^# <<< dots:theme <<<$' "${_ctf_conf}" 2>/dev/null || printf '0')
+    _ctf_open="$(_doc_count_lines '^# >>> dots:theme >>>$' "${_ctf_conf}")"
+    _ctf_close="$(_doc_count_lines '^# <<< dots:theme <<<$' "${_ctf_conf}")"
     if [ "${_ctf_open}" = 1 ] && [ "${_ctf_close}" = 1 ]; then
         if grep -q 'set -g @ukiyo-theme' "${_ctf_conf}"; then
             _doc_pass "${_ctf_label}"
@@ -280,7 +304,12 @@ check_manifest_oh_my_posh_json() {
 # ---------------------------------------------------------------------------
 check_stale_backups() {
     _csb_label="stale dotbot-backup files"
-    _csb_count=$(find "${HOME}" -type f -name '*.dotbot-backup.*' -mtime +29 2>/dev/null | wc -l | tr -d ' ')
+    _csb_count="$(
+        _doc_managed_dirs | while IFS= read -r _csb_dir; do
+            [ -d "${_csb_dir}" ] || continue
+            find "${_csb_dir}" -maxdepth 1 -type f -name '*.dotbot-backup.*' -mtime +29 2>/dev/null
+        done | wc -l | tr -d ' '
+    )"
     if [ "${_csb_count:-0}" -gt 0 ]; then
         _doc_warn "${_csb_label}" "${_csb_count} file(s) older than 30 days (run ./dots clean)"
     else

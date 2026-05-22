@@ -21,6 +21,7 @@
       if ! command -v brew >/dev/null 2>&1; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       fi
+    quiet: true
     stderr: true
     stdout: true
 
@@ -99,7 +100,8 @@
 # Guarded: no-op when bat is absent (|| true prevents dotbot aborting the run).
 - shell:
   - description: Build bat cache (no-op when bat is absent)
-    command: command -v bat >/dev/null 2>&1 && bat cache --build || true
+    command: command -v bat >/dev/null 2>&1 && bat cache --build >/dev/null 2>&1 || true
+    quiet: true
     stdout: true
     stderr: true
 

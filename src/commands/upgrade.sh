@@ -1,5 +1,5 @@
 #!/bin/sh
-# commands/upgrade.sh — bump vendored submodules + brew cleanup + mise prune
+# commands/upgrade.sh — bump vendored submodules + report optional cleanup/prune
 # POSIX sh. Invoked by the dots dispatcher or directly.
 
 set -eu
@@ -8,18 +8,24 @@ set -eu
 # Help
 # ---------------------------------------------------------------------------
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    printf 'dots upgrade - vendored-deps lifecycle\n\n' >&2
+    printf 'dots upgrade - vendored-deps lifecycle (safe by default)\n\n' >&2
     printf 'USAGE\n' >&2
-    printf '  ./dots upgrade [--commit] [--dry-run]\n\n' >&2
+    printf '  ./dots upgrade [--commit] [--dry-run] [--cleanup] [--prune] [--yes]\n\n' >&2
     printf 'FLAGS\n' >&2
     printf '  --commit      Stage and commit gitlink advances on success.\n' >&2
-    printf '  --dry-run     Report changes without invoking destructive commands.\n' >&2
+    printf '  --dry-run     Report submodule changes only; with --cleanup, report cleanup candidates.\n' >&2
+    printf '  --cleanup     Opt into Homebrew cleanup phase (report with --dry-run, apply with --yes).\n' >&2
+    printf '  --prune       Allow mise prune to remove unused tool installs.\n' >&2
+    printf '  --yes         Required with --cleanup/--prune to skip confirmation.\n' >&2
     printf '  --help, -h    Show this message.\n\n' >&2
+    printf 'SAFETY\n' >&2
+    printf '  Default mode NEVER runs brew cleanup --force and NEVER runs mise prune.\n' >&2
+    printf '  Cleanup/prune are destructive and require explicit flags plus confirmation.\n\n' >&2
     printf 'PHASES\n' >&2
-    printf '  1. Bump pinned commit of dotbot/, plugins/dotbot-brew/,\n' >&2
-    printf '     plugins/dotbot-mise/ to upstream default-branch HEAD.\n' >&2
-    printf '  2. brew bundle cleanup --force --file=Brewfile.\n' >&2
-    printf '  3. mise prune --yes.\n' >&2
+    printf '  1. Bump pinned commit of vendor/dotbot/, vendor/plugins/dotbot-brew/,\n' >&2
+    printf '     vendor/plugins/dotbot-mise/ to upstream default-branch HEAD.\n' >&2
+    printf '  2. Skip Homebrew cleanup unless --cleanup is explicit.\n' >&2
+    printf '  3. Skip mise prune unless --prune is explicit.\n' >&2
     printf '  4. Print summary; optionally commit gitlinks.\n' >&2
     exit 0
 fi
@@ -29,10 +35,16 @@ fi
 # ---------------------------------------------------------------------------
 _do_commit=0
 _dry_run=0
+_do_cleanup=0
+_do_prune=0
+_yes=0
 for _arg in "$@"; do
     case "${_arg}" in
-        --commit)  _do_commit=1 ;;
-        --dry-run) _dry_run=1 ;;
+        --commit)   _do_commit=1 ;;
+        --dry-run)  _dry_run=1 ;;
+        --cleanup)  _do_cleanup=1 ;;
+        --prune)    _do_prune=1 ;;
+        --yes|-y)   _yes=1 ;;
         *)
             printf 'unknown flag: %s\n' "${_arg}" >&2
             printf 'run: ./dots upgrade --help\n' >&2
@@ -56,6 +68,26 @@ export REPO_ROOT
 
 render_subcommand_banner "Upgrade"
 
+_upgrade_confirm_destructive() {
+    _ucd_what="${1:?_upgrade_confirm_destructive: description required}"
+
+    if [ "${_dry_run}" = 1 ]; then
+        return 1
+    fi
+
+    if [ "${_yes}" = 1 ]; then
+        return 0
+    fi
+
+    if [ -t 0 ] && [ -t 1 ] && command -v gum >/dev/null 2>&1; then
+        gum confirm "Destructive action: ${_ucd_what}. Continue?"
+        return $?
+    fi
+
+    log_error "${_ucd_what} is destructive; rerun with --yes to confirm"
+    return 1
+}
+
 # ---------------------------------------------------------------------------
 # Phase 1 — submodule pin bump
 # ---------------------------------------------------------------------------
@@ -64,7 +96,7 @@ log_step "Phase 1: submodule pin bump"
 _summary=""
 _bumped=""
 
-for _sub in dotbot plugins/dotbot-brew plugins/dotbot-mise; do
+for _sub in vendor/dotbot vendor/plugins/dotbot-brew vendor/plugins/dotbot-mise; do
     _path="${REPO_ROOT}/${_sub}"
     if [ ! -d "${_path}" ]; then
         log_warn "${_sub}: not initialized; skipping"
@@ -103,30 +135,35 @@ for _sub in dotbot plugins/dotbot-brew plugins/dotbot-mise; do
 done
 
 # ---------------------------------------------------------------------------
-# Phase 2 — brew bundle cleanup
+# Phase 2 — optional brew bundle cleanup report / apply
 # ---------------------------------------------------------------------------
 log_step "Phase 2: brew bundle cleanup"
 
-if command -v brew >/dev/null 2>&1; then
-    if [ "${_dry_run}" = 1 ]; then
-        brew bundle cleanup --file="${REPO_ROOT}/config/Brewfile" || true
-    else
-        brew bundle cleanup --force --file="${REPO_ROOT}/config/Brewfile" || true
-    fi
-else
+if [ "${_do_cleanup}" != 1 ]; then
+    log_info "safe mode: skipping brew cleanup (use --cleanup --dry-run to inspect; --cleanup --yes to apply)"
+elif ! command -v brew >/dev/null 2>&1; then
     log_warn "brew not found; skipping bundle cleanup"
+elif [ "${_dry_run}" = 1 ]; then
+    log_info "dry-run: reporting cleanup candidates only (nothing removed)"
+    brew bundle cleanup --file="${REPO_ROOT}/config/Brewfile" || true
+elif _upgrade_confirm_destructive "brew bundle cleanup --force may uninstall apps, casks, formulae, and taps not listed in config/Brewfile"; then
+    log_warn "Running destructive Homebrew cleanup (--force)"
+    brew bundle cleanup --force --file="${REPO_ROOT}/config/Brewfile" || true
+else
+    log_warn "brew cleanup skipped"
 fi
 
 # ---------------------------------------------------------------------------
-# Phase 3 — mise prune
+# Phase 3 — mise prune report / optional apply
 # ---------------------------------------------------------------------------
 log_step "Phase 3: mise prune"
 
 if command -v mise >/dev/null 2>&1; then
-    if [ "${_dry_run}" = 1 ]; then
-        log_info "dry-run: mise prune has no --dry-run; skipping"
-    else
+    if [ "${_do_prune}" = 1 ] && _upgrade_confirm_destructive "mise prune may remove unused tool installs"; then
+        log_warn "Running destructive mise prune"
         mise prune --yes || true
+    else
+        log_info "safe mode: skipping mise prune (use --prune --yes to apply)"
     fi
 else
     log_warn "mise not found; skipping prune"
@@ -144,7 +181,7 @@ else
 fi
 
 if [ "${_do_commit}" = 1 ] && [ -n "${_bumped}" ] && [ "${_dry_run}" = 0 ]; then
-    git -C "${REPO_ROOT}" add .gitmodules dotbot plugins/dotbot-brew plugins/dotbot-mise
+    git -C "${REPO_ROOT}" add .gitmodules vendor/dotbot vendor/plugins/dotbot-brew vendor/plugins/dotbot-mise
     _msg="$(printf 'chore(deps): upgrade %s\n\n%b' "${_bumped% }" "${_summary}")"
     git -C "${REPO_ROOT}" commit -m "${_msg}"
     log_ok "commit created"
@@ -152,4 +189,4 @@ elif [ "${_do_commit}" = 1 ] && [ -z "${_bumped}" ]; then
     log_info "--commit: no submodule advanced; no commit created"
 fi
 
-log_success "Upgrade complete" "${_bumped:-no submodules advanced}"
+log_success "Upgrade complete" "${_bumped:-no submodules advanced}" "cleanup=${_do_cleanup} prune=${_do_prune}"
