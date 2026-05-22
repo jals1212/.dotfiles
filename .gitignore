@@ -13,6 +13,5 @@ tmp/
 *.local.*
 
 # Removed by reorganize-repo-folders (gitignored to prevent re-add)
-/orchestra
 /installer/
 /.opencode/
