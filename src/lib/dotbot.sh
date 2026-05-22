@@ -66,6 +66,6 @@ dotbot_theme_apply() {
         return 1
     fi
 
-    log_step "Applying theme config: themes/${_dta_theme}-${_dta_flavor}.yaml"
-    "${REPO_ROOT}/src/install" "themes/${_dta_theme}-${_dta_flavor}.yaml"
+    log_step "Applying theme config: content/themes/${_dta_theme}-${_dta_flavor}.yaml"
+    "${REPO_ROOT}/src/install" "${_dta_config}"
 }
