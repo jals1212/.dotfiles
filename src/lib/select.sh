@@ -104,12 +104,12 @@ validate_flavor() {
 # ---------------------------------------------------------------------------
 # select_theme <repo_root> [current_theme]
 #   Presents a gum choose picker over available themes (derived from
-#   assets/themes/oh-my-posh/). Pre-focuses current_theme when provided.
+#   content/assets/palettes/oh-my-posh/). Pre-focuses current_theme when provided.
 # ---------------------------------------------------------------------------
 select_theme() {
     _st_root="${1}"
     _st_current="${2:-}"
-    _st_themes_dir="${_st_root}/assets/themes/oh-my-posh"
+    _st_themes_dir="${_st_root}/content/assets/palettes/oh-my-posh"
 
     if [ ! -d "${_st_themes_dir}" ]; then
         log_error "Themes directory missing: ${_st_themes_dir}"
@@ -137,13 +137,13 @@ select_theme() {
 # ---------------------------------------------------------------------------
 # select_flavor <repo_root> <theme> [current_flavor]
 #   Presents a gum choose picker over flavors for the given theme (derived
-#   from assets/themes/oh-my-posh/<theme>/*.json).
+#   from content/assets/palettes/oh-my-posh/<theme>/*.json).
 # ---------------------------------------------------------------------------
 select_flavor() {
     _sf_root="${1}"
     _sf_theme="${2:?select_flavor: theme required}"
     _sf_current="${3:-}"
-    _sf_dir="${_sf_root}/assets/themes/oh-my-posh/${_sf_theme}"
+    _sf_dir="${_sf_root}/content/assets/palettes/oh-my-posh/${_sf_theme}"
 
     if [ ! -d "${_sf_dir}" ]; then
         log_error "Theme directory missing: ${_sf_dir}"

@@ -108,13 +108,14 @@ if [ "${_dry_run}" = 1 ]; then
         printf 'would-remove: %s\n' "${_link}"
     done < "${_dead_tmpfile}"
 else
-    dotbot_check_submodules || exit 1
-    python3 "${REPO_ROOT}/vendor/dotbot/bin/dotbot" \
-        --plugin "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" \
-        --plugin "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" \
-        -d "${REPO_ROOT}" \
-        -c "${REPO_ROOT}/config/install.conf.yaml" \
-        --only clean
+    # Remove the broken symlinks ourselves (don't shell out to dotbot --only
+    # clean: dotbot's stock clean plugin raises on some macOS Tahoe edge
+    # cases when given `~` as a target. Our enumeration above already
+    # restricts to known managed directories.)
+    while IFS= read -r _link; do
+        [ -n "${_link}" ] || continue
+        rm -f "${_link}"
+    done < "${_dead_tmpfile}"
 fi
 
 # ---------------------------------------------------------------------------

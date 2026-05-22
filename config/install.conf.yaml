@@ -104,22 +104,8 @@
     stderr: true
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
-# dotbot --only clean removes symlinks whose target doesn't exist under these
-# directories. Invoked by ./dots clean.
-- clean:
-    - ~
-    - ~/.config/zsh
-    - ~/.config/nvim
-    - ~/.config/tmux
-    - ~/.config/ghostty
-    - ~/.config/atuin
-    - ~/.config/atuin/themes
-    - ~/.config/aerospace
-    - ~/.config/mise
-    - ~/.config/dots
-    - ~/.config/oh-my-posh
-    - ~/.config/bat/themes
-    - ~/.config/eza/themes
-    - ~/.config/fzf/themes
-    - ~/.config/lazygit
-    - ~/.config/bottom
+# Note: dead-symlink cleanup is owned by `./dots clean` (commands/clean.sh)
+# which enumerates broken symlinks via `find -maxdepth 1 -type l` across the
+# managed directories and `rm -f`s each. We do NOT use dotbot's stock
+# `clean:` directive here because its handle() raises an exception on
+# macOS Tahoe when iterating `$HOME` (some filesystem privacy boundary).
