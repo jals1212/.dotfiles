@@ -22,7 +22,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '                       atuin, mise (all resolve into the repo)\n'
     printf '  Theme symlinks     : oh-my-posh, bat, fzf, eza, lazygit, bottom,\n'
     printf '                       ghostty/themes/dots, atuin/themes/dots.toml,\n'
-    printf '                       dots/theme.sh, nvim/lua/dots-theme.lua\n'
+    printf '                       nvim/lua/dots-theme.lua\n'
     printf '  Theme agreement    : all theme symlinks resolve to the same\n'
     printf '                       <theme>/<flavor>\n'
     printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'

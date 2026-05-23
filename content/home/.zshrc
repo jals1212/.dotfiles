@@ -1,5 +1,4 @@
 # Dotfiles — ZSH
-# Theme: linked via ~/.config/dots/theme.sh (managed by ./dots theme)
 
 # ── Config dir ───────────────────────────────────────
 # Standard zsh files (.zshrc, .zshenv, .zprofile) live at $HOME. Repo
@@ -45,9 +44,6 @@ fi
 # ── Eza ──────────────────────────────────────────────
 # The active eza colors are written to ~/.config/eza/themes/dots.sh by `dots install`.
 [ -f ~/.config/eza/themes/dots.sh ] && source ~/.config/eza/themes/dots.sh
-
-# ── Theme (sourced from the active per-theme symlink) ───────────────────
-[ -r "$HOME/.config/dots/theme.sh" ] && . "$HOME/.config/dots/theme.sh"
 
 # BAT_THEME is constant; the actual palette comes from
 # ~/.config/bat/themes/dots.tmTheme (a per-theme dotbot symlink).

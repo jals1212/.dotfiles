@@ -26,7 +26,7 @@ Show active theme:
 ## What the switcher does
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
-2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 10 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
+2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 9 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
 3. Rewrites the tmux fenced block (`# >>> dots:theme >>>` … `# <<< dots:theme <<<`) in `home/.config/tmux/tmux.conf` so tmux-ukiyo's `@ukiyo-theme` matches the new pair.
 4. Runs `bat cache --build` (skipped when bat is absent).
 5. If a tmux server is running, runs `tmux source-file ~/.tmux.conf` so the new fenced block takes effect.
@@ -55,7 +55,6 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 | bottom | `~/.config/bottom/bottom.toml` | `assets/themes/bottom/<theme>/<flavor>.toml` |
 | ghostty | `~/.config/ghostty/themes/dots` | `assets/themes/ghostty/<theme>/<flavor>.conf` |
 | atuin | `~/.config/atuin/themes/dots.toml` | `assets/themes/atuin/<theme>/<flavor>.toml` (asset declares `name = "dots"`) |
-| zsh | `~/.config/dots/theme.sh` | `assets/themes/zsh/<theme>-<flavor>.sh` |
 | Neovim | `~/.config/nvim/lua/dots-theme.lua` | `assets/themes/nvim/<theme>-<flavor>.lua` |
 
 Atuin uses a static `[theme] name = "dots"` in `home/.config/atuin/config.toml`; only the `~/.config/atuin/themes/dots.toml` symlink retargets between themes.

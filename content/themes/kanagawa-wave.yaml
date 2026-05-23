@@ -14,5 +14,4 @@
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/wave.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/wave.conf
     ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/kanagawa/wave.toml
-    ~/.config/dots/theme.sh: content/assets/palettes/zsh/kanagawa-wave.sh
     ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/kanagawa-wave.lua
