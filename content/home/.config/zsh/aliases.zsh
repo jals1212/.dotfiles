@@ -1,5 +1,9 @@
 # Dotfiles — Aliases
 
+# Dotfiles
+alias dots='~/.dotfiles/dots'
+alias dotfiles='$EDITOR ~/.dotfiles'
+
 # Globals
 alias -g NE='2>/dev/null' # Redirect stderr to /dev/null
 alias -g NO='>/dev/null' # Redirect stdout to /dev/null
@@ -52,10 +56,6 @@ alias tx='tmux new-session -A -s main'
 alias txa='tmux attach -t'
 alias txl='tmux ls'
 alias txk='tmux kill-session -t'
-
-# Dotfiles
-alias dots='cd ~/.dotfiles && nvim'
-alias dotsync='~/.dotfiles/dots'
 
 # FZF previews
 alias fzfbat='fzf --preview="bat --theme=dots --color=always {}"'
