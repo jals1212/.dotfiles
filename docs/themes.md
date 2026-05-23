@@ -1,6 +1,6 @@
 # Themes
 
-Use `./dots theme <theme> <flavor>` to switch. Use `./dots sync` to re-apply the manifest theme.
+Use `./dots theme <theme> <flavor>` to switch. Use `./dots update` and press Enter at `Change theme?` to re-apply the manifest theme.
 
 ## Switch theme
 
@@ -65,10 +65,11 @@ tmux is the only app whose shape file (`tmux.conf`) gets a fenced rewrite — th
 ## Re-apply current theme
 
 ```sh
-./dots sync
+./dots update
+# Press Enter at: Change theme?
 ```
 
-`./dots sync` re-runs the dotbot base config and re-applies the manifest theme. No flag changes; if you need to change flag values use `./dots theme <theme> <flavor>` or `./dots update`.
+`./dots update` re-runs the dotbot base config and re-applies the manifest theme when you keep the default No answer at `Change theme?`. If you need to change theme values, answer Y to open the picker or use `./dots theme <theme> <flavor>`.
 
 ## Check theme health
 

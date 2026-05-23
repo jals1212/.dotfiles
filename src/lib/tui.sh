@@ -38,7 +38,6 @@ tui_subtitle_for() {
     case "${1:-}" in
         init) printf 'Init' ;;
         update) printf 'Update' ;;
-        sync) printf 'Sync' ;;
         backup) printf 'Backup' ;;
         doctor) printf 'Doctor' ;;
         restore) printf 'Restore' ;;
@@ -102,5 +101,5 @@ render_action_menu() {
     gum choose \
         --header "Choose an action" \
         ${_ram_sel_arg} \
-        update sync theme doctor clean upgrade uninstall help quit
+        update theme doctor clean upgrade uninstall help quit
 }

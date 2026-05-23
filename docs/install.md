@@ -62,8 +62,7 @@ Run `./dots` for the visual action menu. On first run (when `manifest.json` is a
 | Command | Use when you want to... |
 | --- | --- |
 | `./dots` | Open the visual action menu. |
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. |
-| `./dots sync` | Re-run the base config + reapply the manifest's theme. |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. |
 | `./dots theme <theme> <flavor>` | Switch theme (or `./dots theme` for interactive picker, `--current` to show active). |
 | `./dots doctor` | Non-mutating health check. |
 | `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks; prune `*.dotbot-backup.*` older than N days (default 30). |
@@ -71,6 +70,8 @@ Run `./dots` for the visual action menu. On first run (when `manifest.json` is a
 | `./dots uninstall [--yes]` | Remove every dotbot-managed symlink + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |
 
 In scripts or CI, use an explicit subcommand. The no-args menu requires a TTY.
+
+Interactive `./dots update` replaces the old re-sync flow: the `Change theme?` prompt defaults to No, so pressing Enter re-runs the base config and reapplies the manifest theme without opening pickers.
 
 ## Themes
 

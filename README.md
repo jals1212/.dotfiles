@@ -1,6 +1,6 @@
 # 󰚌 dots
 
-Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, sync, switch theme, doctor, clean, upgrade, uninstall.
+Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, switch theme, doctor, clean, upgrade, uninstall.
 
 Default theme: `kanagawa/dragon`.
 
@@ -30,8 +30,7 @@ Non-interactive:
 
 | Command | What it does |
 |---|---|
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With `--pull`, runs `git pull --ff-only` first. |
-| `./dots sync` | Re-runs the base config and reapplies the manifest theme. No flag changes. |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. |
 | `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the per-app theme files; rewrites the tmux fenced `@ukiyo-theme`; rebuilds the bat cache; reloads a running tmux server; writes the slim manifest. |
 | `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, slim manifest schema, submodule presence, stale dotbot-backup warning. |
 | `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
@@ -86,7 +85,7 @@ Run `./dots update` to install. Run `./dots upgrade` to prune removed versions.
 
 ## Documentation
 
-- [Install guide](docs/install.md) — install, update, sync, theme, doctor, clean, upgrade, uninstall.
+- [Install guide](docs/install.md) — install, update, theme, doctor, clean, upgrade, uninstall.
 - [Tools](docs/tools.md) — common usage for managed CLI tools.
 - [Aliases](docs/aliases.md) — shell aliases and functions.
 - [Plugins](docs/plugins.md) — zsh/tmux plugin usage.

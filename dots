@@ -34,7 +34,6 @@ _dots_help() {
     printf '  ./dots <subcommand> [flags]\n\n' >&2
     printf 'SUBCOMMANDS\n' >&2
     printf '  update      Run ./install (base dotbot) then apply active theme.\n' >&2
-    printf '  sync        Re-run base dotbot + reapply manifest theme.\n' >&2
     printf '  theme       Switch the active theme/flavor.\n' >&2
     printf '  doctor      Non-mutating health checks.\n' >&2
     printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n' >&2
@@ -59,7 +58,6 @@ _dots_run() {
     shift
     case "${_drun_cmd}" in
         update)    sh "${REPO_ROOT}/src/commands/update.sh"    "$@" ;;
-        sync)      sh "${REPO_ROOT}/src/commands/sync.sh"      "$@" ;;
         theme)     sh "${REPO_ROOT}/src/commands/theme.sh"     "$@" ;;
         doctor)    sh "${REPO_ROOT}/src/commands/doctor.sh"    "$@" ;;
         clean)     sh "${REPO_ROOT}/src/commands/clean.sh"     "$@" ;;

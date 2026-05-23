@@ -4,7 +4,7 @@ Usage notes for the shell and tmux plugins enabled by these dotfiles. For editor
 
 ## Zsh plugins
 
-These load automatically in new shells after `./dots update` or `./dots sync` has been applied. Restart the shell with `exec zsh` if you just changed settings.
+These load automatically in new shells after `./dots update` has been applied. Restart the shell with `exec zsh` if you just changed settings.
 
 ### Completions and picker UI
 
