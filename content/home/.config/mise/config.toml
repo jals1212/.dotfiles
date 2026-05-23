@@ -2,7 +2,7 @@
 # Run `./dots update` (or `./dots upgrade` to prune removed versions) after edits.
 
 [tools]
-node = "lts"
+node = ["latest", "lts"]
 python = "latest"
 go = "latest"
 ruby = "latest"
