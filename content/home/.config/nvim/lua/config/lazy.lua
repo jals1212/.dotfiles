@@ -46,13 +46,7 @@ require("lazy").setup({
   },
   install = {
     missing = not no_install,
-    colorscheme = (function()
-      local ok, dots = pcall(require, "dots-theme")
-      if ok and dots.colorscheme then
-        return { dots.colorscheme, "catppuccin", "kanagawa", "habamax" }
-      end
-      return { "catppuccin", "kanagawa", "habamax" }
-    end)(),
+    colorscheme = require("config.dots_theme").install_colorschemes(),
   },
   checker = { enabled = false, notify = false },
   change_detection = { notify = false },

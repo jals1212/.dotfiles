@@ -67,7 +67,7 @@ Run `./dots` for the visual action menu. On first run (when `manifest.json` is a
 | `./dots doctor` | Non-mutating health check. |
 | `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks; prune `*.dotbot-backup.*` older than N days (default 30). |
 | `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. |
-| `./dots uninstall [--yes]` | Remove every dotbot-managed symlink + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |
+| `./dots uninstall [--yes] [--dry-run]` | Remove declared Dotbot symlinks + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |
 
 In scripts or CI, use an explicit subcommand. The no-args menu requires a TTY.
 

@@ -1,1 +1,0 @@
-../../../../assets/palettes/nvim/kanagawa-dragon.lua

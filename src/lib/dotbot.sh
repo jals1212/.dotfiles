@@ -100,6 +100,83 @@ PY
 }
 
 # ---------------------------------------------------------------------------
+# dotbot_managed_links
+#   Print unique $HOME link destinations declared by the repository's Dotbot
+#   configs. Source of truth:
+#     - config/install.conf.yaml link: destinations
+#     - content/themes/*.yaml link: destinations
+#   Output is absolute, one path per line. This is intentionally destination-
+#   based so destructive commands can operate on an allowlist instead of
+#   recursively scanning $HOME.
+# ---------------------------------------------------------------------------
+dotbot_managed_links() {
+    _dml_root="${REPO_ROOT:?REPO_ROOT required}"
+    _dml_home="${HOME:?HOME required}"
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        log_error "python3 not found; cannot derive Dotbot-managed links"
+        return 1
+    fi
+
+    python3 - "${_dml_root}" "${_dml_home}" <<'PY'
+import glob
+import os
+import re
+import sys
+
+repo_root = sys.argv[1]
+home = sys.argv[2]
+
+configs = [os.path.join(repo_root, "config", "install.conf.yaml")]
+configs.extend(sorted(glob.glob(os.path.join(repo_root, "content", "themes", "*.yaml"))))
+
+links = set()
+
+
+def expand_home(path):
+    path = path.strip().strip("'\"")
+    if not path or path.startswith("#"):
+        return None
+    if path == "~":
+        return home
+    if path.startswith("~/"):
+        return os.path.join(home, path[2:])
+    return None
+
+
+top_directive = re.compile(r"^-\s+([A-Za-z0-9_-]+):")
+link_key = re.compile(r"^    ([^:#][^:]*):(?:\s.*)?$")
+
+for config in configs:
+    if not os.path.isfile(config):
+        continue
+
+    mode = None
+    with open(config, encoding="utf-8") as fh:
+        for raw in fh:
+            line = raw.rstrip("\n")
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+
+            m = top_directive.match(line)
+            if m:
+                mode = m.group(1)
+                continue
+
+            if mode == "link":
+                m = link_key.match(line)
+                if m:
+                    expanded = expand_home(m.group(1))
+                    if expanded:
+                        links.add(os.path.normpath(expanded))
+
+for link in sorted(links):
+    print(link)
+PY
+}
+
+# ---------------------------------------------------------------------------
 # dotbot_check_submodules
 #   Ensure dotbot and plugin submodules are initialized (auto-bootstraps the
 #   chicken-and-egg prereqs on a fresh machine via lib/bootstrap.sh), then

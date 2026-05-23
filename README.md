@@ -35,7 +35,7 @@ Non-interactive:
 | `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, slim manifest schema, submodule presence, stale dotbot-backup warning. |
 | `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
 | `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. Optionally commits gitlink advances. |
-| `./dots uninstall [--yes]` | Removes every symlink in `$HOME` whose target resolves into the repo. Removes `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
+| `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
 | `./dots` (no args) | TTY: action menu. Non-TTY + manifest absent: auto-runs `update`. Non-TTY + manifest present: errors. |
 
 ## Themes

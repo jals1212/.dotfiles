@@ -26,7 +26,7 @@ Show active theme:
 ## What the switcher does
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
-2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 9 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
+2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 8 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
 3. Rewrites the tmux fenced block (`# >>> dots:theme >>>` … `# <<< dots:theme <<<`) in `home/.config/tmux/tmux.conf` so tmux-ukiyo's `@ukiyo-theme` matches the new pair.
 4. Runs `bat cache --build` (skipped when bat is absent).
 5. If a tmux server is running, runs `tmux source-file ~/.tmux.conf` so the new fenced block takes effect.
@@ -55,9 +55,11 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 | bottom | `~/.config/bottom/bottom.toml` | `assets/themes/bottom/<theme>/<flavor>.toml` |
 | ghostty | `~/.config/ghostty/themes/dots` | `assets/themes/ghostty/<theme>/<flavor>.conf` |
 | atuin | `~/.config/atuin/themes/dots.toml` | `assets/themes/atuin/<theme>/<flavor>.toml` (asset declares `name = "dots"`) |
-| Neovim | `~/.config/nvim/lua/dots-theme.lua` | `assets/themes/nvim/<theme>-<flavor>.lua` |
+| Neovim | Reads `manifest.json` | `content/assets/palettes/nvim/<theme>-<flavor>.lua` |
 
 Atuin uses a static `[theme] name = "dots"` in `home/.config/atuin/config.toml`; only the `~/.config/atuin/themes/dots.toml` symlink retargets between themes.
+
+Neovim reads the active theme from `manifest.json`; there is no mutable `~/.config/nvim/lua/dots-theme.lua` symlink.
 
 tmux is the only app whose shape file (`tmux.conf`) gets a fenced rewrite — the `tmux-ukiyo` plugin reads `@ukiyo-theme` directly and there is no separate-file include path that fits it cleanly.
 
@@ -76,4 +78,4 @@ tmux is the only app whose shape file (`tmux.conf`) gets a fenced rewrite — th
 ./dots doctor
 ```
 
-Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, the atuin static `name = "dots"` is intact, and the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them.
+Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the atuin static `name = "dots"` is intact, and the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them.

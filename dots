@@ -38,7 +38,7 @@ _dots_help() {
     printf '  doctor      Non-mutating health checks.\n' >&2
     printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n' >&2
     printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n' >&2
-    printf '  uninstall   Remove every dotbot-managed symlink and manifest.\n' >&2
+    printf '  uninstall   Remove declared dotbot-managed symlinks and manifest.\n' >&2
     printf '  help        Show this message.\n\n' >&2
     printf 'FLAGS (per subcommand)\n' >&2
     printf '  --help / -h   Show subcommand usage.\n\n' >&2

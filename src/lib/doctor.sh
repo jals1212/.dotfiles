@@ -168,7 +168,15 @@ check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "${HOME}
 check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "${HOME}/.config/bottom/bottom.toml"; }
 check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "${HOME}/.config/ghostty/themes/dots"; }
 check_atuin_theme_link()   { check_symlink_into_repo "atuin theme"      "${HOME}/.config/atuin/themes/dots.toml"; }
-check_nvim_theme_link()    { check_symlink_into_repo "nvim dots-theme"  "${HOME}/.config/nvim/lua/dots-theme.lua"; }
+check_nvim_theme_helper() {
+    _cnth_path="${HOME}/.config/nvim/lua/config/dots_theme.lua"
+    if [ -r "${_cnth_path}" ]; then
+        _doc_pass "nvim manifest theme helper"
+        return 0
+    fi
+    _doc_fail "nvim manifest theme helper" "unreadable: ${_cnth_path}"
+    return 1
+}
 
 # ---------------------------------------------------------------------------
 # Theme symlinks agreement
@@ -320,5 +328,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_nvim_link check_tmux_link check_ghostty_link check_atuin_link check_mise_link check_ompo_theme_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_atuin_theme_link check_nvim_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_theme_export check_atuin_static_name check_tmux_fence check_manifest_exists check_manifest_slim_schema check_manifest_oh_my_posh_json check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_nvim_link check_tmux_link check_ghostty_link check_atuin_link check_mise_link check_ompo_theme_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_atuin_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_theme_export check_atuin_static_name check_tmux_fence check_manifest_exists check_manifest_slim_schema check_manifest_oh_my_posh_json check_stale_backups"
 export DOCTOR_CHECKS

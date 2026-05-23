@@ -14,4 +14,3 @@
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/lotus.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/lotus.conf
     ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/kanagawa/lotus.toml
-    ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/kanagawa-lotus.lua

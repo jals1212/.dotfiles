@@ -14,4 +14,3 @@
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/frappe.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/frappe.conf
     ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/frappe.toml
-    ~/.config/nvim/lua/dots-theme.lua: content/assets/palettes/nvim/catppuccin-frappe.lua

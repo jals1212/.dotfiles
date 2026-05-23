@@ -1,16 +1,6 @@
--- colorschemes.lua — load active theme via ~/.config/nvim/lua/dots-theme.lua
--- (linked by the per-theme dotbot config; see themes/<theme>-<flavor>.yaml).
+-- colorschemes.lua — load active theme from the repo-local manifest.json.
 
-local ok, dots = pcall(require, "dots-theme")
-if not ok then
-  -- Fallback for first-run or broken link: pick a sane default.
-  dots = {
-    theme = "kanagawa",
-    flavor = "dragon",
-    plugin = "rebelot/kanagawa.nvim",
-    colorscheme = "kanagawa-dragon",
-  }
-end
+local dots = require("config.dots_theme").current()
 
 return {
   {
@@ -24,7 +14,8 @@ return {
       return { flavour = dots.flavor, flavor = dots.flavor }
     end,
     config = function(_, opts)
-      local plugin_name = dots.plugin:match("([^/]+)$"):gsub("%.nvim$", "")
+      local plugin_name = dots.plugin == "catppuccin/nvim" and "catppuccin"
+        or dots.plugin:match("([^/]+)$"):gsub("%.nvim$", "")
       local mod_ok, mod = pcall(require, plugin_name)
       if mod_ok and mod.setup then
         mod.setup(opts)
