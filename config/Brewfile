@@ -45,8 +45,7 @@ tap "nikitabobko/tap" if OS.mac?
 cask "nikitabobko/tap/aerospace" if OS.mac?
 
 # ── GUI Apps (optional — uncomment as needed) ────────
-# cask "brave-browser"
-# cask "visual-studio-code"
-# cask "orbstack"
-# cask "figma"
-# cask "monitorcontrol"
+cask "brave-browser"
+cask "orbstack"
+cask "visual-studio-code"
+cask "windows-app"
