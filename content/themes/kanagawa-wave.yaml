@@ -1,0 +1,16 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/kanagawa/wave.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/kanagawa/Kanagawa-wave.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/kanagawa/wave.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/kanagawa/wave.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/kanagawa/wave.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/wave.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/wave.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/kanagawa/wave.toml

@@ -1,0 +1,16 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/mocha.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-mocha.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/mocha.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/mocha.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/mocha.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/mocha.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/mocha.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/mocha.toml

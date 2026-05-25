@@ -2,6 +2,10 @@
 .fseventsd
 .Spotlight-V100
 *.lock.*
-
-~/.local/share/zinit/*
-ssh/*
+backups/
+manifest.json
+tmp/
+*.log
+.backups/
+*.bak
+*.local.*

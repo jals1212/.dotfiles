@@ -1,0 +1,5 @@
+themes:
+  kanagawa:
+    flavors: [dragon, lotus, wave]
+  catppuccin:
+    flavors: [frappe, latte, macchiato, mocha]

@@ -1,0 +1,120 @@
+# ── Defaults ──────────────────────────────────────────────────────────────────
+# force + backup: first run on an existing tar-copy install displaces regular
+# files to <target>.dotbot-backup.<timestamp> before symlinking.
+# relink: idempotent re-runs replace stale/wrong symlinks without error.
+# create: parent directories are created on demand.
+# canonicalize: false so that dotbot resolves relative to BASEDIR, not realpath.
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      backup: true
+      canonicalize: false
+
+# ── Pre-flight ─────────────────────────────────────────────────────────────────
+# Install Homebrew when missing.  Interactive (no NONINTERACTIVE=1) per §1.7.
+# The shell directive is a no-op when brew is already on PATH.
+- shell:
+  - description: Install Homebrew if missing
+    command: |
+      if ! command -v brew >/dev/null 2>&1; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      fi
+    quiet: true
+    stderr: true
+    stdout: true
+
+# ── Brew ───────────────────────────────────────────────────────────────────────
+# dotbot-brew plugin: runs `brew bundle --file=config/Brewfile`.
+# Path is resolved relative to BASEDIR (set by ./install via -d).
+- brewfile:
+  - config/Brewfile
+
+# ── Parent directories ─────────────────────────────────────────────────────────
+# Ensure every ~/.config/<app>/ directory exists before the link block runs.
+- create:
+  - ~/.config/zsh
+  - ~/.config/zsh/plugins/oh-my-posh
+  - ~/.config/zsh/plugins/zoxide
+  - ~/.config/zsh/plugins/mise
+  - ~/.config/zsh/plugins/atuin
+  - ~/.config/nvim
+  - ~/.config/tmux
+  - ~/.config/ghostty
+  - ~/.config/atuin
+  - ~/.config/atuin/themes
+  - ~/.config/aerospace
+  - ~/.config/mise
+  - ~/.config/oh-my-posh
+  - ~/.config/bat/themes
+  - ~/.config/eza/themes
+  - ~/.config/fzf/themes
+  - ~/.config/lazygit
+  - ~/.config/bottom
+
+# ── Symlinks ───────────────────────────────────────────────────────────────────
+# Every non-theme file under home/ mapped to its $HOME counterpart.
+# Entries inherit the defaults block above unless overridden per-entry.
+# OS-conditional entries use if: (shell predicate; zero exit = proceed).
+- link:
+    # Shell entry points
+    ~/.zshrc: content/home/.zshrc
+    ~/.zprofile: content/home/.zprofile
+    ~/.zshenv: content/home/.zshenv
+
+    # Zsh config fragments
+    ~/.config/zsh/aliases.zsh: content/home/.config/zsh/aliases.zsh
+    ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
+    ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
+    ~/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh: content/home/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh
+    ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
+    ~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh
+    ~/.config/zsh/plugins/atuin/atuin.plugin.zsh: content/home/.config/zsh/plugins/atuin/atuin.plugin.zsh
+
+    # Neovim — single files + lua directory link
+    ~/.config/nvim/init.lua: content/home/.config/nvim/init.lua
+    ~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json
+    ~/.config/nvim/lua: content/home/.config/nvim/lua
+
+    # Tmux
+    ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
+
+    # Ghostty — config file + shaders directory link
+    ~/.config/ghostty/config: content/home/.config/ghostty/config
+    ~/.config/ghostty/shaders: content/home/.config/ghostty/shaders
+
+    # Atuin
+    ~/.config/atuin/config.toml: content/home/.config/atuin/config.toml
+
+    # Mise — linked before the mise: directive so mise install reads the XDG path
+    ~/.config/mise/config.toml: content/home/.config/mise/config.toml
+
+    # Aerospace — macOS only (if: predicate prevents link on Linux)
+    ~/.config/aerospace/aerospace.toml:
+      path: content/home/.config/aerospace/aerospace.toml
+      if: '[ "$(uname)" = Darwin ]'
+
+# ── Mise ───────────────────────────────────────────────────────────────────────
+# dotbot-mise plugin: runs `mise install`.
+# The plugin ignores YAML data; empty list satisfies the key.
+# Ordering: brewfile: has already installed mise; link: has already established
+# ~/.config/mise/config.toml so mise install finds its XDG-default config.
+- mise: []
+
+# ── Post-link ──────────────────────────────────────────────────────────────────
+# Build bat's binary cache after all symlinks are in place.
+# Guarded: no-op when bat is absent (|| true prevents dotbot aborting the run).
+- shell:
+  - description: Build bat cache (no-op when bat is absent)
+    command: command -v bat >/dev/null 2>&1 && bat cache --build >/dev/null 2>&1 || true
+    quiet: true
+    stdout: true
+    stderr: true
+
+# ── Cleanup ────────────────────────────────────────────────────────────────────
+# Note: dead-symlink cleanup is owned by `./dots clean` (commands/clean.sh)
+# which enumerates broken symlinks via `find -maxdepth 1 -type l` across the
+# managed directories and `rm -f`s each. We do NOT use dotbot's stock
+# `clean:` directive here because its handle() raises an exception on
+# macOS Tahoe when iterating `$HOME` (some filesystem privacy boundary).

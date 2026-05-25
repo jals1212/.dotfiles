@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>name</key><string>Kanagawa Wave</string>
+    <key>semanticClass</key><string>theme.dark.kanagawa-wave</string>
+    <key>author</key><string>dots</string>
+    <key>colorSpaceName</key><string>sRGB</string>
+    <key>settings</key>
+    <array>
+      <dict><key>settings</key><dict>
+        <key>background</key><string>#1f1f28</string>
+        <key>foreground</key><string>#dcd7ba</string>
+        <key>caret</key><string>#c8c093</string>
+        <key>lineHighlight</key><string>#363646</string>
+        <key>selection</key><string>#2d4f6780</string>
+      </dict></dict>
+      <dict><key>name</key><string>Comments</string><key>scope</key><string>comment</string><key>settings</key><dict><key>foreground</key><string>#727169</string><key>fontStyle</key><string>italic</string></dict></dict>
+      <dict><key>name</key><string>Strings</string><key>scope</key><string>string</string><key>settings</key><dict><key>foreground</key><string>#98bb6c</string></dict></dict>
+      <dict><key>name</key><string>Keywords</string><key>scope</key><string>keyword, storage</string><key>settings</key><dict><key>foreground</key><string>#957fb8</string><key>fontStyle</key><string>italic</string></dict></dict>
+      <dict><key>name</key><string>Functions</string><key>scope</key><string>entity.name.function, support.function</string><key>settings</key><dict><key>foreground</key><string>#7e9cd8</string></dict></dict>
+      <dict><key>name</key><string>Types</string><key>scope</key><string>entity.name.type, support.type</string><key>settings</key><dict><key>foreground</key><string>#e6c384</string></dict></dict>
+      <dict><key>name</key><string>Constants</string><key>scope</key><string>constant, variable.other.constant</string><key>settings</key><dict><key>foreground</key><string>#ffa066</string></dict></dict>
+      <dict><key>name</key><string>Invalid</string><key>scope</key><string>invalid</string><key>settings</key><dict><key>foreground</key><string>#e82424</string></dict></dict>
+    </array>
+  </dict>
+</plist>

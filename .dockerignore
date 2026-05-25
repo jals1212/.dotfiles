@@ -1,0 +1,11 @@
+.git
+.orchestra
+.opencode
+.grit
+backups
+manifest.json
+dots
+orchestra
+.DS_Store
+*.lock.*
+openspec
