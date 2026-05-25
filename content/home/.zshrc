@@ -6,6 +6,18 @@
 # explicitly from this file.
 _zsh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
+# ── Environment ──────────────────────────────────────
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export MISE_DATA_DIR="${XDG_DATA_HOME}/mise"
+export MISE_CACHE_DIR="${XDG_CACHE_HOME}/mise"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PAGER="bat --paging=always"
+
+# ── PATH ─────────────────────────────────────────────
+[[ -f "$_zsh_config_dir/paths.zsh" ]] && source "$_zsh_config_dir/paths.zsh"
+
 # ── Zinit ────────────────────────────────────────────
 if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
@@ -97,5 +109,3 @@ function start_if_needed() {
     fi
 }
 start_if_needed
-
-. "$HOME/.local/share/../bin/env"

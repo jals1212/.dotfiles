@@ -111,6 +111,7 @@ path_home_file() {
 path_home_zshrc() { path_home_file ".zshrc"; }
 path_home_zprofile() { path_home_file ".zprofile"; }
 path_home_zshenv() { path_home_file ".zshenv"; }
+path_home_zsh_paths() { path_home_file ".config/zsh/paths.zsh"; }
 path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }

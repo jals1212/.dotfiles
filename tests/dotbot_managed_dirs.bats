@@ -33,9 +33,10 @@ teardown() {
     [[ "${output}" != *"content/assets"* ]]
 }
 
-@test "base dotbot config declares zsh plugin symlinks" {
+@test "base dotbot config declares zsh fragment and plugin symlinks" {
     config="${REPO_ROOT_REAL}/config/install.conf.yaml"
 
+    grep -Fq "~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh: content/home/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh" "${config}"

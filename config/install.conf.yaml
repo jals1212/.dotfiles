@@ -67,6 +67,7 @@
     ~/.config/zsh/aliases.zsh: content/home/.config/zsh/aliases.zsh
     ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
     ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
+    ~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh
     ~/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh: content/home/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh
     ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
     ~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh

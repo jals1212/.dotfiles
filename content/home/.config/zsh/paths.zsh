@@ -1,0 +1,34 @@
+# Dotfiles — ZSH PATH
+# All executable search path setup for zsh lives here.
+
+typeset -U path PATH
+
+function _dots_brew_shellenv() {
+  local brew_bin
+
+  if [[ "$(uname)" == "Darwin" ]]; then
+    for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      if [[ -x "$brew_bin" ]]; then
+        eval "$("$brew_bin" shellenv)"
+        return
+      fi
+    done
+  elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  fi
+}
+
+_dots_brew_shellenv
+unfunction _dots_brew_shellenv 2>/dev/null || true
+
+path=(
+  "$HOME/.local/bin"
+  $path
+)
+
+if [[ -r "$HOME/.local/bin/env" ]]; then
+  source "$HOME/.local/bin/env"
+fi
+
+typeset -U path PATH
+export PATH
