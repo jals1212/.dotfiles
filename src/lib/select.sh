@@ -10,10 +10,17 @@
 # shellcheck source=src/lib/detect.sh
 # shellcheck source=src/lib/header.sh
 
-if ! command -v _header_color_code >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
+if ! command -v path_manifest >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/src/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+    fi
+fi
+
+if ! command -v _header_color_code >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib header.sh)" ]; then
+        # shellcheck disable=SC1091
+        . "$(path_src_lib header.sh)"
     fi
 fi
 
@@ -44,7 +51,7 @@ _styled_header() {
 # ---------------------------------------------------------------------------
 read_current_selection() {
     _rcs_repo="${1:?read_current_selection: repo_root required}"
-    _rcs_manifest="${_rcs_repo}/manifest.json"
+    _rcs_manifest="$(path_manifest "${_rcs_repo}")"
 
     if [ -f "${_rcs_manifest}" ] && jq empty "${_rcs_manifest}" 2>/dev/null; then
         _rcs_theme="$(jq -r '.theme // empty' "${_rcs_manifest}")"
@@ -109,7 +116,7 @@ validate_flavor() {
 select_theme() {
     _st_root="${1}"
     _st_current="${2:-}"
-    _st_themes_dir="${_st_root}/content/assets/palettes/oh-my-posh"
+    _st_themes_dir="$(path_oh_my_posh_palettes "${_st_root}")"
 
     if [ ! -d "${_st_themes_dir}" ]; then
         log_error "Themes directory missing: ${_st_themes_dir}"
@@ -143,7 +150,7 @@ select_flavor() {
     _sf_root="${1}"
     _sf_theme="${2:?select_flavor: theme required}"
     _sf_current="${3:-}"
-    _sf_dir="${_sf_root}/content/assets/palettes/oh-my-posh/${_sf_theme}"
+    _sf_dir="$(path_oh_my_posh_theme_dir "${_sf_root}" "${_sf_theme}")"
 
     if [ ! -d "${_sf_dir}" ]; then
         log_error "Theme directory missing: ${_sf_dir}"

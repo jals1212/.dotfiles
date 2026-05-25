@@ -47,14 +47,16 @@ done
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 export REPO_ROOT
 
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 # shellcheck source=src/lib/header.sh
-. "${REPO_ROOT}/src/lib/header.sh"
+. "$(path_src_lib header.sh)"
 # shellcheck source=src/lib/dotbot.sh
-. "${REPO_ROOT}/src/lib/dotbot.sh"
+. "$(path_src_lib dotbot.sh)"
 
 render_subcommand_banner "Uninstall"
 
@@ -94,8 +96,8 @@ else
 fi
 
 if [ "${_dry_run}" = 1 ]; then
-    if [ -f "${REPO_ROOT}/manifest.json" ]; then
-        printf 'would-remove: %s\n' "${REPO_ROOT}/manifest.json" >&2
+    if [ -f "$(path_manifest)" ]; then
+        printf 'would-remove: %s\n' "$(path_manifest)" >&2
     fi
     log_success "Uninstall (dry-run)" "would remove ${_remove_count} symlink(s)"
     exit 0
@@ -149,7 +151,7 @@ log_ok "removed ${_removed} symlink(s)"
 # ---------------------------------------------------------------------------
 # Remove manifest
 # ---------------------------------------------------------------------------
-_manifest="${REPO_ROOT}/manifest.json"
+_manifest="$(path_manifest)"
 if [ -f "${_manifest}" ]; then
     rm -f "${_manifest}"
     log_ok "removed manifest.json"

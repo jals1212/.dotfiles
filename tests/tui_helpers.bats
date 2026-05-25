@@ -11,6 +11,8 @@ setup() {
     mkdir -p "${MOCKBIN}"
     export PATH="${MOCKBIN}:${PATH}"
 
+    # shellcheck source=../src/lib/paths.sh
+    . "${REPO_ROOT_REAL}/src/lib/paths.sh"
     # shellcheck source=../src/lib/header.sh
     . "${REPO_ROOT_REAL}/src/lib/header.sh"
     render_header() {

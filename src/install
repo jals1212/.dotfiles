@@ -18,7 +18,10 @@ while [ -L "$SELF" ]; do
 done
 REPO_ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
 
-CONFIG="${1:-${REPO_ROOT}/config/install.conf.yaml}"
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
+
+CONFIG="${1:-$(path_install_config)}"
 
 # Ensure brew install locations are on PATH so dotbot-brew finds `brew`
 # after the shell directive installs it (Python subprocesses inherit PATH
@@ -36,14 +39,14 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ]; then
+if [ ! -x "$(path_dotbot_bin)" ]; then
   printf 'error: dotbot submodule not initialized.\n' >&2
   printf '  Run: git submodule update --init --recursive\n' >&2
   exit 1
 fi
 
-if [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] || \
-   [ ! -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
+if [ ! -f "$(path_dotbot_brew_plugin)" ] || \
+   [ ! -f "$(path_dotbot_mise_plugin)" ]; then
   printf 'error: plugin submodules not initialized.\n' >&2
   printf '  Run: git submodule update --init --recursive\n' >&2
   exit 1
@@ -51,8 +54,8 @@ fi
 
 # ── Invoke dotbot ──────────────────────────────────────────────────────────
 
-python3 "${REPO_ROOT}/vendor/dotbot/bin/dotbot" \
-  --plugin "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" \
-  --plugin "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" \
+python3 "$(path_dotbot_bin)" \
+  --plugin "$(path_dotbot_brew_plugin)" \
+  --plugin "$(path_dotbot_mise_plugin)" \
   -d "${REPO_ROOT}" \
   -c "${CONFIG}"

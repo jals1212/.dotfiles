@@ -55,14 +55,16 @@ esac
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 # shellcheck source=src/lib/header.sh
-. "${REPO_ROOT}/src/lib/header.sh"
+. "$(path_src_lib header.sh)"
 # shellcheck source=src/lib/dotbot.sh
-. "${REPO_ROOT}/src/lib/dotbot.sh"
+. "$(path_src_lib dotbot.sh)"
 
 render_subcommand_banner "Clean"
 

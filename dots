@@ -15,14 +15,16 @@ export REPO_ROOT
 # ---------------------------------------------------------------------------
 # Source shared libraries.
 # ---------------------------------------------------------------------------
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/detect.sh
-. "${REPO_ROOT}/src/lib/detect.sh"
+. "$(path_src_lib detect.sh)"
 # shellcheck source=src/lib/header.sh
-. "${REPO_ROOT}/src/lib/header.sh"
+. "$(path_src_lib header.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 
 # ---------------------------------------------------------------------------
 # _dots_help
@@ -57,12 +59,12 @@ _dots_run() {
     _drun_cmd="${1}"
     shift
     case "${_drun_cmd}" in
-        update)    sh "${REPO_ROOT}/src/commands/update.sh"    "$@" ;;
-        theme)     sh "${REPO_ROOT}/src/commands/theme.sh"     "$@" ;;
-        doctor)    sh "${REPO_ROOT}/src/commands/doctor.sh"    "$@" ;;
-        clean)     sh "${REPO_ROOT}/src/commands/clean.sh"     "$@" ;;
-        upgrade)   sh "${REPO_ROOT}/src/commands/upgrade.sh"   "$@" ;;
-        uninstall) sh "${REPO_ROOT}/src/commands/uninstall.sh" "$@" ;;
+        update)    sh "$(path_command update)"    "$@" ;;
+        theme)     sh "$(path_command theme)"     "$@" ;;
+        doctor)    sh "$(path_command doctor)"    "$@" ;;
+        clean)     sh "$(path_command clean)"     "$@" ;;
+        upgrade)   sh "$(path_command upgrade)"   "$@" ;;
+        uninstall) sh "$(path_command uninstall)" "$@" ;;
         help|-h|--help) _dots_help ;;
         quit) return 0 ;;
         *)
@@ -88,8 +90,8 @@ _dots_pause() {
 # Dispatcher
 # ---------------------------------------------------------------------------
 if [ "$#" -eq 0 ]; then
-    if [ ! -f "${REPO_ROOT}/manifest.json" ]; then
-        sh "${REPO_ROOT}/src/commands/update.sh"
+    if [ ! -f "$(path_manifest)" ]; then
+        sh "$(path_command update)"
         exit $?
     fi
     if [ -t 0 ] && [ -t 1 ]; then

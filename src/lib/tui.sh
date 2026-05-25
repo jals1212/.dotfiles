@@ -6,15 +6,22 @@
 # shellcheck source=src/lib/log.sh
 # shellcheck source=src/lib/header.sh
 
-if ! command -v render_header >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
+if ! command -v path_manifest >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/src/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+    fi
+fi
+
+if ! command -v render_header >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib header.sh)" ]; then
+        # shellcheck disable=SC1091
+        . "$(path_src_lib header.sh)"
     fi
 fi
 
 _tui_manifest_path() {
-    printf '%s/manifest.json' "${REPO_ROOT:?REPO_ROOT required}"
+    path_manifest
 }
 
 _tui_active_theme() {

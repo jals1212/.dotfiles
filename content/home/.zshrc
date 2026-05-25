@@ -97,3 +97,5 @@ function start_if_needed() {
     fi
 }
 start_if_needed
+
+. "$HOME/.local/share/../bin/env"

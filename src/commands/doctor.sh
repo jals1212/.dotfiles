@@ -50,12 +50,14 @@ export REPO_ROOT
 # ---------------------------------------------------------------------------
 # Source base libs
 # ---------------------------------------------------------------------------
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/detect.sh
-. "${REPO_ROOT}/src/lib/detect.sh"
+. "$(path_src_lib detect.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 
 tui_start_timer
 render_subcommand_banner "$(tui_subtitle_for doctor)"
@@ -63,7 +65,7 @@ render_subcommand_banner "$(tui_subtitle_for doctor)"
 # ---------------------------------------------------------------------------
 # Source lib/doctor.sh (defines check_* functions and DOCTOR_CHECKS registry)
 # ---------------------------------------------------------------------------
-_doctor_lib="${REPO_ROOT}/src/lib/doctor.sh"
+_doctor_lib="$(path_src_lib doctor.sh)"
 if [ ! -f "${_doctor_lib}" ]; then
     log_error "lib/doctor.sh missing"
     exit 1

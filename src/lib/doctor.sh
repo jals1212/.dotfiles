@@ -3,6 +3,13 @@
 # POSIX sh. Source this file; do not execute directly.
 # Caller MUST have sourced lib/log.sh and exported REPO_ROOT.
 
+if ! command -v path_manifest >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/paths.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -18,9 +25,9 @@ _doc_skip() { _log_line 250 '[SKIP]' "${1}: ${2}"; }
 
 _doc_managed_dirs() {
     if ! command -v dotbot_managed_dirs >/dev/null 2>&1; then
-        if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/dotbot.sh" ]; then
+        if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib dotbot.sh)" ]; then
             # shellcheck disable=SC1091
-            . "${REPO_ROOT}/src/lib/dotbot.sh"
+            . "$(path_src_lib dotbot.sh)"
         fi
     fi
 
@@ -121,7 +128,7 @@ check_python3() { check_command "python3" python3; }
 # Submodule presence
 # ---------------------------------------------------------------------------
 check_dotbot_submodule() {
-    if [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ]; then
+    if [ -x "$(path_dotbot_bin)" ]; then
         _doc_pass "dotbot submodule"
         return 0
     fi
@@ -129,7 +136,7 @@ check_dotbot_submodule() {
     return 1
 }
 check_dotbot_brew_plugin() {
-    if [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ]; then
+    if [ -f "$(path_dotbot_brew_plugin)" ]; then
         _doc_pass "dotbot-brew plugin"
         return 0
     fi
@@ -137,7 +144,7 @@ check_dotbot_brew_plugin() {
     return 1
 }
 check_dotbot_mise_plugin() {
-    if [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
+    if [ -f "$(path_dotbot_mise_plugin)" ]; then
         _doc_pass "dotbot-mise plugin"
         return 0
     fi
@@ -148,28 +155,28 @@ check_dotbot_mise_plugin() {
 # ---------------------------------------------------------------------------
 # Required deployed paths (symlinks into repo)
 # ---------------------------------------------------------------------------
-check_zshrc_link()    { check_symlink_into_repo ".zshrc symlink"    "${HOME}/.zshrc"; }
-check_zprofile_link() { check_symlink_into_repo ".zprofile symlink" "${HOME}/.zprofile"; }
-check_zshenv_link()   { check_symlink_into_repo ".zshenv symlink"   "${HOME}/.zshenv"; }
-check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "${HOME}/.config/nvim/init.lua"; }
-check_tmux_link()     { check_symlink_into_repo "tmux config"       "${HOME}/.config/tmux/tmux.conf"; }
-check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "${HOME}/.config/ghostty/config"; }
-check_atuin_link()    { check_symlink_into_repo "atuin config"      "${HOME}/.config/atuin/config.toml"; }
-check_mise_link()     { check_symlink_into_repo "mise config"       "${HOME}/.config/mise/config.toml"; }
+check_zshrc_link()    { check_symlink_into_repo ".zshrc symlink"    "$(path_home_zshrc)"; }
+check_zprofile_link() { check_symlink_into_repo ".zprofile symlink" "$(path_home_zprofile)"; }
+check_zshenv_link()   { check_symlink_into_repo ".zshenv symlink"   "$(path_home_zshenv)"; }
+check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
+check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
+check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "$(path_home_ghostty_config)"; }
+check_atuin_link()    { check_symlink_into_repo "atuin config"      "$(path_home_atuin_config)"; }
+check_mise_link()     { check_symlink_into_repo "mise config"       "$(path_home_mise_config)"; }
 
 # ---------------------------------------------------------------------------
 # Theme symlinks (managed by per-theme dotbot config)
 # ---------------------------------------------------------------------------
-check_ompo_theme_link()    { check_symlink_into_repo "oh-my-posh theme" "${HOME}/.config/oh-my-posh/config.json"; }
-check_bat_theme_link()     { check_symlink_into_repo "bat theme"        "${HOME}/.config/bat/themes/dots.tmTheme"; }
-check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "${HOME}/.config/fzf/themes/dots.sh"; }
-check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "${HOME}/.config/eza/themes/dots.sh"; }
-check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "${HOME}/.config/lazygit/config.yml"; }
-check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "${HOME}/.config/bottom/bottom.toml"; }
-check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "${HOME}/.config/ghostty/themes/dots"; }
-check_atuin_theme_link()   { check_symlink_into_repo "atuin theme"      "${HOME}/.config/atuin/themes/dots.toml"; }
+check_ompo_theme_link()    { check_symlink_into_repo "oh-my-posh theme" "$(path_home_oh_my_posh_theme)"; }
+check_bat_theme_link()     { check_symlink_into_repo "bat theme"        "$(path_home_bat_theme)"; }
+check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "$(path_home_fzf_theme)"; }
+check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "$(path_home_eza_theme)"; }
+check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "$(path_home_lazygit_theme)"; }
+check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "$(path_home_bottom_theme)"; }
+check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "$(path_home_ghostty_theme)"; }
+check_atuin_theme_link()   { check_symlink_into_repo "atuin theme"      "$(path_home_atuin_theme)"; }
 check_nvim_theme_helper() {
-    _cnth_path="${HOME}/.config/nvim/lua/config/dots_theme.lua"
+    _cnth_path="$(path_home_nvim_theme_helper)"
     if [ -r "${_cnth_path}" ]; then
         _doc_pass "nvim manifest theme helper"
         return 0
@@ -186,10 +193,10 @@ check_theme_symlinks_agree() {
     _ctsa_expected=""
     _ctsa_disagreed=""
     for _ctsa_link in \
-        "${HOME}/.config/oh-my-posh/config.json" \
-        "${HOME}/.config/atuin/themes/dots.toml" \
-        "${HOME}/.config/bottom/bottom.toml" \
-        "${HOME}/.config/lazygit/config.yml"
+        "$(path_home_oh_my_posh_theme)" \
+        "$(path_home_atuin_theme)" \
+        "$(path_home_bottom_theme)" \
+        "$(path_home_lazygit_theme)"
     do
         [ -L "${_ctsa_link}" ] || continue
         _ctsa_t="$(readlink -f "${_ctsa_link}" 2>/dev/null || true)"
@@ -217,16 +224,16 @@ check_theme_symlinks_agree() {
 # Content markers
 # ---------------------------------------------------------------------------
 check_tmux_prefix() {
-    check_contains "tmux prefix C-a" "${HOME}/.config/tmux/tmux.conf" 'set -g prefix C-a'
+    check_contains "tmux prefix C-a" "$(path_home_tmux_config)" 'set -g prefix C-a'
 }
 check_ghostty_theme_marker() {
-    check_contains "ghostty theme = dots" "${HOME}/.config/ghostty/config" 'theme = dots'
+    check_contains "ghostty theme = dots" "$(path_home_ghostty_config)" 'theme = dots'
 }
 check_bat_theme_export() {
-    check_contains 'BAT_THEME literal' "${HOME}/.zshrc" 'export BAT_THEME="dots"'
+    check_contains 'BAT_THEME literal' "$(path_home_zshrc)" 'export BAT_THEME="dots"'
 }
 check_atuin_static_name() {
-    check_contains 'atuin name = "dots"' "${HOME}/.config/atuin/config.toml" 'name = "dots"'
+    check_contains 'atuin name = "dots"' "$(path_home_atuin_config)" 'name = "dots"'
 }
 
 # ---------------------------------------------------------------------------
@@ -234,7 +241,7 @@ check_atuin_static_name() {
 # ---------------------------------------------------------------------------
 check_tmux_fence() {
     _ctf_label="tmux fenced theme block"
-    _ctf_conf="${HOME}/.config/tmux/tmux.conf"
+    _ctf_conf="$(path_home_tmux_config)"
     if [ ! -r "${_ctf_conf}" ]; then
         _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
         return 1
@@ -257,7 +264,7 @@ check_tmux_fence() {
 # Slim manifest validation
 # ---------------------------------------------------------------------------
 check_manifest_exists() {
-    if [ -f "${REPO_ROOT}/manifest.json" ]; then
+    if [ -f "$(path_manifest)" ]; then
         _doc_pass "manifest.json exists"
         return 0
     fi
@@ -266,7 +273,7 @@ check_manifest_exists() {
 }
 check_manifest_slim_schema() {
     _cms_label="manifest slim schema"
-    _cms_m="${REPO_ROOT}/manifest.json"
+    _cms_m="$(path_manifest)"
     [ -f "${_cms_m}" ] || { _doc_skip "${_cms_label}" "no manifest"; return 0; }
     if ! command -v jq >/dev/null 2>&1; then
         _doc_skip "${_cms_label}" "jq not installed"
@@ -303,7 +310,7 @@ check_manifest_slim_schema() {
     return 0
 }
 check_manifest_oh_my_posh_json() {
-    check_json_via_symlink "oh-my-posh JSON" "${HOME}/.config/oh-my-posh/config.json"
+    check_json_via_symlink "oh-my-posh JSON" "$(path_home_oh_my_posh_theme)"
 }
 
 # ---------------------------------------------------------------------------

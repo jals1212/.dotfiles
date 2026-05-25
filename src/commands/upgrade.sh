@@ -59,12 +59,14 @@ done
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export REPO_ROOT
 
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 # shellcheck source=src/lib/header.sh
-. "${REPO_ROOT}/src/lib/header.sh"
+. "$(path_src_lib header.sh)"
 
 render_subcommand_banner "Upgrade"
 
@@ -97,7 +99,11 @@ _summary=""
 _bumped=""
 
 for _sub in vendor/dotbot vendor/plugins/dotbot-brew vendor/plugins/dotbot-mise; do
-    _path="${REPO_ROOT}/${_sub}"
+    case "${_sub}" in
+        vendor/dotbot) _path="$(path_vendor_dotbot)" ;;
+        vendor/plugins/dotbot-brew) _path="$(path_vendor_dotbot_brew)" ;;
+        vendor/plugins/dotbot-mise) _path="$(path_vendor_dotbot_mise)" ;;
+    esac
     if [ ! -d "${_path}" ]; then
         log_warn "${_sub}: not initialized; skipping"
         continue
@@ -145,10 +151,10 @@ elif ! command -v brew >/dev/null 2>&1; then
     log_warn "brew not found; skipping bundle cleanup"
 elif [ "${_dry_run}" = 1 ]; then
     log_info "dry-run: reporting cleanup candidates only (nothing removed)"
-    brew bundle cleanup --file="${REPO_ROOT}/config/Brewfile" || true
+    brew bundle cleanup --file="$(path_brewfile)" || true
 elif _upgrade_confirm_destructive "brew bundle cleanup --force may uninstall apps, casks, formulae, and taps not listed in config/Brewfile"; then
     log_warn "Running destructive Homebrew cleanup (--force)"
-    brew bundle cleanup --force --file="${REPO_ROOT}/config/Brewfile" || true
+    brew bundle cleanup --force --file="$(path_brewfile)" || true
 else
     log_warn "brew cleanup skipped"
 fi

@@ -7,17 +7,24 @@
 # ---------------------------------------------------------------------------
 # Internal: ensure log helpers are available
 # ---------------------------------------------------------------------------
-if ! command -v log_error >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/log.sh" ]; then
+if ! command -v path_manifest >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/src/lib/log.sh"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+    fi
+fi
+
+if ! command -v log_error >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib log.sh)" ]; then
+        # shellcheck disable=SC1091
+        . "$(path_src_lib log.sh)"
     fi
 fi
 
 if ! command -v dotbot_theme_apply >/dev/null 2>&1; then
-    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/dotbot.sh" ]; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib dotbot.sh)" ]; then
         # shellcheck disable=SC1091
-        . "${REPO_ROOT}/src/lib/dotbot.sh"
+        . "$(path_src_lib dotbot.sh)"
     fi
 fi
 
@@ -27,17 +34,17 @@ fi
 
 # _th_index_path — print the absolute path to themes/index.yaml
 _th_index_path() {
-    printf '%s/content/themes/index.yaml' "${REPO_ROOT:?REPO_ROOT required}"
+    path_themes_index
 }
 
 # _th_tmux_conf_path — print the absolute path to the repo tmux.conf
 _th_tmux_conf_path() {
-    printf '%s/content/home/.config/tmux/tmux.conf' "${REPO_ROOT:?REPO_ROOT required}"
+    path_content_tmux_conf
 }
 
 # _th_manifest_path — print the absolute path to manifest.json
 _th_manifest_path() {
-    printf '%s/manifest.json' "${REPO_ROOT:?REPO_ROOT required}"
+    path_manifest
 }
 
 # _th_tmux_fence_count <file>
@@ -302,8 +309,8 @@ theme_apply() {
 
     # --- Step 5: Tmux server reload ---
     if tmux info >/dev/null 2>&1; then
-        tmux source-file "${HOME}/.tmux.conf" 2>/dev/null \
-            || tmux source-file "${HOME}/.config/tmux/tmux.conf" 2>/dev/null \
+        tmux source-file "$(path_home_tmux_conf)" 2>/dev/null \
+            || tmux source-file "$(path_home_tmux_config)" 2>/dev/null \
             || log_warn "tmux source-file failed; active sessions may need a manual reload"
     fi
 

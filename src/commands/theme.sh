@@ -44,22 +44,24 @@ export REPO_ROOT
 # ---------------------------------------------------------------------------
 # Source dependencies
 # ---------------------------------------------------------------------------
+# shellcheck source=src/lib/paths.sh
+. "${REPO_ROOT}/src/lib/paths.sh"
 # shellcheck source=src/lib/log.sh
-. "${REPO_ROOT}/src/lib/log.sh"
+. "$(path_src_lib log.sh)"
 # shellcheck source=src/lib/tui.sh
-. "${REPO_ROOT}/src/lib/tui.sh"
+. "$(path_src_lib tui.sh)"
 
-if [ -f "${REPO_ROOT}/src/lib/header.sh" ]; then
+if [ -f "$(path_src_lib header.sh)" ]; then
     # shellcheck source=src/lib/header.sh
-    . "${REPO_ROOT}/src/lib/header.sh"
+    . "$(path_src_lib header.sh)"
 fi
 
 # shellcheck source=src/lib/dotbot.sh
-. "${REPO_ROOT}/src/lib/dotbot.sh"
+. "$(path_src_lib dotbot.sh)"
 # shellcheck source=src/lib/theme.sh
-. "${REPO_ROOT}/src/lib/theme.sh"
+. "$(path_src_lib theme.sh)"
 # shellcheck source=src/lib/select.sh
-. "${REPO_ROOT}/src/lib/select.sh"
+. "$(path_src_lib select.sh)"
 
 # ---------------------------------------------------------------------------
 # --current flag (early exit before banner)

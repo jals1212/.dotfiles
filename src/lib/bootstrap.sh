@@ -3,6 +3,13 @@
 # POSIX sh. Source this file; do not execute directly.
 # Caller MUST have sourced lib/log.sh and lib/detect.sh and exported REPO_ROOT.
 
+if ! command -v path_manifest >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/paths.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # bootstrap_check
 #   Returns 0 when python3 + git + all vendored submodules are present.
@@ -11,9 +18,9 @@
 bootstrap_check() {
     command -v python3 >/dev/null 2>&1 || return 1
     command -v git >/dev/null 2>&1 || return 1
-    [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ] || return 1
-    [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] || return 1
-    [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ] || return 1
+    [ -x "$(path_dotbot_bin)" ] || return 1
+    [ -f "$(path_dotbot_brew_plugin)" ] || return 1
+    [ -f "$(path_dotbot_mise_plugin)" ] || return 1
     return 0
 }
 
@@ -66,9 +73,9 @@ bootstrap_install_prereqs() {
 #   submodule entry point is missing.
 # ---------------------------------------------------------------------------
 bootstrap_init_submodules() {
-    if [ -x "${REPO_ROOT}/vendor/dotbot/bin/dotbot" ] \
-        && [ -f "${REPO_ROOT}/vendor/plugins/dotbot-brew/brew.py" ] \
-        && [ -f "${REPO_ROOT}/vendor/plugins/dotbot-mise/mise.py" ]; then
+    if [ -x "$(path_dotbot_bin)" ] \
+        && [ -f "$(path_dotbot_brew_plugin)" ] \
+        && [ -f "$(path_dotbot_mise_plugin)" ]; then
         return 0
     fi
     log_step "Initializing git submodules (dotbot + plugins)"
