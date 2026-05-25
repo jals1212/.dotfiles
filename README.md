@@ -1,55 +1,91 @@
 # 󰚌 dots
 
-Personal dotfiles with a visual `./dots` command for installing, updating, backing up, restoring, and checking the setup.
+Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, switch theme, doctor, clean, upgrade, uninstall.
 
 Default theme: `kanagawa/dragon`.
+
+[dotbot]: https://github.com/anishathalye/dotbot
+[dotbot-brew]: https://github.com/d12frosted/dotbot-brew
+[dotbot-mise]: https://github.com/s0cks/dotbot-mise
 
 ## Quick Start
 
 ```sh
 git clone <repo> ~/.dotfiles
 cd ~/.dotfiles
-./bootstrap.sh
+./dots
 ```
+
+`./dots` is the only entry point you need. On a fresh machine it auto-detects missing prerequisites and bootstraps them (Linux build deps via apt/dnf/pacman, Xcode CLT on macOS, submodule init) before invoking dotbot.
 
 Non-interactive:
 
 ```sh
-./bootstrap.sh --yes --theme=kanagawa --flavor=dragon
+./dots update --yes --theme=kanagawa --flavor=dragon
 ```
 
-## Main Commands
+`./dots` is the only entry point. `bootstrap.sh` is removed — no compat alias.
 
-```sh
-./dots                 # visual menu
-./dots update          # change theme/tools and apply
-./dots sync            # re-apply current config
-./dots sync --force    # force re-apply
-./dots backup          # create a backup
-./dots restore         # visually choose a backup, newest first
-./dots restore --latest # restore newest backup directly
-./dots doctor          # health check
-./dots uninstall       # remove managed configs
-```
+## Lifecycle
 
-First run: if no config exists yet, `./dots` starts `update` automatically.
+| Command | What it does |
+|---|---|
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. |
+| `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the per-app theme files; rewrites the tmux fenced `@ukiyo-theme`; rebuilds the bat cache; reloads a running tmux server; writes the slim manifest. |
+| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, slim manifest schema, submodule presence, stale dotbot-backup warning. |
+| `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
+| `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. Optionally commits gitlink advances. |
+| `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
+| `./dots` (no args) | TTY: action menu. Non-TTY + manifest absent: auto-runs `update`. Non-TTY + manifest present: errors. |
 
 ## Themes
 
 Supported themes:
 
 - `kanagawa`: `dragon`, `lotus`, `wave`
-- `catppuccin`: `latte`, `frappe`, `macchiato`, `mocha`
+- `catppuccin`: `frappe`, `latte`, `macchiato`, `mocha`
 
-Change theme:
+Switch theme:
 
 ```sh
-./dots update
+./dots theme kanagawa dragon
+./dots theme              # interactive picker
+./dots theme --current    # show active theme
 ```
+
+If `@ukiyo-theme` does not refresh in an active tmux session after a switch, run `tmux kill-server` (heavy) or restart tmux manually.
+
+## How it works
+
+- **Symlinks via dotbot**: `install.conf.yaml` declares every base file under `home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
+- **Theme symlinks**: each `content/themes/<theme>-<flavor>.yaml` re-links 10 theme files from `content/assets/palettes/<app>/...` to `$HOME`. Theme switch = retarget those symlinks.
+- **Tmux fence**: `home/.config/tmux/tmux.conf` contains a `# >>> dots:theme >>>` / `# <<< dots:theme <<<` block holding the `@ukiyo-theme` line. The theme switcher rewrites between the fences.
+- **Atuin**: `home/.config/atuin/config.toml` declares static `[theme] name = "dots"`. The atuin theme palette is delivered via the per-theme dotbot symlink `~/.config/atuin/themes/dots.toml`.
+- **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
+- **Brewfile + Mise**: `brew bundle --file=Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
+
+## Adding a new theme
+
+1. Add the asset files under `content/assets/palettes/<app>/<theme>/<flavor>.<ext>` for every app.
+2. Create `content/themes/<theme>-<flavor>.yaml` mirroring an existing one.
+3. Add the pair to `content/themes/index.yaml`.
+4. Test with `./dots theme <theme> <flavor>`.
+
+## Adding a mise tool
+
+Edit `home/.config/mise/config.toml`:
+
+```toml
+[tools]
+node = "lts"
+python = "3.12"
+```
+
+Run `./dots update` to install. Run `./dots upgrade` to prune removed versions.
 
 ## Documentation
 
-- [Install guide](docs/install.md) — install, update, sync, backup, restore, doctor, uninstall.
+- [Install guide](docs/install.md) — install, update, theme, doctor, clean, upgrade, uninstall.
 - [Tools](docs/tools.md) — common usage for managed CLI tools.
 - [Aliases](docs/aliases.md) — shell aliases and functions.
 - [Plugins](docs/plugins.md) — zsh/tmux plugin usage.

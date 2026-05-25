@@ -1,0 +1,16 @@
+- defaults:
+    link:
+      force: true
+      relink: true
+      create: true
+      canonicalize: false
+
+- link:
+    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/latte.json
+    ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-latte.tmTheme
+    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/latte.txt
+    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/latte.sh
+    ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/latte.yml
+    ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/latte.toml
+    ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/latte.conf
+    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/latte.toml

@@ -1,0 +1,13 @@
+# Dotfiles — mise
+# Run `./dots update` (or `./dots upgrade` to prune removed versions) after edits.
+
+[tools]
+node = ["latest", "lts"]
+python = "latest"
+go = "latest"
+ruby = "latest"
+
+[settings]
+
+[settings.ruby]
+compile = false

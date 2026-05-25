@@ -10,7 +10,7 @@ Login shell with completions, history search, and common OMZ helpers. Plugin inv
 
 ### Oh My Posh — [docs](https://ohmyposh.dev/)
 
-Prompt renderer. Theme JSON deployed to `~/.config/oh-my-posh/config.json` by `./dots update` / `./dots sync`. Switch flavors via `./dots update`. Reload: `exec zsh`.
+Prompt renderer. Theme JSON deployed to `~/.config/oh-my-posh/config.json` by `./dots update`. Switch flavors via `./dots update`. Reload: `exec zsh`.
 
 ### Atuin — [docs](https://docs.atuin.sh/)
 
@@ -34,7 +34,7 @@ Polyglot runtime/version manager (Node, Python, Go, etc.). Activated in zsh. Com
 
 ### Ghostty — [docs](https://ghostty.org/docs)
 
-Terminal emulator (macOS cask). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update` / `./dots sync`.
+Terminal emulator (macOS cask). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`.
 
 ### tmux — [docs](https://github.com/tmux/tmux/wiki)
 
@@ -48,7 +48,7 @@ Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout
 
 ### bat — [docs](https://github.com/sharkdp/bat)
 
-`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and exported as `BAT_THEME=dots`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` / `sync` when bat is present.
+`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and exported as `BAT_THEME=dots`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` when bat is present.
 
 ### eza — [docs](https://eza.rocks/)
 
@@ -112,4 +112,4 @@ TUI primitives used by `./dots`: `gum choose` for the action menu and update wiz
 
 ## Themes
 
-Theme deployment covered in [themes.md](themes.md). Override flavor with `./dots update` or `./bootstrap.sh --yes --theme=<family> --flavor=<flavor>`.
+Theme deployment covered in [themes.md](themes.md). Switch theme with `./dots theme <family> <flavor>` (or `./dots update --yes --theme=<family> --flavor=<flavor>` to also rerun the base config).

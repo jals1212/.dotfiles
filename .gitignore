@@ -8,6 +8,4 @@ tmp/
 *.log
 .backups/
 *.bak
-# Local, per-host overrides (e.g. .claude/settings.local.json,
-# any future *.local.json or *.local.yml side-by-side configs).
 *.local.*
