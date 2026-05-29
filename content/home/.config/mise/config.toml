@@ -2,9 +2,11 @@
 # Run `./dots update` (or `./dots upgrade` to prune removed versions) after edits.
 
 [tools]
-node = ["latest", "lts"]
-python = "latest"
+dotnet = "latest"
 go = "latest"
+node = ["latest", "lts"]
+pnpm = "latest"
+python = "latest"
 ruby = "latest"
 
 [settings]
