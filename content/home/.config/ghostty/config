@@ -17,35 +17,35 @@ window-height = 100
 window-width = 100
 gtk-tabs-location = hidden
 
-# ── Input / Keybindings ──────────────────────────────
-macos-option-as-alt = left
-keybind = alt+left=unbind
-keybind = alt+right=unbind
-
-# Split Management
-keybind = alt+v=new_split:right
-keybind = alt+d=new_split:down
-
-# Split Navigation
-keybind = alt+k=goto_split:up
-keybind = alt+j=goto_split:down
-keybind = alt+h=goto_split:left
-keybind = alt+l=goto_split:right
-
-# Split Resize
-keybind = ctrl+shift+j=resize_split:up,10
-keybind = ctrl+shift+k=resize_split:down,10
-keybind = ctrl+shift+h=resize_split:left,10
-keybind = ctrl+shift+l=resize_split:right,10
-
-# Miscellaneous
-keybind = cmd+k=clear_screen
-keybind = shift+enter=text:\x1b\r
-keybind = alt+s=write_screen_file:paste
+# ── Shell & terminal behavior ────────────────────────
+shell-integration = zsh
+# Don't let ghostty rewrite the cursor shape; shell prompts stay consistent.
+shell-integration-features = no-cursor
+mouse-hide-while-typing = true
+scrollback-limit = 1000000
 
 # ── Theme ────────────────────────────────────────────
 # The active flavor's palette is written to ~/.config/ghostty/themes/dots
 # by `dots install` / `dots update`; this file references it natively.
 theme = dots
-
 custom-shader = shaders/cursor_smear.glsl
+
+# ── Input ────────────────────────────────────────────
+# Only the left Option key acts as Alt; right Option stays as macOS Option.
+macos-option-as-alt = left
+
+# ── Copy/paste (uniform with tmux) ───────────────────
+# Don't clobber the clipboard on selection; require an explicit copy gesture.
+copy-on-select = false
+# Keep selection visible regardless of theme contrast.
+selection-invert-fg-bg = true
+# ctrl+shift+c copies if there's a selection, otherwise passes through.
+keybind = performable:ctrl+shift+c=copy_to_clipboard
+# cmd+c sends a CSI key sequence so tmux can intercept it uniformly.
+keybind = super+c=csi:99;6u
+
+# ── tmux passthroughs (prefix = C-a, \x01) ───────────
+# cmd+s -> prefix + s (session picker)
+keybind = cmd+s=text:\x01\x73
+# cmd+b -> prefix + z (zoom current pane)
+keybind = cmd+b=text:\x01\x7a
