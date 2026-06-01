@@ -33,6 +33,8 @@ abbr git -S --quieter --force gst=status
 abbr git -S --quieter --force gss="status --short"
 abbr git -S --quieter --force gsw=switch
 abbr git -S --quieter --force gswc="switch --create"
+abbr git -S --quieter --force gwip='add -A; git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-verify --no-gpg-sign --message "--wip-- [skip ci]"'
+abbr git -S --quieter --force gunwip='rev-list --max-count=1 --format="%s" HEAD | grep -q -- "--wip--" && git reset HEAD~1'
 
 # Tmux
 abbr -S --quieter --force txs="tmux new-session -A -s"
