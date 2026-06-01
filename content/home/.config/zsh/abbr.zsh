@@ -35,7 +35,6 @@ abbr git -S --quieter --force gsw=switch
 abbr git -S --quieter --force gswc="switch --create"
 
 # Tmux
-abbr -S --quieter --force tx="tmux new-session -A -s main"
 abbr -S --quieter --force txs="tmux new-session -A -s"
 abbr -S --quieter --force txa="tmux attach -t"
 abbr -S --quieter --force txl="tmux ls"
