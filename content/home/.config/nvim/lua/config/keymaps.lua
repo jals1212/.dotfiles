@@ -18,7 +18,8 @@ map("n", "<C-j>", tmux_nav("NvimTmuxNavigateDown", "wincmd j"), { desc = "Go to 
 map("n", "<C-k>", tmux_nav("NvimTmuxNavigateUp", "wincmd k"), { desc = "Go to upper window/pane" })
 map("n", "<C-l>", tmux_nav("NvimTmuxNavigateRight", "wincmd l"), { desc = "Go to right window/pane" })
 map("n", "<C-\\>", tmux_nav("NvimTmuxNavigateLastActive", "wincmd p"), { desc = "Go to last active window/pane" })
-map("n", "<C-Space>", tmux_nav("NvimTmuxNavigateNext", "wincmd w"), { desc = "Go to next window/pane" })
+-- <leader><Space> instead of <C-Space> to avoid clashing with macOS input source switcher.
+map("n", "<leader><Space>", tmux_nav("NvimTmuxNavigateNext", "wincmd w"), { desc = "Go to next window/pane" })
 
 -- Resize windows
 map("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
