@@ -201,10 +201,6 @@ on-mode-changed = []
     3 = 3
 
 [[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
-run = "move-node-to-workspace Z"
-
-[[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 run = "move-node-to-workspace A"
 
