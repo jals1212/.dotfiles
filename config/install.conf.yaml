@@ -65,6 +65,7 @@
 
     # Zsh config fragments
     ~/.config/zsh/aliases.zsh: content/home/.config/zsh/aliases.zsh
+    ~/.config/zsh/abbr.zsh: content/home/.config/zsh/abbr.zsh
     ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
     ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
     ~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh

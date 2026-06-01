@@ -88,15 +88,16 @@ zinit ice has"atuin"
 zinit light "$_zsh_config_dir/plugins/atuin"
 
 # ── Oh My Zsh plugins (snippet-loaded) ───────────────
-zinit snippet OMZP::git
+zinit snippet OMZP::aliases
 zinit snippet OMZP::extract
-zinit snippet OMZP::safe-paste
 zinit snippet OMZP::copypath
 zinit snippet OMZP::copyfile
 zinit snippet OMZP::copybuffer
 zinit snippet OMZP::fancy-ctrl-z
-zinit snippet OMZP::jsontools
-zinit snippet OMZP::gh
+
+# ── Abbreviations ───────────────────────────────────
+zinit light olets/zsh-abbr
+[[ -f "$_zsh_config_dir/abbr.zsh" ]] && source "$_zsh_config_dir/abbr.zsh"
 
 # Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.
 zinit light zsh-users/zsh-autosuggestions

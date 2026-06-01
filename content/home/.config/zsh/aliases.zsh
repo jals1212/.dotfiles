@@ -26,7 +26,6 @@ alias ping='gping'
 alias git='hub'
 
 # Shortcuts
-alias c='clear'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
@@ -42,7 +41,6 @@ alias -s html=open
 alias -s js='$EDITOR'
 alias -s json=jless
 alias -s log=bat
-alias -s md='$EDITOR'
 alias -s md=bat
 alias -s py='$EDITOR'
 alias -s rs='$EDITOR'
@@ -50,12 +48,6 @@ alias -s ts='$EDITOR'
 alias -s txt=bat
 alias -s yaml='$EDITOR'
 alias -s yml='$EDITOR'
-
-# Tmux
-alias tx='tmux new-session -A -s main'
-alias txa='tmux attach -t'
-alias txl='tmux ls'
-alias txk='tmux kill-session -t'
 
 # FZF previews
 alias fzfbat='fzf --preview="bat --theme=dots --color=always {}"'
