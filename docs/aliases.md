@@ -4,6 +4,30 @@ Shell shortcuts available after applying the dotfiles.
 
 Tool-level keybindings (tmux, Ghostty, AeroSpace, Neovim) live in [keymaps.md](keymaps.md). For the tools themselves see [tools.md](tools.md).
 
+## Abbreviations
+
+Abbreviations expand in place before the command runs. Type the short form, then press `Space`.
+
+- `c` → `clear`.
+- `tx` → `tmux new-session -A -s main` — attach or create the `main` session.
+- `txs <name>` → create or attach to a named session.
+- `txa <name>` → attach to a named session.
+- `txl` → list sessions.
+- `txk <name>` → kill a session.
+- Git shortcuts expand to full commands, for example:
+  - `gst` → `git status`
+  - `gco` → `git checkout`
+  - `gcb` → `git checkout -b`
+  - `gcmsg` → `git commit --message`
+  - `gd` → `git diff`
+  - `gds` → `git diff --staged`
+  - `gl` → `git pull`
+  - `gp` → `git push`
+  - `gpsup` → `git push --set-upstream origin HEAD`
+  - `grbi` → `git rebase --interactive`
+  - `gstp` → `git stash pop`
+  - `gswc` → `git switch --create`
+
 ## Global aliases
 
 Zsh expands [global aliases](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.html#Aliasing) anywhere on the command line, not only the first word. Use as a pipe segment.
@@ -31,7 +55,6 @@ If you need the original tool, prefix with `\`: `\cat`, `\grep`, `\ls`.
 
 ## Shortcuts
 
-- `c` → `clear`.
 - `..`, `...`, `....` → climb 1/2/3 levels.
 - `vim`, `v` → `nvim`.
 - `lg` → [`lazygit`](https://github.com/jesseduffield/lazygit).
@@ -41,24 +64,15 @@ If you need the original tool, prefix with `\`: `\cat`, `\grep`, `\ls`.
 
 Zsh runs [suffix aliases](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.html#Aliasing) when you "execute" a file with that extension. Type `file.ext` (no command) to open it.
 
-- `csv`, `go`, `js`, `md`, `py`, `rs`, `ts`, `yaml`, `yml` → `$EDITOR` (Neovim).
+- `csv`, `go`, `js`, `py`, `rs`, `ts`, `yaml`, `yml` → `$EDITOR` (Neovim).
 - `html` → `open` (macOS default browser).
 - `json` → [`jless`](https://jless.io/).
-- `log`, `txt`, `md` → [`bat`](https://github.com/sharkdp/bat). Note `md` is bound twice; last definition (`bat`) wins.
-
-## Tmux helpers
-
-Session quick-management. Prefix is `Ctrl-a` (full key table in [keymaps.md](keymaps.md#tmux)).
-
-- `tx` → `tmux new-session -A -s main` — attach or create the `main` session.
-- `txa <name>` → attach to a named session.
-- `txl` → list sessions.
-- `txk <name>` → kill a session.
+- `log`, `txt`, `md` → [`bat`](https://github.com/sharkdp/bat).
 
 ## Dotfiles helpers
 
-- `dots` → `cd ~/.dotfiles && nvim` — open the repo in Neovim.
-- `dotsync` → run `./dots` from anywhere. Subcommands documented in [install.md](install.md#everyday-commands).
+- `dots` → run the dotfiles CLI from anywhere. Subcommands are documented in [install.md](install.md#everyday-commands).
+- `dotfiles` → open the repo in `$EDITOR`.
 
 ## fzf previews
 

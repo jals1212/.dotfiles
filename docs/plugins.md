@@ -30,18 +30,20 @@ These load automatically in new shells after `./dots update` has been applied. R
 
 These helpers are available without installing the full Oh My Zsh framework.
 
-- [`git`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git) — `g`-prefixed aliases like `gst`, `gco`, `gp`, `gl`, `gd`, and `grb`.
+- [`aliases`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aliases) — `als` lists active aliases; use `als <keyword>` to filter or `als --groups` to list groups.
 - [`extract`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/extract) — `extract <archive>` or `x <archive>` extracts common archive formats.
-- [`safe-paste`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/safe-paste) — reviews pasted multi-line commands before execution.
 - [`copypath`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copypath) — `copypath` copies the current directory or a path.
 - [`copyfile`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copyfile) — `copyfile <path>` copies file contents.
 - [`copybuffer`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copybuffer) — `Ctrl-O` copies the current command line.
 - [`fancy-ctrl-z`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/fancy-ctrl-z) — `Ctrl-Z` at an empty prompt brings back the last suspended job.
-- [`jsontools`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jsontools) — `pp_json`, `is_json`, `urlencode_json`, and `urldecode_json`.
-- [`gh`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh) — GitHub CLI completion.
 
 ### Editing assistance
 
+- [zsh-abbr](https://github.com/olets/zsh-abbr) expands abbreviations before commands run:
+  - `abbr add gco='git checkout'`
+  - Type `gco` then `Space` to expand it in place.
+  - Run `abbr help` for more commands.
+  - Configured Git abbreviations include `gst`, `gco`, `gcb`, `gcmsg`, `gd`, `gds`, `gl`, `gp`, `gpsup`, `grbi`, `gstp`, and `gswc`.
 - [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text suggestions from history. Accept with `→` or `End`.
 - [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) colors commands as you type so missing commands and invalid syntax stand out early.
 
