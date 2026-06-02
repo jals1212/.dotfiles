@@ -1,4 +1,5 @@
 -- Repo-owned color utilities adapted from the Gentleman.Dots helper module.
+-- Credit: https://github.com/Gentleman-Programming/Gentleman.Dots
 -- Kept intentionally dependency-free so editor helpers can use it during startup.
 
 local M = {}

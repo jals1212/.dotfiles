@@ -25,6 +25,7 @@ opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
 
 -- WSL clipboard bridge, adapted from Gentleman.Dots but guarded so macOS/Linux
 -- keep their native provider behavior. Requires win32yank.exe in WSL.
+-- Credit: https://github.com/Gentleman-Programming/Gentleman.Dots
 if vim.fn.has("wsl") == 1 then
   vim.g.clipboard = {
     name = "win32yank",

@@ -1,4 +1,4 @@
-# 💀 dots
+# 💀 JALS DOTS
 
 Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, switch theme, doctor, clean, upgrade, uninstall.
 
@@ -103,4 +103,4 @@ Then open tmux and press `Ctrl-a I` to install tmux plugins.
 
 ## License
 
-MIT
+MIT © 2026 Jeffrey León ([@jals1212](https://github.com/jals1212)) — see [LICENSE](LICENSE).
