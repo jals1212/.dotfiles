@@ -9,8 +9,14 @@ alias -g NE='2>/dev/null' # Redirect stderr to /dev/null
 alias -g NO='>/dev/null' # Redirect stdout to /dev/null
 alias -g NUL='>/dev/null 2>&1' # Redirect both stdout and stderr to /dev/null
 alias -g J='| jq' # Pipe to jq
-alias -g C='| pbcopy' # Copy output to clipboard (macOS)
-# alias -g C='| xclip -selection clipboard' # Copy output to clipboard (Linux with xclip)
+# Copy output to clipboard (cross-platform)
+if [[ "$(uname)" == "Darwin" ]]; then
+  alias -g C='| pbcopy'
+elif command -v wl-copy >/dev/null 2>&1; then
+  alias -g C='| wl-copy'                      # Wayland
+elif command -v xclip >/dev/null 2>&1; then
+  alias -g C='| xclip -selection clipboard'   # X11
+fi
 
 # Modern replacements
 alias ls='eza --icons --group-directories-first'
@@ -33,6 +39,9 @@ alias vim='nvim'
 alias v='nvim'
 alias lg='lazygit'
 alias ld='lazydocker'
+
+# Portable `open` (Linux uses xdg-open; macOS has open natively)
+[[ "$(uname)" != "Darwin" ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
 
 # Suffixes
 alias -s csv='$EDITOR'
