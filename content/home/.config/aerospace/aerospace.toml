@@ -111,10 +111,10 @@ on-mode-changed = []
     ctrl-alt-comma = 'layout accordion horizontal vertical'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#focus
-    ctrl-alt-h = 'focus left'
-    ctrl-alt-j = 'focus down'
-    ctrl-alt-k = 'focus up'
-    ctrl-alt-l = 'focus right'
+    ctrl-alt-h = 'focus --boundaries-action wrap-around-the-workspace left'
+    ctrl-alt-j = 'focus --boundaries-action wrap-around-the-workspace down'
+    ctrl-alt-k = 'focus --boundaries-action wrap-around-the-workspace up'
+    ctrl-alt-l = 'focus --boundaries-action wrap-around-the-workspace right'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#move
     ctrl-alt-shift-h = 'move left'
