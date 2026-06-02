@@ -90,7 +90,7 @@ Change theme:
 ./dots theme --current          # print active theme
 ```
 
-The theme switcher re-links the per-app theme files (`~/.config/oh-my-posh/config.json`, `~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the tmux fenced `@ukiyo-theme` line, rebuilds the bat cache, reloads a running tmux server, and writes `manifest.json`.
+The theme switcher re-links the per-app theme files (`~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the fenced theme lines in `tmux.conf` (`@ukiyo-theme`) and `starship.toml` (`palette`), rebuilds the bat cache, reloads a running tmux server, and writes `manifest.json`.
 
 If a running tmux session does not pick up the new theme after `./dots theme`, run `tmux kill-server` and restart tmux.
 

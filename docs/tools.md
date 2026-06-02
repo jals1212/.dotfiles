@@ -6,11 +6,11 @@ Brief usage for each managed CLI tool. Nvim covered separately. Tool-specific ke
 
 ### Zsh + Zinit
 
-Login shell with completions, history search, and common OMZ helpers. Plugin inventory: [plugins.md](plugins.md).
+Login shell with completions and history search. Plugin inventory: [plugins.md](plugins.md).
 
-### Oh My Posh — [docs](https://ohmyposh.dev/)
+### Starship — [docs](https://starship.rs/)
 
-Prompt renderer. Theme JSON deployed to `~/.config/oh-my-posh/config.json` by `./dots update`. Switch flavors via `./dots update`. Reload: `exec zsh`.
+Prompt renderer (Homebrew binary, initialized in `.zshrc`). Config at `~/.config/starship.toml`; the active theme is the `palette` selected inside its `dots:theme` fence, which `./dots theme <theme> <flavor>` rewrites in place (all per-theme palettes live in that one file). Starship re-reads its config each prompt, so no `exec zsh` is needed.
 
 ### Atuin — [docs](https://docs.atuin.sh/)
 

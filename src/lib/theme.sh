@@ -42,15 +42,22 @@ _th_tmux_conf_path() {
     path_content_tmux_conf
 }
 
+# _th_starship_conf_path — print the absolute path to the repo starship.toml
+_th_starship_conf_path() {
+    path_content_starship_config
+}
+
 # _th_manifest_path — print the absolute path to manifest.json
 _th_manifest_path() {
     path_manifest
 }
 
-# _th_tmux_fence_count <file>
+# _th_fence_count <file>
 #   Print the number of opening-fence lines (# >>> dots:theme >>>) in <file>.
-_th_tmux_fence_count() {
-    _tfc_file="${1:?_th_tmux_fence_count: file required}"
+#   The dots:theme fence uses '#'-prefixed markers, which are valid comments in
+#   both tmux.conf and starship.toml (TOML), so one helper serves both.
+_th_fence_count() {
+    _tfc_file="${1:?_th_fence_count: file required}"
     if [ ! -f "${_tfc_file}" ]; then
         printf '0'
         return 0
@@ -58,6 +65,65 @@ _th_tmux_fence_count() {
     _tfc_n="$(grep -c '# >>> dots:theme >>>' "${_tfc_file}" 2>/dev/null || true)"
     _tfc_n="$(printf '%s\n' "${_tfc_n:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }')"
     printf '%s' "${_tfc_n}"
+}
+
+# _th_apply_fence <file> <content_line> <insert_anchor_ere>
+#   Ensure exactly one dots:theme fence in <file> with its body set to
+#   <content_line>. When no fence exists, insert one before the first line
+#   matching <insert_anchor_ere> (or at EOF). Returns non-zero on duplicate
+#   fences or a post-rewrite integrity failure.
+_th_apply_fence() {
+    _af_file="${1:?_th_apply_fence: file required}"
+    _af_content="${2:?_th_apply_fence: content required}"
+    _af_anchor="${3:?_th_apply_fence: anchor required}"
+    _af_open='# >>> dots:theme >>>'
+    _af_close='# <<< dots:theme <<<'
+
+    _af_count="$(_th_fence_count "${_af_file}")"
+    if [ "${_af_count}" -eq 0 ]; then
+        _af_tmp="${_af_file}.theme.tmp"
+        awk \
+            -v fence_open="${_af_open}" \
+            -v fence_close="${_af_close}" \
+            -v content="${_af_content}" \
+            -v anchor="${_af_anchor}" \
+            '
+            !inserted && $0 ~ anchor {
+                print fence_open; print content; print fence_close; inserted = 1
+            }
+            { print }
+            END { if (!inserted) { print fence_open; print content; print fence_close } }
+            ' "${_af_file}" > "${_af_tmp}"
+        mv "${_af_tmp}" "${_af_file}"
+        _af_count="$(_th_fence_count "${_af_file}")"
+    fi
+
+    if [ "${_af_count}" -ne 1 ]; then
+        log_error "Duplicate dots:theme fences in ${_af_file} (count=${_af_count}); aborting rewrite to avoid corruption"
+        return 1
+    fi
+
+    _af_tmp="${_af_file}.theme.tmp"
+    awk \
+        -v fence_open="${_af_open}" \
+        -v fence_close="${_af_close}" \
+        -v content="${_af_content}" \
+        '
+        $0 == fence_open  { print; in_fence = 1; next }
+        $0 == fence_close { print content; print; in_fence = 0; next }
+        in_fence    { next }
+        { print }
+        ' "${_af_file}" > "${_af_tmp}"
+    mv "${_af_tmp}" "${_af_file}"
+
+    _af_open_n="$(_th_fence_count "${_af_file}")"
+    _af_close_n="$(grep -c '# <<< dots:theme <<<' "${_af_file}" 2>/dev/null || true)"
+    _af_close_n="$(printf '%s\n' "${_af_close_n:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }')"
+    if [ "${_af_open_n}" -ne 1 ] || [ "${_af_close_n}" -ne 1 ]; then
+        log_error "Fence integrity check failed for ${_af_file} (open=${_af_open_n}, close=${_af_close_n})"
+        return 1
+    fi
+    return 0
 }
 
 # _th_write_manifest <theme> <flavor>
@@ -242,62 +308,20 @@ theme_apply() {
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
 
-    # --- Step 3: Tmux fence management ---
-    _ta_fence_open='# >>> dots:theme >>>'
-    _ta_fence_close='# <<< dots:theme <<<'
-    _ta_theme_line="set -g @ukiyo-theme '${_ta_theme}/${_ta_flavor}'"
+    # --- Step 3: tmux fence (theme marker rewritten in place) ---
+    _th_apply_fence "${_ta_tmux_conf}" \
+        "set -g @ukiyo-theme '${_ta_theme}/${_ta_flavor}'" \
+        '^(set -g |run-shell )' || return 1
 
-    _ta_fence_count="$(_th_tmux_fence_count "${_ta_tmux_conf}")"
-
-    if [ "${_ta_fence_count}" -eq 0 ]; then
-        # Insert fences before first "set -g " or "run-shell " line, or at end.
-        # Use awk to avoid multiple individual >> redirects.
-        _ta_tmp="${_ta_tmux_conf}.theme.tmp"
-        awk \
-            -v fence_open="${_ta_fence_open}" \
-            -v fence_close="${_ta_fence_close}" \
-            -v content="${_ta_theme_line}" \
-            '
-            !inserted && /^(set -g |run-shell )/ {
-                print fence_open
-                print content
-                print fence_close
-                inserted=1
-            }
-            { print }
-            END { if (!inserted) { print fence_open; print content; print fence_close } }
-            ' "${_ta_tmux_conf}" > "${_ta_tmp}"
-        mv "${_ta_tmp}" "${_ta_tmux_conf}"
-        _ta_fence_count="$(_th_tmux_fence_count "${_ta_tmux_conf}")"
-    fi
-
-    # Sanity check before rewrite
-    if [ "${_ta_fence_count}" -ne 1 ]; then
-        log_error "Duplicate tmux theme fences detected (count=${_ta_fence_count}); aborting rewrite to avoid corruption"
-        return 1
-    fi
-
-    # Rewrite fence content in-place using awk (portable BSD+GNU)
-    _ta_tmp="${_ta_tmux_conf}.theme.tmp"
-    awk \
-        -v fence_open="${_ta_fence_open}" \
-        -v fence_close="${_ta_fence_close}" \
-        -v content="${_ta_theme_line}" \
-        '
-        $0 == fence_open  { print; in_fence=1; next }
-        $0 == fence_close { print content; print; in_fence=0; next }
-        in_fence    { next }
-        { print }
-        ' "${_ta_tmux_conf}" > "${_ta_tmp}"
-    mv "${_ta_tmp}" "${_ta_tmux_conf}"
-
-    # Verify fence integrity after rewrite
-    _ta_open_count="$(_th_tmux_fence_count "${_ta_tmux_conf}")"
-    _ta_close_count="$(grep -c '# <<< dots:theme <<<' "${_ta_tmux_conf}" 2>/dev/null || true)"
-    _ta_close_count="$(printf '%s\n' "${_ta_close_count:-0}" | awk 'NR == 1 { print ($0 ~ /^[0-9]+$/ ? $0 : 0); exit }')"
-    if [ "${_ta_open_count}" -ne 1 ] || [ "${_ta_close_count}" -ne 1 ]; then
-        log_error "Fence integrity check failed after rewrite (open=${_ta_open_count}, close=${_ta_close_count})"
-        return 1
+    # --- Step 3b: starship fence (active palette selected in place) ---
+    # Starship has no external-theme include, so the active palette is chosen by
+    # a single `palette = "<theme>_<flavor>"` line inside the same dots:theme
+    # fence; the per-theme palettes all live in the one starship.toml.
+    _ta_starship_conf="$(_th_starship_conf_path)"
+    if [ -f "${_ta_starship_conf}" ]; then
+        _th_apply_fence "${_ta_starship_conf}" \
+            "palette = \"${_ta_theme}_${_ta_flavor}\"" \
+            '^[[]' || return 1
     fi
 
     # --- Step 4: Bat cache rebuild ---

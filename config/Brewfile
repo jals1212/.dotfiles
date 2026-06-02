@@ -17,7 +17,7 @@ brew "zoxide"
 
 # ── Shell enhancements ───────────────────────────────
 brew "atuin"
-brew "oh-my-posh"
+brew "starship"
 
 # ── Dev tools ────────────────────────────────────────
 brew "lazygit"

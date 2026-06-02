@@ -68,15 +68,8 @@ path_content_tmux_conf() {
     path_repo_file "content/home/.config/tmux/tmux.conf"
 }
 
-path_oh_my_posh_palettes() {
-    _pomp_root="${1:-$(_path_repo_root)}"
-    printf '%s/content/assets/palettes/oh-my-posh' "${_pomp_root}"
-}
-
-path_oh_my_posh_theme_dir() {
-    _pompt_root="${1:?path_oh_my_posh_theme_dir: repo root required}"
-    _pompt_theme="${2:?path_oh_my_posh_theme_dir: theme required}"
-    printf '%s/%s' "$(path_oh_my_posh_palettes "${_pompt_root}")" "${_pompt_theme}"
+path_content_starship_config() {
+    path_repo_file "content/home/.config/starship.toml"
 }
 
 path_dotbot_bin() {
@@ -122,7 +115,7 @@ path_home_ghostty_config() { path_home_file ".config/ghostty/config"; }
 path_home_atuin_config() { path_home_file ".config/atuin/config.toml"; }
 path_home_mise_config() { path_home_file ".config/mise/config.toml"; }
 
-path_home_oh_my_posh_theme() { path_home_file ".config/oh-my-posh/config.json"; }
+path_home_starship_config() { path_home_file ".config/starship.toml"; }
 path_home_bat_theme() { path_home_file ".config/bat/themes/dots.tmTheme"; }
 path_home_fzf_theme() { path_home_file ".config/fzf/themes/dots.sh"; }
 path_home_eza_theme() { path_home_file ".config/eza/themes/dots.sh"; }

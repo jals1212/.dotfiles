@@ -31,6 +31,42 @@ _SELECT_DEFAULT_THEME="kanagawa"
 _SELECT_DEFAULT_FLAVOR="dragon"
 
 # ---------------------------------------------------------------------------
+# _themes_from_index <repo_root>
+#   Emits the supported theme names (one per line) parsed from the shared
+#   theme index content/themes/index.yaml. Theme keys are indented two
+#   spaces under the top-level `themes:` map.
+# ---------------------------------------------------------------------------
+_themes_from_index() {
+    _tfi_root="${1:?_themes_from_index: repo root required}"
+    _tfi_index="${_tfi_root}/content/themes/index.yaml"
+    [ -f "${_tfi_index}" ] || return 1
+    sed -n 's/^  \([A-Za-z][A-Za-z0-9_-]*\):$/\1/p' "${_tfi_index}" | sort
+}
+
+# ---------------------------------------------------------------------------
+# _flavors_from_index <repo_root> <theme>
+#   Emits the flavors (one per line) for <theme> parsed from the inline
+#   `flavors: [a, b, c]` list in content/themes/index.yaml.
+# ---------------------------------------------------------------------------
+_flavors_from_index() {
+    _ffi_root="${1:?_flavors_from_index: repo root required}"
+    _ffi_theme="${2:?_flavors_from_index: theme required}"
+    _ffi_index="${_ffi_root}/content/themes/index.yaml"
+    [ -f "${_ffi_index}" ] || return 1
+    awk -v t="${_ffi_theme}" '
+        $0 ~ "^  " t ":$" { f = 1; next }
+        f && /^  [A-Za-z][A-Za-z0-9_-]*:$/ { f = 0 }
+        f && /flavors:/ {
+            line = $0
+            sub(/.*\[/, "", line); sub(/\].*/, "", line)
+            gsub(/[ ,]+/, "\n", line)
+            print line
+            exit
+        }
+    ' "${_ffi_index}" | sed '/^$/d' | sort
+}
+
+# ---------------------------------------------------------------------------
 # _styled_header <text> [theme]
 #   Returns a gum-styled picker header using the active/theme accent colour.
 # ---------------------------------------------------------------------------
@@ -110,22 +146,23 @@ validate_flavor() {
 
 # ---------------------------------------------------------------------------
 # select_theme <repo_root> [current_theme]
-#   Presents a gum choose picker over available themes (derived from
-#   content/assets/palettes/oh-my-posh/). Pre-focuses current_theme when provided.
+#   Presents a gum choose picker over themes derived from the shared theme
+#   index (content/themes/index.yaml). Pre-focuses current_theme when provided.
 # ---------------------------------------------------------------------------
 select_theme() {
     _st_root="${1}"
     _st_current="${2:-}"
-    _st_themes_dir="$(path_oh_my_posh_palettes "${_st_root}")"
-
-    if [ ! -d "${_st_themes_dir}" ]; then
-        log_error "Themes directory missing: ${_st_themes_dir}"
-        exit 1
-    fi
 
     _check_gum
 
-    _st_themes="$(find "${_st_themes_dir}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)"
+    _st_themes="$(_themes_from_index "${_st_root}")" || {
+        log_error "Theme index missing or unreadable: ${_st_root}/content/themes/index.yaml"
+        exit 1
+    }
+    if [ -z "${_st_themes}" ]; then
+        log_error "No themes found in ${_st_root}/content/themes/index.yaml"
+        exit 1
+    fi
     _st_header_text="Select theme:"
     _st_header="$(_styled_header "${_st_header_text}" "${_st_current:-kanagawa}")"
 
@@ -143,23 +180,24 @@ select_theme() {
 
 # ---------------------------------------------------------------------------
 # select_flavor <repo_root> <theme> [current_flavor]
-#   Presents a gum choose picker over flavors for the given theme (derived
-#   from content/assets/palettes/oh-my-posh/<theme>/*.json).
+#   Presents a gum choose picker over flavors for the given theme, derived
+#   from the shared theme index (content/themes/index.yaml).
 # ---------------------------------------------------------------------------
 select_flavor() {
     _sf_root="${1}"
     _sf_theme="${2:?select_flavor: theme required}"
     _sf_current="${3:-}"
-    _sf_dir="$(path_oh_my_posh_theme_dir "${_sf_root}" "${_sf_theme}")"
-
-    if [ ! -d "${_sf_dir}" ]; then
-        log_error "Theme directory missing: ${_sf_dir}"
-        exit 1
-    fi
 
     _check_gum
 
-    _sf_flavors="$(find "${_sf_dir}" -mindepth 1 -maxdepth 1 -type f -name '*.json' -exec basename {} .json \; | sort)"
+    _sf_flavors="$(_flavors_from_index "${_sf_root}" "${_sf_theme}")" || {
+        log_error "Theme index missing or unreadable: ${_sf_root}/content/themes/index.yaml"
+        exit 1
+    }
+    if [ -z "${_sf_flavors}" ]; then
+        log_error "No flavors found for theme ${_sf_theme} in the theme index"
+        exit 1
+    fi
     _sf_header_text="Select flavor for ${_sf_theme}:"
     _sf_header="$(_styled_header "${_sf_header_text}" "${_sf_theme}")"
 
