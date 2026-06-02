@@ -35,7 +35,6 @@
 # Ensure every ~/.config/<app>/ directory exists before the link block runs.
 - create:
   - ~/.config/zsh
-  - ~/.config/zsh/plugins/oh-my-posh
   - ~/.config/zsh/plugins/zoxide
   - ~/.config/zsh/plugins/mise
   - ~/.config/zsh/plugins/atuin
@@ -46,7 +45,6 @@
   - ~/.config/atuin/themes
   - ~/.config/aerospace
   - ~/.config/mise
-  - ~/.config/oh-my-posh
   - ~/.config/bat/themes
   - ~/.config/eza/themes
   - ~/.config/fzf/themes
@@ -69,10 +67,13 @@
     ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
     ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
     ~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh
-    ~/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh: content/home/.config/zsh/plugins/oh-my-posh/oh-my-posh.plugin.zsh
     ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
     ~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh
     ~/.config/zsh/plugins/atuin/atuin.plugin.zsh: content/home/.config/zsh/plugins/atuin/atuin.plugin.zsh
+
+    # Starship prompt — static base config; theme palette is switched in place
+    # via the dots:theme fenced marker by `./dots theme`, not a per-theme link.
+    ~/.config/starship.toml: content/home/.config/starship.toml
 
     # Neovim — single files + lua directory link
     ~/.config/nvim/init.lua: content/home/.config/nvim/init.lua

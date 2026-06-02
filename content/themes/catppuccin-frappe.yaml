@@ -6,7 +6,6 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/frappe.json
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-frappe.tmTheme
     ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/frappe.txt
     ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/frappe.sh

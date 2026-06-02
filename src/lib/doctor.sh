@@ -92,26 +92,6 @@ check_contains() {
     return 1
 }
 
-# check_json_via_symlink <label> <path>
-check_json_via_symlink() {
-    _cj_label="${1}"; _cj_path="${2}"
-    if ! command -v jq >/dev/null 2>&1; then
-        _doc_skip "${_cj_label}" "jq not installed"
-        return 0
-    fi
-    _cj_target="$(readlink -f "${_cj_path}" 2>/dev/null || true)"
-    if [ ! -f "${_cj_target}" ]; then
-        _doc_fail "${_cj_label}" "broken symlink: ${_cj_path}"
-        return 1
-    fi
-    if jq -e . "${_cj_target}" >/dev/null 2>&1; then
-        _doc_pass "${_cj_label}"
-        return 0
-    fi
-    _doc_fail "${_cj_label}" "invalid JSON: ${_cj_target}"
-    return 1
-}
-
 # ---------------------------------------------------------------------------
 # Command availability
 # ---------------------------------------------------------------------------
@@ -164,11 +144,11 @@ check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home
 check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "$(path_home_ghostty_config)"; }
 check_atuin_link()    { check_symlink_into_repo "atuin config"      "$(path_home_atuin_config)"; }
 check_mise_link()     { check_symlink_into_repo "mise config"       "$(path_home_mise_config)"; }
+check_starship_link() { check_symlink_into_repo "starship config"   "$(path_home_starship_config)"; }
 
 # ---------------------------------------------------------------------------
 # Theme symlinks (managed by per-theme dotbot config)
 # ---------------------------------------------------------------------------
-check_ompo_theme_link()    { check_symlink_into_repo "oh-my-posh theme" "$(path_home_oh_my_posh_theme)"; }
 check_bat_theme_link()     { check_symlink_into_repo "bat theme"        "$(path_home_bat_theme)"; }
 check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "$(path_home_fzf_theme)"; }
 check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "$(path_home_eza_theme)"; }
@@ -194,7 +174,7 @@ check_theme_symlinks_agree() {
     _ctsa_expected=""
     _ctsa_disagreed=""
     for _ctsa_link in \
-        "$(path_home_oh_my_posh_theme)" \
+        "$(path_home_eza_theme)" \
         "$(path_home_atuin_theme)" \
         "$(path_home_bottom_theme)" \
         "$(path_home_lazygit_theme)"
@@ -232,6 +212,9 @@ check_ghostty_theme_marker() {
 }
 check_bat_theme_export() {
     check_contains 'BAT_THEME literal' "$(path_home_zshrc)" 'export BAT_THEME="dots"'
+}
+check_starship_init() {
+    check_contains 'starship zsh init' "$(path_home_zshrc)" 'starship init zsh'
 }
 check_atuin_static_name() {
     check_contains 'atuin name = "dots"' "$(path_home_atuin_config)" 'name = "dots"'
@@ -310,8 +293,25 @@ check_manifest_slim_schema() {
     _doc_pass "${_cms_label} (${_cms_theme}/${_cms_flavor})"
     return 0
 }
-check_manifest_oh_my_posh_json() {
-    check_json_via_symlink "oh-my-posh JSON" "$(path_home_oh_my_posh_theme)"
+check_starship_fence() {
+    _csf_label="starship theme fence"
+    _csf_conf="$(path_home_starship_config)"
+    if [ ! -r "${_csf_conf}" ]; then
+        _doc_fail "${_csf_label}" "unreadable: ${_csf_conf}"
+        return 1
+    fi
+    _csf_open="$(_doc_count_lines '^# >>> dots:theme >>>$' "${_csf_conf}")"
+    _csf_close="$(_doc_count_lines '^# <<< dots:theme <<<$' "${_csf_conf}")"
+    if [ "${_csf_open}" = 1 ] && [ "${_csf_close}" = 1 ]; then
+        if grep -q '^palette = ' "${_csf_conf}"; then
+            _doc_pass "${_csf_label}"
+            return 0
+        fi
+        _doc_fail "${_csf_label}" "fence present but no 'palette =' line between markers"
+        return 1
+    fi
+    _doc_fail "${_csf_label}" "expected exactly one open + one close fence (got open=${_csf_open}, close=${_csf_close})"
+    return 1
 }
 
 # ---------------------------------------------------------------------------
@@ -336,5 +336,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zsh_paths_link check_nvim_link check_tmux_link check_ghostty_link check_atuin_link check_mise_link check_ompo_theme_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_atuin_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_theme_export check_atuin_static_name check_tmux_fence check_manifest_exists check_manifest_slim_schema check_manifest_oh_my_posh_json check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zsh_paths_link check_nvim_link check_tmux_link check_ghostty_link check_atuin_link check_mise_link check_starship_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_atuin_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_theme_export check_starship_init check_atuin_static_name check_tmux_fence check_starship_fence check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS

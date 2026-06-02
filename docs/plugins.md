@@ -13,7 +13,7 @@ These load automatically in new shells after `./dots update` has been applied. R
 
 ### Prompt, navigation, and history
 
-- [Oh My Posh](https://ohmyposh.dev/) renders the prompt. Change prompt flavor with `./dots update`, then reload with `exec zsh`.
+- [Starship](https://starship.rs/) renders the prompt. The active theme is the `palette` selected inside `~/.config/starship.toml`'s `dots:theme` fence; switch with `./dots theme <theme> <flavor>` (takes effect on the next prompt).
 - [Zoxide](https://github.com/ajeetdsouza/zoxide) adds smart directory jumps:
   - `z <partial>` jumps to a frequently used matching directory.
   - `zi` opens an interactive picker.
@@ -25,17 +25,6 @@ These load automatically in new shells after `./dots update` has been applied. R
   - `Up` searches session history.
   - `Ctrl-R` opens global history search.
   - `Ctrl-P` opens history search through fzf.
-
-### Oh My Zsh helpers
-
-These helpers are available without installing the full Oh My Zsh framework.
-
-- [`aliases`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aliases) — `als` lists active aliases; use `als <keyword>` to filter or `als --groups` to list groups.
-- [`extract`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/extract) — `extract <archive>` or `x <archive>` extracts common archive formats.
-- [`copypath`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copypath) — `copypath` copies the current directory or a path.
-- [`copyfile`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copyfile) — `copyfile <path>` copies file contents.
-- [`copybuffer`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/copybuffer) — `Ctrl-O` copies the current command line.
-- [`fancy-ctrl-z`](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/fancy-ctrl-z) — `Ctrl-Z` at an empty prompt brings back the last suspended job.
 
 ### Editing assistance
 

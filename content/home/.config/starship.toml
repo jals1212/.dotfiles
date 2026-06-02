@@ -1,0 +1,130 @@
+# Starship prompt — dots
+# The prompt structure here is theme-independent. Per-theme colors live in the
+# [palettes.*] tables below; the active palette is selected inside the
+# dots:theme fence, which `./dots theme <theme> <flavor>` rewrites in place.
+# Do not edit the fenced line by hand.
+
+add_newline = false
+
+format = """
+$directory$git_branch$git_status$nodejs$golang$python$cmd_duration
+$character"""
+
+right_format = "$time"
+
+# >>> dots:theme >>>
+palette = "kanagawa_dragon"
+# <<< dots:theme <<<
+
+[directory]
+style = "blue"
+format = "[$path]($style) "
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = ""
+
+[git_branch]
+style = "mauve"
+symbol = ""
+format = "[-> $branch]($style) "
+
+[git_status]
+style = "mauve"
+format = "([$all_status$ahead_behind]($style) )"
+
+[nodejs]
+style = "green"
+format = "[node $version]($style) "
+
+[golang]
+style = "teal"
+format = "[go $version]($style) "
+
+[python]
+style = "peach"
+format = "[py $version]($style) "
+
+[cmd_duration]
+min_time = 500
+style = "yellow"
+format = "[took $duration]($style) "
+
+[time]
+disabled = false
+style = "gray"
+time_format = "%H:%M"
+format = "[$time]($style)"
+
+[character]
+success_symbol = "[󰚌](green)"
+error_symbol = "[󰚌](red)"
+
+[palettes.catppuccin_mocha]
+blue = "#89b4fa"
+mauve = "#cba6f7"
+green = "#a6e3a1"
+teal = "#94e2d5"
+peach = "#fab387"
+yellow = "#f9e2af"
+gray = "#a6adc8"
+red = "#f38ba8"
+
+[palettes.catppuccin_frappe]
+blue = "#8caaee"
+mauve = "#ca9ee6"
+green = "#a6d189"
+teal = "#81c8be"
+peach = "#ef9f76"
+yellow = "#e5c890"
+gray = "#a5adce"
+red = "#e78284"
+
+[palettes.catppuccin_latte]
+blue = "#1e66f5"
+mauve = "#8839ef"
+green = "#40a02b"
+teal = "#179299"
+peach = "#fe640b"
+yellow = "#df8e1d"
+gray = "#6c6f85"
+red = "#d20f39"
+
+[palettes.catppuccin_macchiato]
+blue = "#8aadf4"
+mauve = "#c6a0f6"
+green = "#a6da95"
+teal = "#8bd5ca"
+peach = "#f5a97f"
+yellow = "#eed49f"
+gray = "#a5adcb"
+red = "#ed8796"
+
+[palettes.kanagawa_dragon]
+blue = "#8ba4b0"
+mauve = "#a292a3"
+green = "#87a987"
+teal = "#8ea4a2"
+peach = "#b6927b"
+yellow = "#c4b28a"
+gray = "#737c73"
+red = "#c4746e"
+
+[palettes.kanagawa_lotus]
+blue = "#4d699b"
+mauve = "#b35b79"
+green = "#6f894e"
+teal = "#6693bf"
+peach = "#cc6d00"
+yellow = "#77713f"
+gray = "#a09cac"
+red = "#c84053"
+
+[palettes.kanagawa_wave]
+blue = "#7e9cd8"
+mauve = "#957fb8"
+green = "#98bb6c"
+teal = "#7aa89f"
+peach = "#ffa066"
+yellow = "#e6c384"
+gray = "#727169"
+red = "#e82424"

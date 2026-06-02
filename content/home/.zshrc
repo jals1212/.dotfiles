@@ -71,9 +71,10 @@ zinit cdreplay -q
 # fzf-tab must load after compinit, but before widget-wrapping plugins.
 zinit light Aloxaf/fzf-tab
 
-# ── Oh My Posh ───────────────────────────────────────
-zinit ice has"oh-my-posh"
-zinit light "$_zsh_config_dir/plugins/oh-my-posh"
+# ── Starship prompt ──────────────────────────────────
+# Starship is a Homebrew binary; initialize directly (no zinit wrapper),
+# guarded by command presence so startup never errors when it is absent.
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 
 # ── Zoxide ───────────────────────────────────────────
 zinit ice has"zoxide"
@@ -86,14 +87,6 @@ zinit light "$_zsh_config_dir/plugins/mise"
 # ── Atuin ────────────────────────────────────────────
 zinit ice has"atuin"
 zinit light "$_zsh_config_dir/plugins/atuin"
-
-# ── Oh My Zsh plugins (snippet-loaded) ───────────────
-zinit snippet OMZP::aliases
-zinit snippet OMZP::extract
-zinit snippet OMZP::copypath
-zinit snippet OMZP::copyfile
-zinit snippet OMZP::copybuffer
-zinit snippet OMZP::fancy-ctrl-z
 
 # ── Abbreviations ───────────────────────────────────
 zinit light olets/zsh-abbr

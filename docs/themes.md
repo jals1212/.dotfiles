@@ -26,8 +26,8 @@ Show active theme:
 ## What the switcher does
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
-2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 8 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
-3. Rewrites the tmux fenced block (`# >>> dots:theme >>>` … `# <<< dots:theme <<<`) in `home/.config/tmux/tmux.conf` so tmux-ukiyo's `@ukiyo-theme` matches the new pair.
+2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 7 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
+3. Rewrites the `# >>> dots:theme >>>` … `# <<< dots:theme <<<` fenced block in two files: `home/.config/tmux/tmux.conf` (sets tmux-ukiyo's `@ukiyo-theme`) and `home/.config/starship.toml` (sets Starship's active `palette`).
 4. Runs `bat cache --build` (skipped when bat is absent).
 5. If a tmux server is running, runs `tmux source-file ~/.tmux.conf` so the new fenced block takes effect.
 6. Writes `manifest.json` atomically: `{ version: "3.0.0", theme, flavor, applied_at }`.
@@ -47,7 +47,6 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 
 | App | Destination | Source |
 | --- | --- | --- |
-| Oh My Posh | `~/.config/oh-my-posh/config.json` | `assets/themes/oh-my-posh/<theme>/<flavor>.json` |
 | bat | `~/.config/bat/themes/dots.tmTheme` | `assets/themes/bat/<theme>/<Titlecase-theme>-<flavor>.tmTheme` |
 | eza | `~/.config/eza/themes/dots.sh` | `assets/themes/eza/<theme>/<flavor>.txt` (rename via dotbot) |
 | fzf | `~/.config/fzf/themes/dots.sh` | `assets/themes/fzf/<theme>/<flavor>.sh` |
@@ -61,7 +60,7 @@ Atuin uses a static `[theme] name = "dots"` in `home/.config/atuin/config.toml`;
 
 Neovim reads the active theme from `manifest.json`; there is no mutable `~/.config/nvim/lua/dots-theme.lua` symlink.
 
-tmux is the only app whose shape file (`tmux.conf`) gets a fenced rewrite — the `tmux-ukiyo` plugin reads `@ukiyo-theme` directly and there is no separate-file include path that fits it cleanly.
+tmux and Starship are the two apps themed by a fenced rewrite instead of a per-theme symlink: `tmux.conf`'s `@ukiyo-theme` and `starship.toml`'s active `palette` are rewritten in place inside their `# >>> dots:theme >>>` … `# <<< dots:theme <<<` blocks. Starship has no external-theme include (unlike ghostty), so all of its per-theme palettes live in the one `starship.toml` and only the active `palette` line changes.
 
 ## Re-apply current theme
 
@@ -78,4 +77,4 @@ tmux is the only app whose shape file (`tmux.conf`) gets a fenced rewrite — th
 ./dots doctor
 ```
 
-Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the atuin static `name = "dots"` is intact, and the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them.
+Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the atuin static `name = "dots"` is intact, the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.

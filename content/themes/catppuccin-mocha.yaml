@@ -6,7 +6,6 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/catppuccin/mocha.json
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-mocha.tmTheme
     ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/mocha.txt
     ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/mocha.sh

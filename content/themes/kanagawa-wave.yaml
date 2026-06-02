@@ -6,7 +6,6 @@
       canonicalize: false
 
 - link:
-    ~/.config/oh-my-posh/config.json: content/assets/palettes/oh-my-posh/kanagawa/wave.json
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/kanagawa/Kanagawa-wave.tmTheme
     ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/kanagawa/wave.txt
     ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/kanagawa/wave.sh
