@@ -3,7 +3,7 @@
 
 typeset -U path PATH
 
-function _dots_brew_shellenv() {
+_dots_brew_shellenv() {
   local brew_bin
 
   if [[ "$(uname)" == "Darwin" ]]; then

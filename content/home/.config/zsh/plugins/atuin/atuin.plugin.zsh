@@ -6,7 +6,7 @@ eval "$(atuin init zsh --disable-ai)"
 #   Up     -> session history, via Atuin's shell-up binding
 #   Ctrl-R -> global history, via Atuin's default search binding
 #   Ctrl-P -> global history, using fzf as the picker over Atuin history
-function fzf-atuin-history-widget() {
+fzf-atuin-history-widget() {
   local selected
   selected=$(
     atuin search --cmd-only --limit "${ATUIN_FZF_LIMIT:-5000}" |

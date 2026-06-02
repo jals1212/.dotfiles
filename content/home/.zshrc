@@ -97,7 +97,7 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-syntax-highlighting
 
 # ── Auto-start tmux ──────────────────────────────────
-function start_if_needed() {
+start_if_needed() {
     if [[ $- == *i* ]] && [[ -z "${TMUX}" ]] && [[ -t 1 ]] && [[ -z "${DOTS_NO_TMUX}" ]]; then
         tmux
     fi
