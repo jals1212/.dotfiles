@@ -36,6 +36,14 @@ abbr git -S --quieter --force gswc="switch --create"
 abbr git -S --quieter --force gwip='add -A; git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-verify --no-gpg-sign --message "--wip-- [skip ci]"'
 abbr git -S --quieter --force gunwip='rev-list --max-count=1 --format="%s" HEAD | grep -q -- "--wip--" && git reset HEAD~1'
 
+# git fetch all — use parallel --jobs when git supports it (>= 2.8)
+autoload -Uz is-at-least
+if is-at-least 2.8 "${${(s: :)$(git --version 2>/dev/null)}[3]}"; then
+  abbr git -S --quieter --force gfa="fetch --all --tags --prune --jobs=10"
+else
+  abbr git -S --quieter --force gfa="fetch --all --tags --prune"
+fi
+
 # Tmux
 abbr -S --quieter --force txs="tmux new-session -A -s"
 abbr -S --quieter --force txa="tmux attach -t"
