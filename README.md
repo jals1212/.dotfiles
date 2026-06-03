@@ -31,7 +31,7 @@ Non-interactive:
 | Command | What it does |
 |---|---|
 | `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. |
-| `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the per-app theme files; rewrites the tmux fenced `@ukiyo-theme`; rebuilds the bat cache; reloads a running tmux server; writes the slim manifest. |
+| `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the tmux (`@ukiyo-theme`) and Starship (`palette`) fenced lines; rebuilds the bat cache; reloads a running tmux server; writes the slim manifest. |
 | `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, slim manifest schema, submodule presence, stale dotbot-backup warning. |
 | `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
 | `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. Optionally commits gitlink advances. |
@@ -58,8 +58,9 @@ If `@ukiyo-theme` does not refresh in an active tmux session after a switch, run
 ## How it works
 
 - **Symlinks via dotbot**: `install.conf.yaml` declares every base file under `home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
-- **Theme symlinks**: each `content/themes/<theme>-<flavor>.yaml` re-links 10 theme files from `content/assets/palettes/<app>/...` to `$HOME`. Theme switch = retarget those symlinks.
+- **Theme symlinks**: each `content/themes/<theme>-<flavor>.yaml` re-links 7 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`. Theme switch = retarget those symlinks.
 - **Tmux fence**: `home/.config/tmux/tmux.conf` contains a `# >>> dots:theme >>>` / `# <<< dots:theme <<<` block holding the `@ukiyo-theme` line. The theme switcher rewrites between the fences.
+- **Starship fence**: `home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
 - **Atuin**: `home/.config/atuin/config.toml` declares static `[theme] name = "dots"`. The atuin theme palette is delivered via the per-theme dotbot symlink `~/.config/atuin/themes/dots.toml`.
 - **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
 - **Brewfile + Mise**: `brew bundle --file=Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
