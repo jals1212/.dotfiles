@@ -1,8 +1,8 @@
 #!/bin/sh
-# lib/header.sh — braille skull header + theme color map
+# lib/header.sh — JALS DOTS header + theme color map
 # POSIX sh. Source this file; call render_header [theme] [subtitle].
-# Braille byte-identical to installer/internal/tui/header.go:5-19
-# and home/.config/nvim/lua/plugins/snacks.lua dashboard header.
+# Single wordmark block, combined like the dashboard header in
+# home/.config/nvim/lua/plugins/snacks.lua.
 
 # ---------------------------------------------------------------------------
 # Theme → ANSI 256-color foreground code map
@@ -48,67 +48,34 @@ render_header() {
 
     _rh_code="$(_header_color_code "${_rh_theme}")"
 
-    # The 14-line braille skull (byte-identical to header.go const skullHeader)
-    _rh_skull=$(cat <<'SKULL'
-⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⠄⣠⣤⢶⣻⣿⣻⣿⣿⣿⣿⣿⣿⣦⣤⣀⠄⠄⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⣼⣺⢷⣻⣽⣾⣿⢿⣿⣷⣿⣿⢿⣿⣿⣿⣇⠄⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠠⡍⢾⣺⢽⡳⣻⡺⣽⢝⢗⢯⣻⢽⣻⣿⣿⣿⣿⢿⡄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⡨⣖⢹⠜⢅⢫⢊⢎⠜⢌⠣⢑⠡⣹⡸⣜⣯⣿⢿⣻⣷⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⢜⢔⡹⡭⣪⢼⠽⠷⠧⣳⢘⢔⡝⠾⠽⢿⣷⣿⣟⢷⣟⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⢸⢘⢼⠿⠟⠁⠄⠄⡀⠄⠃⠑⡌⠄⠄⠈⠙⠿⣷⢽⣻⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⢌⠂⠅⠄⠄⠄⠄⠄⠄⡀⣲⣢⢂⠄⠄⠄⠄⠄⠈⣯⠏⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠐⠨⡂⠄⠄⠄⠄⠄⡀⡔⠋⢻⣤⡀⠄⠄⢀⠄⢸⣯⠇⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠈⣕⠝⠒⠄⠄⠒⢉⠪⠄⠄⠄⢿⠜⠑⠢⠠⡒⡺⣿⠖⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠐⠅⠁⡀⠄⠐⢔⠁⠄⠄⠄⢀⢇⢌⠄⠄⠄⠸⠕⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⠂⠄⠄⠨⣔⡝⠼⡄⠂⣦⡆⣿⣲⠐⠑⠁⠄⠃⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠃⢫⢛⣙⡊⣜⣏⡝⣝⠆⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠈⠁⠁⠁⠈⠈⠊⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄
-SKULL
-)
-
-    # JALS wordmark, prints between the skull and DOTS — personal brand.
-    # Font: ANSI Shadow (figlet) — same font as the DOTS banner below.
-    _rh_jals=$(cat <<'JALS'
-⠄⠄⠄⠄⠄██╗⠄█████╗⠄██╗⠄⠄⠄⠄⠄███████╗
-⠄⠄⠄⠄⠄██║██╔══██╗██║⠄⠄⠄⠄⠄██╔════╝
-⠄⠄⠄⠄⠄██║███████║██║⠄⠄⠄⠄⠄███████╗
-██⠄⠄⠄██║██╔══██║██║⠄⠄⠄⠄⠄╚════██║
-╚█████╔╝██║⠄⠄██║███████╗███████║
-⠄╚════╝⠄╚═╝⠄⠄╚═╝╚══════╝╚══════╝
-JALS
-)
-
-    # DOTS block-letter banner, prints under the skull.
-    # Font: ANSI Shadow (figlet) — box-drawing shadow effect.
-    _rh_dots=$(cat <<'DOTS'
-██████╗⠄⠄██████╗⠄████████╗███████╗
+    # JALS DOTS header — one block: the JALS figlet wordmark (indented 1 col to
+    # center its 32 cols over the 34-col DOTS banner) stacked on the DOTS block
+    # banner. Personal brand. Font: ANSI Shadow (figlet). Kept byte-aligned with
+    # the wordmark header in snacks.lua.
+    _rh_header=$(cat <<'HEADER'
+      ██╗ █████╗ ██╗     ███████╗
+      ██║██╔══██╗██║     ██╔════╝
+      ██║███████║██║     ███████╗
+ ██   ██║██╔══██║██║     ╚════██║
+ ╚█████╔╝██║  ██║███████╗███████║
+  ╚════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+██████╗  ██████╗ ████████╗███████╗
 ██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝
-██║⠄⠄██║██║⠄⠄⠄██║⠄⠄⠄██║⠄⠄⠄███████╗
-██║⠄⠄██║██║⠄⠄⠄██║⠄⠄⠄██║⠄⠄⠄╚════██║
-██████╔╝╚██████╔╝⠄⠄⠄██║⠄⠄⠄███████║
-╚═════╝⠄⠄╚═════╝⠄⠄⠄⠄╚═╝⠄⠄⠄╚══════╝
-DOTS
+██║  ██║██║   ██║   ██║   ███████╗
+██║  ██║██║   ██║   ██║   ╚════██║
+██████╔╝╚██████╔╝   ██║   ███████║
+╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+HEADER
 )
-
-    # Center the skull and JALS (both 32 cols) over the 34-col DOTS banner with
-    # a uniform 1-col indent. Applied at render time so the skull const stays
-    # byte-identical to the nvim dashboard header in snacks.lua.
-    _rh_skull=$(printf '%s\n' "${_rh_skull}" | sed 's/^/ /')
-    _rh_jals=$(printf '%s\n' "${_rh_jals}" | sed 's/^/ /')
 
     if [ "${_rh_use_color}" -eq 1 ]; then
         # ANSI 256-color: ESC[38;5;<n>m ... ESC[0m
-        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_skull}"
-        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_jals}"
-        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_dots}"
+        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_header}"
         if [ -n "${_rh_subtitle}" ]; then
             printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_subtitle}"
         fi
     else
-        printf '%s\n' "${_rh_skull}"
-        printf '%s\n' "${_rh_jals}"
-        printf '%s\n' "${_rh_dots}"
+        printf '%s\n' "${_rh_header}"
         if [ -n "${_rh_subtitle}" ]; then
             printf '%s\n' "${_rh_subtitle}"
         fi

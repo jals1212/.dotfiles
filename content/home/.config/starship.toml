@@ -56,8 +56,8 @@ time_format = "%H:%M"
 format = "[$time]($style)"
 
 [character]
-success_symbol = "[󰚌](green)"
-error_symbol = "[󰚌](red)"
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
 
 [palettes.catppuccin_mocha]
 blue = "#89b4fa"

@@ -1,4 +1,4 @@
-# 💀 JALS DOTS
+# JALS DOTS
 
 Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, switch theme, doctor, clean, upgrade, uninstall.
 
