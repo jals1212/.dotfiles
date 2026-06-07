@@ -2,7 +2,7 @@
 name = "dots"
 
 [colors]
-AlertInfo = "#87a987"
+AlertInfo = "#8a9a7b"
 AlertWarn = "#b6927b"
 AlertError = "#c4746e"
 Annotation = "#a292a3"

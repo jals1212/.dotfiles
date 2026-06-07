@@ -9,8 +9,9 @@ setup() {
     export HOME="${SANDBOX}/home"
     MINI_REPO="${SANDBOX}/repo"
 
-    mkdir -p "${HOME}" "${MINI_REPO}/src" "${MINI_REPO}/config" "${MINI_REPO}/content/themes"
+    mkdir -p "${HOME}" "${MINI_REPO}/src" "${MINI_REPO}/config" "${MINI_REPO}/content/themes" "${MINI_REPO}/vendor/dotbot/lib/pyyaml"
     cp -R "${REPO_ROOT_REAL}/src/lib" "${MINI_REPO}/src/lib"
+    cp -R "${REPO_ROOT_REAL}/vendor/dotbot/lib/pyyaml/lib" "${MINI_REPO}/vendor/dotbot/lib/pyyaml/lib"
     mkdir -p "${MINI_REPO}/src/commands"
     cp "${REPO_ROOT_REAL}/src/commands/uninstall.sh" "${MINI_REPO}/src/commands/uninstall.sh"
     cp "${REPO_ROOT_REAL}/config/install.conf.yaml" "${MINI_REPO}/config/install.conf.yaml"

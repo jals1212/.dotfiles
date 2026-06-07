@@ -7,7 +7,7 @@ This document lists repo-owned keymaps. LazyVim and plugin defaults can add more
 - AeroSpace owns the global `ctrl-alt` namespace.
 - AeroSpace smart resize is intentionally limited to `ctrl-alt-minus` and `ctrl-alt-equal`.
 - `ctrl-alt-r` is kept for AeroSpace `balance-sizes`.
-- Ghostty keeps split management on `alt-*` / `ctrl-shift-*` and only unbinds `alt-left/right` so shell/editor navigation can use them.
+- Ghostty native tab shortcuts are unbound; pane/split shortcuts stay enabled.
 - Neovim disables `<A-j>` and `<A-k>` in insert/normal/visual modes to avoid accidental conflicts.
 
 ## Neovim

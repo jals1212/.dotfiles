@@ -1,17 +1,17 @@
 [styles.cpu]
 all_entry_color = "#b35b79"
-avg_entry_color = "#c84053"
-cpu_core_colors = ["#c84053","#cc6d00","#77713f","#6f894e","#4d699b","#b35b79"]
+avg_entry_color = "#d7474b"
+cpu_core_colors = ["#c84053","#cc6d00","#77713f","#6f894e","#6693bf","#624c83"]
 [styles.memory]
 ram_color = "#6f894e"
 cache_color = "#c84053"
 swap_color = "#cc6d00"
-gpu_colors = ["#4d699b","#b35b79","#c84053","#cc6d00","#77713f","#6f894e"]
-arc_color = "#6693bf"
+gpu_colors = ["#6693bf","#624c83","#c84053","#cc6d00","#77713f","#6f894e"]
+arc_color = "#5e857a"
 [styles.network]
 rx_color = "#6f894e"
 tx_color = "#c84053"
-rx_total_color = "#6693bf"
+rx_total_color = "#5e857a"
 tx_total_color = "#6f894e"
 [styles.battery]
 high_battery_color = "#6f894e"
@@ -23,7 +23,7 @@ headers = {color = "#b35b79"}
 graph_color = "#a09cac"
 legend_text = {color = "#a09cac"}
 [styles.widgets]
-border_color = "#e7dba0"
+border_color = "#8a8980"
 selected_border_color = "#b35b79"
 widget_title = {color = "#b35b79"}
 text = {color = "#545464"}

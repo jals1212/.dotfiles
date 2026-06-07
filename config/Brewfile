@@ -10,7 +10,10 @@ brew "git"
 brew "hub"
 brew "mise"
 brew "neovim"
+brew "luajit" # for neovim plugins
+brew "luarocks" # for neovim plugins
 brew "ripgrep"
+brew "ast-grep"
 brew "tmux"
 brew "zoxide"
 

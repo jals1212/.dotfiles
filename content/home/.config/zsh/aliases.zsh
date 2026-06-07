@@ -35,8 +35,6 @@ alias git='hub'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias vim='nvim'
-alias v='nvim'
 alias lg='lazygit'
 alias ld='lazydocker'
 

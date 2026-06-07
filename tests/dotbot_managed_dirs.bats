@@ -27,7 +27,7 @@ teardown() {
     [[ "${output}" == *"${HOME}/.config/zsh/plugins/zoxide"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/plugins/mise"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/plugins/atuin"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/lua"* ]]
+    [[ "${output}" == *"${HOME}/.config/nvim"* ]]
     [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]]
     [[ "${output}" == *"${HOME}/.config/bat/themes"* ]]
     [[ "${output}" != *"content/assets"* ]]
@@ -44,12 +44,27 @@ teardown() {
     ! grep -Fq "oh-my-posh" "${config}"
 }
 
+@test "base dotbot config glob-links nvim direct children" {
+    config="${REPO_ROOT_REAL}/config/install.conf.yaml"
+
+    grep -Fq "~/.config/nvim:" "${config}"
+    grep -Fq "path: content/home/.config/nvim/*" "${config}"
+    grep -Fq "~/.config/nvim/:" "${config}"
+    grep -Fq "path: content/home/.config/nvim/.*" "${config}"
+    ! grep -Fq "~/.config/nvim/init.lua: content/home/.config/nvim/init.lua" "${config}"
+    ! grep -Fq "~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json" "${config}"
+}
+
 @test "dotbot_managed_links lists declared destinations only" {
     run dotbot_managed_links
 
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"${HOME}/.zshrc"* ]]
     [[ "${output}" == *"${HOME}/.config/mise/config.toml"* ]]
+    [[ "${output}" == *"${HOME}/.config/nvim/.gitignore"* ]]
+    [[ "${output}" == *"${HOME}/.config/nvim/.neoconf.json"* ]]
+    [[ "${output}" == *"${HOME}/.config/nvim/init.lua"* ]]
+    [[ "${output}" == *"${HOME}/.config/nvim/lazy-lock.json"* ]]
     [[ "${output}" == *"${HOME}/.config/nvim/lua"* ]]
     [[ "${output}" != *"${HOME}/.local/state/mise/tracked-configs"* ]]
     [[ "${output}" != *"${HOME}/.config/nvim/lua/dots-theme.lua"* ]]

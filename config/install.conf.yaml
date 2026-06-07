@@ -75,10 +75,14 @@
     # via the dots:theme fenced marker by `./dots theme`, not a per-theme link.
     ~/.config/starship.toml: content/home/.config/starship.toml
 
-    # Neovim — single files + lua directory link
-    ~/.config/nvim/init.lua: content/home/.config/nvim/init.lua
-    ~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json
-    ~/.config/nvim/lua: content/home/.config/nvim/lua
+    # Neovim — direct children are linked via glob so new top-level config
+    # files do not need one Dotbot entry each.
+    ~/.config/nvim:
+      glob: true
+      path: content/home/.config/nvim/*
+    ~/.config/nvim/:
+      glob: true
+      path: content/home/.config/nvim/.*
 
     # Tmux
     ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf

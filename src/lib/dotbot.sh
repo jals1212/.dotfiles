@@ -34,21 +34,26 @@ dotbot_managed_dirs() {
 
     path_dotbot_config_files > "${_dmd_configs_file}"
 
-    python3 - "${_dmd_home}" "${_dmd_configs_file}" <<'PY'
+    python3 - "${_dmd_root}" "${_dmd_home}" "${_dmd_configs_file}" <<'PY'
+import glob
 import os
-import re
 import sys
 
-home = sys.argv[1]
-configs_file = sys.argv[2]
+repo_root = sys.argv[1]
+home = sys.argv[2]
+configs_file = sys.argv[3]
+sys.path.insert(0, os.path.join(repo_root, "vendor/dotbot/lib/pyyaml/lib"))
+
+import yaml
+
 with open(configs_file, encoding="utf-8") as fh:
     configs = [line.rstrip("\n") for line in fh if line.strip()]
 
 dirs = set()
 
 
-def expand_home(path):
-    path = path.strip().strip("'\"")
+def expand_destination(path):
+    path = str(path).strip().strip("'\"")
     if not path or path.startswith("#"):
         return None
     if path == "~":
@@ -58,50 +63,104 @@ def expand_home(path):
     return None
 
 
+def source_pattern(path):
+    if path is None:
+        return None
+    path = str(path).strip().strip("'\"")
+    if not path:
+        return None
+    path = os.path.expandvars(os.path.expanduser(path))
+    if os.path.isabs(path):
+        return path
+    return os.path.join(repo_root, path)
+
+
+def default_source_for(destination):
+    base = os.path.basename(os.path.normpath(str(destination)))
+    if base.startswith("."):
+        base = base[1:]
+    return base
+
+
+def excluded_matches(patterns):
+    excluded = set()
+    for pattern in patterns or []:
+        resolved = source_pattern(pattern)
+        if not resolved:
+            continue
+        excluded.update(os.path.normpath(match) for match in glob.glob(resolved, recursive=True))
+    return excluded
+
+
+def link_destinations(destination, spec):
+    expanded = expand_destination(destination)
+    if not expanded:
+        return []
+
+    glob_enabled = False
+    path = None
+    excludes = []
+    prefix = ""
+
+    if isinstance(spec, str):
+        path = spec
+    elif isinstance(spec, dict):
+        path = spec.get("path")
+        glob_enabled = bool(spec.get("glob", False))
+        excludes = spec.get("exclude") or []
+        prefix = str(spec.get("prefix") or "")
+    elif spec is None:
+        path = default_source_for(destination)
+    else:
+        return []
+
+    if not glob_enabled:
+        return [os.path.normpath(expanded)]
+
+    resolved_pattern = source_pattern(path)
+    if not resolved_pattern:
+        return []
+
+    excluded = excluded_matches(excludes)
+    destinations = []
+    for match in sorted(glob.glob(resolved_pattern, recursive=True)):
+        normalized_match = os.path.normpath(match)
+        if normalized_match in excluded:
+            continue
+        basename = os.path.basename(normalized_match)
+        if not basename:
+            continue
+        destinations.append(os.path.normpath(os.path.join(expanded, f"{prefix}{basename}")))
+    return destinations
+
+
 def add_create(path):
-    expanded = expand_home(path)
+    expanded = expand_destination(path)
     if expanded:
         dirs.add(os.path.normpath(expanded))
 
 
-def add_link_destination(path):
-    expanded = expand_home(path)
-    if expanded:
-        dirs.add(os.path.dirname(os.path.normpath(expanded)))
-
-
-top_directive = re.compile(r"^-\s+([A-Za-z0-9_-]+):")
-list_item = re.compile(r"^\s+-\s+(.+?)\s*$")
-link_key = re.compile(r"^    ([^:#][^:]*):(?:\s.*)?$")
-
 for config in configs:
     if not os.path.isfile(config):
         continue
-
-    mode = None
     with open(config, encoding="utf-8") as fh:
-        for raw in fh:
-            line = raw.rstrip("\n")
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
+        data = yaml.safe_load(fh) or []
+    if not isinstance(data, list):
+        continue
 
-            m = top_directive.match(line)
-            if m:
-                mode = m.group(1)
-                continue
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        create = item.get("create")
+        if isinstance(create, list):
+            for created in create:
+                add_create(created)
 
-            if mode == "create":
-                m = list_item.match(line)
-                if m:
-                    add_create(m.group(1))
-                continue
-
-            if mode == "link":
-                m = link_key.match(line)
-                if m:
-                    add_link_destination(m.group(1))
-                continue
+        link = item.get("link")
+        if isinstance(link, dict):
+            for destination, spec in link.items():
+                for expanded in link_destinations(destination, spec):
+                    dirs.add(os.path.dirname(os.path.normpath(expanded)))
 
 for directory in sorted(dirs):
     print(directory)
@@ -134,21 +193,26 @@ dotbot_managed_links() {
 
     path_dotbot_config_files > "${_dml_configs_file}"
 
-    python3 - "${_dml_home}" "${_dml_configs_file}" <<'PY'
+    python3 - "${_dml_root}" "${_dml_home}" "${_dml_configs_file}" <<'PY'
+import glob
 import os
-import re
 import sys
 
-home = sys.argv[1]
-configs_file = sys.argv[2]
+repo_root = sys.argv[1]
+home = sys.argv[2]
+configs_file = sys.argv[3]
+sys.path.insert(0, os.path.join(repo_root, "vendor/dotbot/lib/pyyaml/lib"))
+
+import yaml
+
 with open(configs_file, encoding="utf-8") as fh:
     configs = [line.rstrip("\n") for line in fh if line.strip()]
 
 links = set()
 
 
-def expand_home(path):
-    path = path.strip().strip("'\"")
+def expand_destination(path):
+    path = str(path).strip().strip("'\"")
     if not path or path.startswith("#"):
         return None
     if path == "~":
@@ -158,32 +222,94 @@ def expand_home(path):
     return None
 
 
-top_directive = re.compile(r"^-\s+([A-Za-z0-9_-]+):")
-link_key = re.compile(r"^    ([^:#][^:]*):(?:\s.*)?$")
+def source_pattern(path):
+    if path is None:
+        return None
+    path = str(path).strip().strip("'\"")
+    if not path:
+        return None
+    path = os.path.expandvars(os.path.expanduser(path))
+    if os.path.isabs(path):
+        return path
+    return os.path.join(repo_root, path)
+
+
+def default_source_for(destination):
+    base = os.path.basename(os.path.normpath(str(destination)))
+    if base.startswith("."):
+        base = base[1:]
+    return base
+
+
+def excluded_matches(patterns):
+    excluded = set()
+    for pattern in patterns or []:
+        resolved = source_pattern(pattern)
+        if not resolved:
+            continue
+        excluded.update(os.path.normpath(match) for match in glob.glob(resolved, recursive=True))
+    return excluded
+
+
+def link_destinations(destination, spec):
+    expanded = expand_destination(destination)
+    if not expanded:
+        return []
+
+    glob_enabled = False
+    path = None
+    excludes = []
+    prefix = ""
+
+    if isinstance(spec, str):
+        path = spec
+    elif isinstance(spec, dict):
+        path = spec.get("path")
+        glob_enabled = bool(spec.get("glob", False))
+        excludes = spec.get("exclude") or []
+        prefix = str(spec.get("prefix") or "")
+    elif spec is None:
+        path = default_source_for(destination)
+    else:
+        return []
+
+    if not glob_enabled:
+        return [os.path.normpath(expanded)]
+
+    resolved_pattern = source_pattern(path)
+    if not resolved_pattern:
+        return []
+
+    excluded = excluded_matches(excludes)
+    destinations = []
+    for match in sorted(glob.glob(resolved_pattern, recursive=True)):
+        normalized_match = os.path.normpath(match)
+        if normalized_match in excluded:
+            continue
+        basename = os.path.basename(normalized_match)
+        if not basename:
+            continue
+        destinations.append(os.path.normpath(os.path.join(expanded, f"{prefix}{basename}")))
+    return destinations
+
 
 for config in configs:
     if not os.path.isfile(config):
         continue
-
-    mode = None
     with open(config, encoding="utf-8") as fh:
-        for raw in fh:
-            line = raw.rstrip("\n")
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
+        data = yaml.safe_load(fh) or []
+    if not isinstance(data, list):
+        continue
 
-            m = top_directive.match(line)
-            if m:
-                mode = m.group(1)
-                continue
-
-            if mode == "link":
-                m = link_key.match(line)
-                if m:
-                    expanded = expand_home(m.group(1))
-                    if expanded:
-                        links.add(os.path.normpath(expanded))
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        link = item.get("link")
+        if not isinstance(link, dict):
+            continue
+        for destination, spec in link.items():
+            for expanded in link_destinations(destination, spec):
+                links.add(os.path.normpath(expanded))
 
 for link in sorted(links):
     print(link)

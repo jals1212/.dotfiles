@@ -7,15 +7,16 @@ font-family = IosevkaTerm NF
 font-size = 14
 
 # ── Window ────────────────────────────────────────────
-background-opacity = 0.85
 background-blur-radius = 20
+background-opacity = 0.85
+gtk-tabs-location = hidden
+macos-titlebar-style = transparent
 window-decoration = true
+window-height = 100
+window-padding-balance = true
 window-padding-color = extend
 window-step-resize = false
-window-padding-balance = true
-window-height = 100
 window-width = 100
-gtk-tabs-location = hidden
 
 # ── Shell & terminal behavior ────────────────────────
 shell-integration = zsh
@@ -33,6 +34,38 @@ custom-shader = shaders/cursor_smear.glsl
 # ── Input ────────────────────────────────────────────
 # Only the left Option key acts as Alt; right Option stays as macOS Option.
 macos-option-as-alt = left
+
+# Disable Ghostty native tab shortcuts without blocking panes/splits or tmux.
+keybind = cmd+t=unbind
+keybind = cmd+shift+BracketLeft=unbind
+keybind = cmd+shift+BracketRight=unbind
+keybind = ctrl+tab=unbind
+keybind = ctrl+shift+tab=unbind
+keybind = ctrl+shift+t=unbind
+keybind = ctrl+shift+left=unbind
+keybind = ctrl+shift+right=unbind
+keybind = ctrl+page_up=unbind
+keybind = ctrl+page_down=unbind
+keybind = ctrl+shift+page_up=unbind
+keybind = ctrl+shift+page_down=unbind
+keybind = cmd+digit_1=unbind
+keybind = cmd+digit_2=unbind
+keybind = cmd+digit_3=unbind
+keybind = cmd+digit_4=unbind
+keybind = cmd+digit_5=unbind
+keybind = cmd+digit_6=unbind
+keybind = cmd+digit_7=unbind
+keybind = cmd+digit_8=unbind
+keybind = cmd+digit_9=unbind
+keybind = alt+digit_1=unbind
+keybind = alt+digit_2=unbind
+keybind = alt+digit_3=unbind
+keybind = alt+digit_4=unbind
+keybind = alt+digit_5=unbind
+keybind = alt+digit_6=unbind
+keybind = alt+digit_7=unbind
+keybind = alt+digit_8=unbind
+keybind = alt+digit_9=unbind
 
 # ── Copy/paste (uniform with tmux) ───────────────────
 # Don't clobber the clipboard on selection; require an explicit copy gesture.
