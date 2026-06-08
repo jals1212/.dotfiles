@@ -112,7 +112,6 @@ path_home_nvim_lua_dir() { path_home_file ".config/nvim/lua"; }
 path_home_nvim_theme_helper() { path_home_file ".config/nvim/lua/config/dots_theme.lua"; }
 path_home_tmux_config() { path_home_file ".config/tmux/tmux.conf"; }
 path_home_ghostty_config() { path_home_file ".config/ghostty/config"; }
-path_home_atuin_config() { path_home_file ".config/atuin/config.toml"; }
 path_home_mise_config() { path_home_file ".config/mise/config.toml"; }
 
 path_home_starship_config() { path_home_file ".config/starship.toml"; }
@@ -122,4 +121,3 @@ path_home_eza_theme() { path_home_file ".config/eza/themes/dots.sh"; }
 path_home_lazygit_theme() { path_home_file ".config/lazygit/config.yml"; }
 path_home_bottom_theme() { path_home_file ".config/bottom/bottom.toml"; }
 path_home_ghostty_theme() { path_home_file ".config/ghostty/themes/dots"; }
-path_home_atuin_theme() { path_home_file ".config/atuin/themes/dots.toml"; }

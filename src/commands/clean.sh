@@ -21,7 +21,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '  Phase 2: prune <path>.dotbot-backup.<timestamp> siblings older than\n' >&2
     printf '           --age days (mtime check).\n\n' >&2
     printf '  Does NOT touch manifest.json, theme symlinks (whose targets exist),\n' >&2
-    printf '  the tmux fenced block, or the atuin static [theme] name.\n' >&2
+    printf '  or the tmux fenced block.\n' >&2
     exit 0
 fi
 

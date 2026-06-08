@@ -18,7 +18,6 @@ brew "tmux"
 brew "zoxide"
 
 # ── Shell enhancements ───────────────────────────────
-brew "atuin"
 brew "starship"
 
 # ── Dev tools ────────────────────────────────────────

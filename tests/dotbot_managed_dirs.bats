@@ -26,7 +26,7 @@ teardown() {
     [[ "${output}" != *"oh-my-posh"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/plugins/zoxide"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/plugins/mise"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/plugins/atuin"* ]]
+    [[ "${output}" != *"${HOME}/.config/zsh/plugins/atuin"* ]]
     [[ "${output}" == *"${HOME}/.config/nvim"* ]]
     [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]]
     [[ "${output}" == *"${HOME}/.config/bat/themes"* ]]
@@ -40,7 +40,7 @@ teardown() {
     grep -Fq "~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh" "${config}"
-    grep -Fq "~/.config/zsh/plugins/atuin/atuin.plugin.zsh: content/home/.config/zsh/plugins/atuin/atuin.plugin.zsh" "${config}"
+    ! grep -Fq "atuin" "${config}"
     ! grep -Fq "oh-my-posh" "${config}"
 }
 
@@ -76,16 +76,18 @@ teardown() {
     fi
 }
 
-@test "Brewfile manages starship and not oh-my-posh" {
+@test "Brewfile manages starship and not Atuin or oh-my-posh" {
     brewfile="${REPO_ROOT_REAL}/config/Brewfile"
 
     grep -Fq 'brew "starship"' "${brewfile}"
+    ! grep -Fq "atuin" "${brewfile}"
     ! grep -Fq "oh-my-posh" "${brewfile}"
 }
 
 @test "theme configs do not declare starship (base link, fence-switched)" {
     for f in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
         ! grep -Fq "starship" "${f}"
+        ! grep -Fq "atuin" "${f}"
         ! grep -Fq "oh-my-posh" "${f}"
     done
 }

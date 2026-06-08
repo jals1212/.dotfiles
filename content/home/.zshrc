@@ -32,11 +32,17 @@ autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
 
 # ── History ──────────────────────────────────────────
-# Atuin is the history source of truth. Keep native zsh history ephemeral.
-HISTSIZE=0
-SAVEHIST=0
-unset HISTFILE
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+HISTFILE="${XDG_STATE_HOME}/zsh/history"
+HISTSIZE=50000
+SAVEHIST=50000
+[[ -d "${HISTFILE:h}" ]] || command mkdir -p "${HISTFILE:h}"
+setopt append_history
+setopt extended_history
+setopt hist_ignore_all_dups
 setopt hist_ignore_space
+setopt hist_reduce_blanks
+setopt share_history
 
 # ── Aliases, functions, keymaps ──────────────────────
 # Load first so later plugins can add tool-specific bindings without resets.
@@ -52,6 +58,28 @@ if command -v fd >/dev/null 2>&1; then
 fi
 # The active fzf theme is written to ~/.config/fzf/themes/dots.sh by `dots install`.
 [ -f ~/.config/fzf/themes/dots.sh ] && source ~/.config/fzf/themes/dots.sh
+
+fzf-history-widget() {
+  local selected
+  selected=$(
+    fc -l -n -r 1 |
+      awk 'NF && !seen[$0]++' |
+      fzf --height="${FZF_HISTORY_HEIGHT:-80%}" \
+          --layout=reverse \
+          --query="$LBUFFER" \
+          --prompt="History > "
+  ) || return
+
+  LBUFFER="$selected"
+  RBUFFER=""
+  zle reset-prompt
+}
+
+if [[ -o interactive ]] && command -v fzf >/dev/null 2>&1; then
+  zle -N fzf-history-widget
+  bindkey '^R' fzf-history-widget
+  bindkey '^P' fzf-history-widget
+fi
 
 # ── Eza ──────────────────────────────────────────────
 # The active eza colors are written to ~/.config/eza/themes/dots.sh by `dots install`.
@@ -83,10 +111,6 @@ zinit light "$_zsh_config_dir/plugins/zoxide"
 # ── Mise ─────────────────────────────────────────────
 zinit ice has"mise"
 zinit light "$_zsh_config_dir/plugins/mise"
-
-# ── Atuin ────────────────────────────────────────────
-zinit ice has"atuin"
-zinit light "$_zsh_config_dir/plugins/atuin"
 
 # ── Abbreviations ───────────────────────────────────
 zinit light olets/zsh-abbr

@@ -53,10 +53,8 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 | lazygit | `~/.config/lazygit/config.yml` | `assets/themes/lazygit/<theme>/<flavor>.yml` |
 | bottom | `~/.config/bottom/bottom.toml` | `assets/themes/bottom/<theme>/<flavor>.toml` |
 | ghostty | `~/.config/ghostty/themes/dots` | `assets/themes/ghostty/<theme>/<flavor>.conf` |
-| atuin | `~/.config/atuin/themes/dots.toml` | `assets/themes/atuin/<theme>/<flavor>.toml` (asset declares `name = "dots"`) |
 | Neovim | Reads `manifest.json` | `content/assets/palettes/nvim/<theme>-<flavor>.lua` |
 
-Atuin uses a static `[theme] name = "dots"` in `home/.config/atuin/config.toml`; only the `~/.config/atuin/themes/dots.toml` symlink retargets between themes.
 
 Neovim reads the active theme from `manifest.json`; there is no mutable `~/.config/nvim/lua/dots-theme.lua` symlink.
 
@@ -77,4 +75,4 @@ tmux and Starship are the two apps themed by a fenced rewrite instead of a per-t
 ./dots doctor
 ```
 
-Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the atuin static `name = "dots"` is intact, the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.
+Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.

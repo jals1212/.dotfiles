@@ -12,16 +12,6 @@ Login shell with completions and history search. Plugin inventory: [plugins.md](
 
 Prompt renderer (Homebrew binary, initialized in `.zshrc`). Config at `~/.config/starship.toml`; the active theme is the `palette` selected inside its `dots:theme` fence, which `./dots theme <theme> <flavor>` rewrites in place (all per-theme palettes live in that one file). Starship re-reads its config each prompt, so no `exec zsh` is needed.
 
-### Atuin — [docs](https://docs.atuin.sh/)
-
-History DB (sqlite) replacing native zsh history. Bindings:
-
-- `Up` — session history (Atuin's shell-up).
-- `Ctrl-R` — global search (Atuin's default).
-- `Ctrl-P` — global search piped through fzf.
-
-`atuin search <query>` for CLI search. `atuin stats` for usage report. Config: `~/.config/atuin/config.toml`.
-
 ### Zoxide — [docs](https://github.com/ajeetdsouza/zoxide)
 
 Smarter `cd`. Learns frecency. Usage: `z <partial>` jumps to a frecent dir; `zi` opens an fzf picker over the database. Replaces `cd` for repeated paths.
@@ -74,7 +64,7 @@ TUI JSON browser. Suffix-aliased: open with `file.json` (suffix alias). Direct: 
 
 ### fzf — [docs](https://junegunn.github.io/fzf/)
 
-Fuzzy finder. Drives `Ctrl-T` (files), `Alt-C` (dirs), `Ctrl-R` (when Atuin is not active), and tmux pickers at prefix `f` (sessions) and prefix `w` (windows). Aliases `fzfbat` / `fzfnvim` open previewed pickers.
+Fuzzy finder. Drives shell history search with `Ctrl-R` and `Ctrl-P`, plus file/directory pickers when available. tmux pickers live at prefix `f` (sessions) and prefix `w` (windows). Aliases `fzfbat` / `fzfnvim` open previewed pickers.
 
 ## Git and docker
 

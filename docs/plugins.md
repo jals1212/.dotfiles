@@ -21,10 +21,10 @@ These load automatically in new shells after `./dots update` has been applied. R
   - `mise use node@lts`
   - `mise install`
   - `mise ls`
-- [Atuin](https://docs.atuin.sh/) powers shell history search:
-  - `Up` searches session history.
-  - `Ctrl-R` opens global history search.
-  - `Ctrl-P` opens history search through fzf.
+- fzf powers shell history search:
+  - `Ctrl-R` opens history search.
+  - `Ctrl-P` opens the same history picker.
+  - `Up` keeps the normal zsh history behavior.
 
 ### Editing assistance
 

@@ -37,12 +37,9 @@
   - ~/.config/zsh
   - ~/.config/zsh/plugins/zoxide
   - ~/.config/zsh/plugins/mise
-  - ~/.config/zsh/plugins/atuin
   - ~/.config/nvim
   - ~/.config/tmux
   - ~/.config/ghostty
-  - ~/.config/atuin
-  - ~/.config/atuin/themes
   - ~/.config/aerospace
   - ~/.config/mise
   - ~/.config/bat/themes
@@ -69,7 +66,6 @@
     ~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh
     ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
     ~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh
-    ~/.config/zsh/plugins/atuin/atuin.plugin.zsh: content/home/.config/zsh/plugins/atuin/atuin.plugin.zsh
 
     # Starship prompt — static base config; theme palette is switched in place
     # via the dots:theme fenced marker by `./dots theme`, not a per-theme link.
@@ -91,8 +87,6 @@
     ~/.config/ghostty/config: content/home/.config/ghostty/config
     ~/.config/ghostty/shaders: content/home/.config/ghostty/shaders
 
-    # Atuin
-    ~/.config/atuin/config.toml: content/home/.config/atuin/config.toml
 
     # Mise — linked before the mise: directive so mise install reads the XDG path
     ~/.config/mise/config.toml: content/home/.config/mise/config.toml

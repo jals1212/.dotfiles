@@ -114,7 +114,7 @@ After install or updates:
 ./dots doctor
 ```
 
-Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (zsh trio, nvim, tmux, ghostty, atuin, mise), theme symlinks (9 per-app), theme agreement, content markers (tmux prefix, ghostty theme, BAT_THEME, atuin `name = "dots"`), tmux fence, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
+Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (zsh trio, nvim, tmux, ghostty, mise), theme symlinks, theme agreement, content markers (tmux prefix, ghostty theme, BAT_THEME, Starship init), tmux fence, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
 
 If doctor reports a fail, the most common fix:
 

@@ -104,4 +104,4 @@ Zle widget bound to `Ctrl-X Ctrl-L`. Clears the visible screen and scrollback bu
 - `Ctrl-Right` / `Ctrl-Left` → `forward-word` / `backward-word`.
 - `Ctrl-X Ctrl-L` → `clear-screen-and-scrollback` (see above).
 
-Additional widget bindings come from plugins (autosuggestions, fzf-tab, Atuin) — see [plugins.md](plugins.md).
+Additional widget bindings come from plugins and fzf history search — see [plugins.md](plugins.md).

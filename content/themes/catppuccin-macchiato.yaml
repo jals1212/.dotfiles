@@ -12,4 +12,3 @@
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/macchiato.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/macchiato.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/macchiato.conf
-    ~/.config/atuin/themes/dots.toml: content/assets/palettes/atuin/catppuccin/macchiato.toml
