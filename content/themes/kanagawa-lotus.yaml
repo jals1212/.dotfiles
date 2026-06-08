@@ -7,8 +7,8 @@
 
 - link:
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/kanagawa/Kanagawa-lotus.tmTheme
-    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/kanagawa/lotus.txt
-    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/kanagawa/lotus.sh
+    ~/.config/eza/theme.sh: content/assets/palettes/eza/kanagawa/lotus.txt
+    ~/.config/fzf/theme.sh: content/assets/palettes/fzf/kanagawa/lotus.sh
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/kanagawa/lotus.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/lotus.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/lotus.conf

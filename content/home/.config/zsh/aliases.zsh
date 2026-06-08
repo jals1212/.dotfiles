@@ -57,5 +57,4 @@ alias -s yaml='$EDITOR'
 alias -s yml='$EDITOR'
 
 # FZF previews
-alias fzfbat='fzf --preview="bat --theme=dots --color=always {}"'
-alias fzfnvim='nvim $(fzf --preview="bat --theme=dots --color=always {}")'
+alias fp='fzf --preview="bat --theme=dots --color=always {}"'

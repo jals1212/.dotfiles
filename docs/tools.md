@@ -38,11 +38,11 @@ Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout
 
 ### bat — [docs](https://github.com/sharkdp/bat)
 
-`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and exported as `BAT_THEME=dots`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` when bat is present.
+`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and selected by `~/.config/bat/config`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` when bat is present.
 
 ### eza — [docs](https://eza.rocks/)
 
-Modern `ls`. Aliased to `ls`, `ll`, `la`, `lt`. Icons + group-dirs-first by default. Color shell snippet sourced from `~/.config/eza/themes/dots.sh`.
+Modern `ls`. Aliased to `ls`, `ll`, `la`, `lt`. Icons + group-dirs-first by default. Color shell snippet sourced from `~/.config/eza/theme.sh`.
 
 ### fd — [docs](https://github.com/sharkdp/fd)
 

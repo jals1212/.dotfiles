@@ -7,8 +7,8 @@
 
 - link:
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-macchiato.tmTheme
-    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/macchiato.txt
-    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/macchiato.sh
+    ~/.config/eza/theme.sh: content/assets/palettes/eza/catppuccin/macchiato.txt
+    ~/.config/fzf/theme.sh: content/assets/palettes/fzf/catppuccin/macchiato.sh
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/macchiato.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/macchiato.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/macchiato.conf

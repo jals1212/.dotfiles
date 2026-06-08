@@ -7,8 +7,8 @@
 
 - link:
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-frappe.tmTheme
-    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/frappe.txt
-    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/frappe.sh
+    ~/.config/eza/theme.sh: content/assets/palettes/eza/catppuccin/frappe.txt
+    ~/.config/fzf/theme.sh: content/assets/palettes/fzf/catppuccin/frappe.sh
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/frappe.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/frappe.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/frappe.conf

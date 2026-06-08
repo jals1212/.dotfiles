@@ -7,8 +7,8 @@
 
 - link:
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/kanagawa/Kanagawa-wave.tmTheme
-    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/kanagawa/wave.txt
-    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/kanagawa/wave.sh
+    ~/.config/eza/theme.sh: content/assets/palettes/eza/kanagawa/wave.txt
+    ~/.config/fzf/theme.sh: content/assets/palettes/fzf/kanagawa/wave.sh
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/kanagawa/wave.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/kanagawa/wave.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/kanagawa/wave.conf

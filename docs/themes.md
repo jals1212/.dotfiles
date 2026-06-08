@@ -48,8 +48,8 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 | App | Destination | Source |
 | --- | --- | --- |
 | bat | `~/.config/bat/themes/dots.tmTheme` | `assets/themes/bat/<theme>/<Titlecase-theme>-<flavor>.tmTheme` |
-| eza | `~/.config/eza/themes/dots.sh` | `assets/themes/eza/<theme>/<flavor>.txt` (rename via dotbot) |
-| fzf | `~/.config/fzf/themes/dots.sh` | `assets/themes/fzf/<theme>/<flavor>.sh` |
+| eza | `~/.config/eza/theme.sh` | `assets/themes/eza/<theme>/<flavor>.txt` (rename via dotbot) |
+| fzf | `~/.config/fzf/theme.sh` | `assets/themes/fzf/<theme>/<flavor>.sh` |
 | lazygit | `~/.config/lazygit/config.yml` | `assets/themes/lazygit/<theme>/<flavor>.yml` |
 | bottom | `~/.config/bottom/bottom.toml` | `assets/themes/bottom/<theme>/<flavor>.toml` |
 | ghostty | `~/.config/ghostty/themes/dots` | `assets/themes/ghostty/<theme>/<flavor>.conf` |

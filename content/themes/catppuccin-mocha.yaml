@@ -7,8 +7,8 @@
 
 - link:
     ~/.config/bat/themes/dots.tmTheme: content/assets/palettes/bat/catppuccin/Catppuccin-mocha.tmTheme
-    ~/.config/eza/themes/dots.sh: content/assets/palettes/eza/catppuccin/mocha.txt
-    ~/.config/fzf/themes/dots.sh: content/assets/palettes/fzf/catppuccin/mocha.sh
+    ~/.config/eza/theme.sh: content/assets/palettes/eza/catppuccin/mocha.txt
+    ~/.config/fzf/theme.sh: content/assets/palettes/fzf/catppuccin/mocha.sh
     ~/.config/lazygit/config.yml: content/assets/palettes/lazygit/catppuccin/mocha.yml
     ~/.config/bottom/bottom.toml: content/assets/palettes/bottom/catppuccin/mocha.toml
     ~/.config/ghostty/themes/dots: content/assets/palettes/ghostty/catppuccin/mocha.conf

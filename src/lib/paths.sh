@@ -104,7 +104,14 @@ path_home_file() {
 path_home_zshrc() { path_home_file ".zshrc"; }
 path_home_zprofile() { path_home_file ".zprofile"; }
 path_home_zshenv() { path_home_file ".zshenv"; }
+path_home_zsh_env() { path_home_file ".config/zsh/env.zsh"; }
 path_home_zsh_paths() { path_home_file ".config/zsh/paths.zsh"; }
+path_home_zsh_zinit() { path_home_file ".config/zsh/zinit.zsh"; }
+path_home_zsh_history() { path_home_file ".config/zsh/history.zsh"; }
+path_home_zsh_completions() { path_home_file ".config/zsh/completions.zsh"; }
+path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }
+path_home_zsh_plugins() { path_home_file ".config/zsh/plugins.zsh"; }
+path_home_zsh_tmux() { path_home_file ".config/zsh/tmux.zsh"; }
 path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }
@@ -115,9 +122,12 @@ path_home_ghostty_config() { path_home_file ".config/ghostty/config"; }
 path_home_mise_config() { path_home_file ".config/mise/config.toml"; }
 
 path_home_starship_config() { path_home_file ".config/starship.toml"; }
+path_home_bat_config() { path_home_file ".config/bat/config"; }
+path_home_fzf_config() { path_home_file ".config/fzf/config.zsh"; }
+path_home_eza_config() { path_home_file ".config/eza/config.zsh"; }
 path_home_bat_theme() { path_home_file ".config/bat/themes/dots.tmTheme"; }
-path_home_fzf_theme() { path_home_file ".config/fzf/themes/dots.sh"; }
-path_home_eza_theme() { path_home_file ".config/eza/themes/dots.sh"; }
+path_home_fzf_theme() { path_home_file ".config/fzf/theme.sh"; }
+path_home_eza_theme() { path_home_file ".config/eza/theme.sh"; }
 path_home_lazygit_theme() { path_home_file ".config/lazygit/config.yml"; }
 path_home_bottom_theme() { path_home_file ".config/bottom/bottom.toml"; }
 path_home_ghostty_theme() { path_home_file ".config/ghostty/themes/dots"; }
