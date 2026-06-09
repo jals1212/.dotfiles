@@ -116,11 +116,21 @@ on-mode-changed = []
     ctrl-alt-k = 'focus --boundaries-action wrap-around-the-workspace up'
     ctrl-alt-l = 'focus --boundaries-action wrap-around-the-workspace right'
 
+    ctrl-alt-left = 'focus --boundaries-action wrap-around-the-workspace left'
+    ctrl-alt-down = 'focus --boundaries-action wrap-around-the-workspace down'
+    ctrl-alt-up = 'focus --boundaries-action wrap-around-the-workspace up'
+    ctrl-alt-right = 'focus --boundaries-action wrap-around-the-workspace right'
+
     # See: https://nikitabobko.github.io/AeroSpace/commands#move
     ctrl-alt-shift-h = 'move left'
     ctrl-alt-shift-j = 'move down'
     ctrl-alt-shift-k = 'move up'
     ctrl-alt-shift-l = 'move right'
+
+    ctrl-alt-shift-left = 'move left'
+    ctrl-alt-shift-down = 'move down'
+    ctrl-alt-shift-up = 'move up'
+    ctrl-alt-shift-right = 'move right'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#resize
     ctrl-alt-minus = 'resize smart -50'
@@ -130,12 +140,6 @@ on-mode-changed = []
     ctrl-alt-1 = 'workspace 1'
     ctrl-alt-2 = 'workspace 2'
     ctrl-alt-3 = 'workspace 3'
-    ctrl-alt-4 = 'workspace 4'
-    ctrl-alt-5 = 'workspace 5'
-    ctrl-alt-6 = 'workspace 6'
-    ctrl-alt-7 = 'workspace 7'
-    ctrl-alt-8 = 'workspace 8'
-    ctrl-alt-9 = 'workspace 9'
     ctrl-alt-q = 'workspace Q' # In your config, you can drop workspace bindings that you don't need
     ctrl-alt-w = 'workspace W'
     ctrl-alt-e = 'workspace E'
@@ -150,12 +154,6 @@ on-mode-changed = []
     ctrl-alt-shift-1 = 'move-node-to-workspace 1'
     ctrl-alt-shift-2 = 'move-node-to-workspace 2'
     ctrl-alt-shift-3 = 'move-node-to-workspace 3'
-    ctrl-alt-shift-4 = 'move-node-to-workspace 4'
-    ctrl-alt-shift-5 = 'move-node-to-workspace 5'
-    ctrl-alt-shift-6 = 'move-node-to-workspace 6'
-    ctrl-alt-shift-7 = 'move-node-to-workspace 7'
-    ctrl-alt-shift-8 = 'move-node-to-workspace 8'
-    ctrl-alt-shift-9 = 'move-node-to-workspace 9'
     ctrl-alt-shift-q = 'move-node-to-workspace Q'
     ctrl-alt-shift-w = 'move-node-to-workspace W'
     ctrl-alt-shift-e = 'move-node-to-workspace E'
@@ -206,8 +204,4 @@ run = "move-node-to-workspace A"
 
 [[on-window-detected]]
 if.app-id = 'com.brave.Browser'
-run = "move-node-to-workspace A"
-
-[[on-window-detected]]
-if.app-id = 'com.google.Chrome'
 run = "move-node-to-workspace A"
