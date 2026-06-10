@@ -29,7 +29,6 @@ alias find='fd'
 alias du='dust'
 alias top='btm'
 alias ping='gping'
-alias git='hub'
 
 # Shortcuts
 alias ..='cd ..'
