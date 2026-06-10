@@ -47,6 +47,11 @@ _th_starship_conf_path() {
     path_content_starship_config
 }
 
+# _th_p10k_conf_path — print the absolute path to the repo p10k.zsh
+_th_p10k_conf_path() {
+    path_content_p10k_config
+}
+
 # _th_manifest_path — print the absolute path to manifest.json
 _th_manifest_path() {
     path_manifest
@@ -126,17 +131,28 @@ _th_apply_fence() {
     return 0
 }
 
-# _th_write_manifest <theme> <flavor>
+# _th_write_manifest <theme> <flavor> [prompt]
 #   Atomically write the slim manifest to REPO_ROOT/manifest.json.
+#   When [prompt] is omitted, the current manifest value is preserved, falling
+#   back to the engine named by the dots:prompt fence in prompt.zsh.
 _th_write_manifest() {
     _twm_theme="${1:?_th_write_manifest: theme required}"
     _twm_flavor="${2:?_th_write_manifest: flavor required}"
+    _twm_prompt="${3:-}"
     _twm_ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     _twm_target="$(_th_manifest_path)"
     _twm_tmp="${_twm_target}.tmp"
 
-    printf '{\n  "version": "3.0.0",\n  "theme": "%s",\n  "flavor": "%s",\n  "applied_at": "%s"\n}\n' \
-        "${_twm_theme}" "${_twm_flavor}" "${_twm_ts}" > "${_twm_tmp}"
+    if [ -z "${_twm_prompt}" ]; then
+        _twm_prompt="$(_th_read_manifest_field prompt 2>/dev/null || printf '')"
+    fi
+    if [ -z "${_twm_prompt}" ] && [ -f "$(path_content_zsh_prompt)" ]; then
+        _twm_prompt="$(sed -n 's/^_dots_prompt_engine="\([^"]*\)".*/\1/p' "$(path_content_zsh_prompt)" | head -1)"
+    fi
+    _twm_prompt="${_twm_prompt:-starship}"
+
+    printf '{\n  "version": "3.1.0",\n  "theme": "%s",\n  "flavor": "%s",\n  "prompt": "%s",\n  "applied_at": "%s"\n}\n' \
+        "${_twm_theme}" "${_twm_flavor}" "${_twm_prompt}" "${_twm_ts}" > "${_twm_tmp}"
     mv "${_twm_tmp}" "${_twm_target}"
 }
 
@@ -322,6 +338,16 @@ theme_apply() {
         _th_apply_fence "${_ta_starship_conf}" \
             "palette = \"${_ta_theme}_${_ta_flavor}\"" \
             '^[[]' || return 1
+    fi
+
+    # --- Step 3c: p10k fence (active palette selected in place) ---
+    # Same approach as starship: every palette lives in the one p10k.zsh and
+    # the active one is named by a single fenced assignment.
+    _ta_p10k_conf="$(_th_p10k_conf_path)"
+    if [ -f "${_ta_p10k_conf}" ]; then
+        _th_apply_fence "${_ta_p10k_conf}" \
+            "_dots_p10k_palette=\"${_ta_theme}_${_ta_flavor}\"" \
+            '^typeset' || return 1
     fi
 
     # --- Step 4: Bat cache rebuild ---

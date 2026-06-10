@@ -214,6 +214,30 @@ select_flavor() {
 }
 
 # ---------------------------------------------------------------------------
+# select_prompt [current_engine]
+#   Presents a gum choose picker over the supported prompt engines.
+#   Pre-focuses current_engine when provided.
+# ---------------------------------------------------------------------------
+select_prompt() {
+    _sp_current="${1:-}"
+
+    _check_gum
+
+    _sp_header="$(_styled_header "Select prompt engine:")"
+
+    _sp_selected_arg=""
+    if [ -n "${_sp_current}" ]; then
+        _sp_selected_arg="--selected=${_sp_current}"
+    fi
+
+    # shellcheck disable=SC2086
+    _sp_chosen="$(printf '%s\n' starship p10k | gum choose --header "${_sp_header}" ${_sp_selected_arg})"
+
+    [ -z "${_sp_chosen}" ] && exit 130
+    printf '%s' "${_sp_chosen}"
+}
+
+# ---------------------------------------------------------------------------
 # confirm_apply <theme> <flavor>
 #   Presents a gum-styled summary card listing theme + flavor and prompts
 #   the operator to confirm. Returns 0 on yes, 1 on no/cancel.

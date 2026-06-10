@@ -83,7 +83,7 @@ _require_bsd_script() {
 
     [ "${status}" -eq 0 ]
     grep -q -- "--header Choose an action" "${GUM_ARGS_FILE}"
-    grep -q "update theme doctor clean upgrade uninstall help quit" "${GUM_ARGS_FILE}"
+    grep -q "update theme prompt doctor clean upgrade uninstall help quit" "${GUM_ARGS_FILE}"
 }
 
 @test "initialized non-TTY no-args errors and exits 2" {

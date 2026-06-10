@@ -108,5 +108,5 @@ render_action_menu() {
     gum choose \
         --header "Choose an action" \
         ${_ram_sel_arg} \
-        update theme doctor clean upgrade uninstall help quit
+        update theme prompt doctor clean upgrade uninstall help quit
 }

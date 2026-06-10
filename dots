@@ -37,6 +37,7 @@ _dots_help() {
     printf 'SUBCOMMANDS\n' >&2
     printf '  update      Run ./install (base dotbot) then apply active theme.\n' >&2
     printf '  theme       Switch the active theme/flavor.\n' >&2
+    printf '  prompt      Switch the active prompt engine (starship | p10k).\n' >&2
     printf '  doctor      Non-mutating health checks.\n' >&2
     printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n' >&2
     printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n' >&2
@@ -61,6 +62,7 @@ _dots_run() {
     case "${_drun_cmd}" in
         update)    sh "$(path_command update)"    "$@" ;;
         theme)     sh "$(path_command theme)"     "$@" ;;
+        prompt)    sh "$(path_command prompt)"    "$@" ;;
         doctor)    sh "$(path_command doctor)"    "$@" ;;
         clean)     sh "$(path_command clean)"     "$@" ;;
         upgrade)   sh "$(path_command upgrade)"   "$@" ;;

@@ -72,6 +72,14 @@ path_content_starship_config() {
     path_repo_file "content/home/.config/starship.toml"
 }
 
+path_content_p10k_config() {
+    path_repo_file "content/home/.config/zsh/p10k.zsh"
+}
+
+path_content_zsh_prompt() {
+    path_repo_file "content/home/.config/zsh/prompt.zsh"
+}
+
 path_dotbot_bin() {
     path_repo_file "vendor/dotbot/bin/dotbot"
 }

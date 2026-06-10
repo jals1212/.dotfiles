@@ -74,6 +74,7 @@
     ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
     ~/.config/zsh/completions.zsh: content/home/.config/zsh/completions.zsh
     ~/.config/zsh/prompt.zsh: content/home/.config/zsh/prompt.zsh
+    ~/.config/zsh/p10k.zsh: content/home/.config/zsh/p10k.zsh
     ~/.config/zsh/plugins.zsh: content/home/.config/zsh/plugins.zsh
     ~/.config/zsh/tmux.zsh: content/home/.config/zsh/tmux.zsh
     ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
