@@ -1,6 +1,5 @@
 # Dotfiles — History
 
-export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 HISTFILE="${XDG_STATE_HOME}/zsh/history"
 HISTSIZE=50000
 SAVEHIST=50000

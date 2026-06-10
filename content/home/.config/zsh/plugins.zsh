@@ -2,19 +2,18 @@
 
 (( $+functions[zinit] )) || return
 
-_zsh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
-
 # Zoxide
 zinit ice has"zoxide"
-zinit light "$_zsh_config_dir/plugins/zoxide"
+zinit light "$ZDOTDIR/plugins/zoxide"
 
 # Mise
 zinit ice has"mise"
-zinit light "$_zsh_config_dir/plugins/mise"
+zinit light "$ZDOTDIR/plugins/mise"
 
 # Abbreviations
+export ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR/abbr.zsh"
 zinit light olets/zsh-abbr
-[[ -f "$_zsh_config_dir/abbr.zsh" ]] && source "$_zsh_config_dir/abbr.zsh"
+[[ -f $ABBR_USER_ABBREVIATIONS_FILE ]] && source $ABBR_USER_ABBREVIATIONS_FILE
 
 # Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.
 zinit light zsh-users/zsh-autosuggestions

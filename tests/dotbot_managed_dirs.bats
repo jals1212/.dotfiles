@@ -41,6 +41,12 @@ teardown() {
 @test "base dotbot config declares zsh fragment and plugin symlinks" {
     config="${REPO_ROOT_REAL}/config/install.conf.yaml"
 
+    grep -Fq "~/.zshenv: content/home/.zshenv" "${config}"
+    grep -Fq "~/.config/zsh/.zshenv: content/home/.config/zsh/.zshenv" "${config}"
+    grep -Fq "~/.config/zsh/.zprofile: content/home/.config/zsh/.zprofile" "${config}"
+    grep -Fq "~/.config/zsh/.zshrc: content/home/.config/zsh/.zshrc" "${config}"
+    ! grep -Fq "~/.zshrc:" "${config}"
+    ! grep -Fq "~/.zprofile:" "${config}"
     grep -Fq "~/.config/zsh/env.zsh: content/home/.config/zsh/env.zsh" "${config}"
     grep -Fq "~/.config/zsh/abbr.zsh: content/home/.config/zsh/abbr.zsh" "${config}"
     grep -Fq "~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh" "${config}"
@@ -65,9 +71,8 @@ teardown() {
 }
 
 @test "zshrc sources fzf and eza tool entrypoints" {
-    zshrc="${REPO_ROOT_REAL}/content/home/.zshrc"
+    zshrc="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc"
 
-    grep -Fq 'env.zsh' "${zshrc}"
     grep -Fq 'history.zsh' "${zshrc}"
     grep -Fq 'completions.zsh' "${zshrc}"
     grep -Fq 'prompt.zsh' "${zshrc}"
@@ -78,6 +83,30 @@ teardown() {
     ! grep -Fq 'FZF_DEFAULT_COMMAND=' "${zshrc}"
     ! grep -Fq 'eza/themes/dots.sh' "${zshrc}"
     ! grep -Fq 'BAT_THEME=' "${zshrc}"
+    ! grep -Fq 'XDG_CONFIG_HOME:-' "${zshrc}"
+}
+
+@test "zsh startup files place environment, login, and interactive setup" {
+    zshenv="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshenv"
+    zprofile="${REPO_ROOT_REAL}/content/home/.config/zsh/.zprofile"
+    zshrc="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc"
+
+    grep -Fq 'env.zsh' "${zshenv}"
+    grep -Fq 'paths.zsh' "${zprofile}"
+    ! grep -Fq 'paths.zsh' "${zshrc}"
+    ! grep -Fq 'env.zsh' "${zshrc}"
+}
+
+@test "zsh consumers use prepared XDG variables directly" {
+    for file in \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc" \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/completions.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/zinit.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/fzf/config.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/eza/config.zsh"
+    do
+        ! grep -Eq 'XDG_(CONFIG|CACHE|DATA|STATE)_HOME:-' "${file}"
+    done
 }
 
 @test "base dotbot config glob-links nvim direct children" {
@@ -95,7 +124,12 @@ teardown() {
     run dotbot_managed_links
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"${HOME}/.zshrc"* ]]
+    [[ "${output}" == *"${HOME}/.zshenv"* ]]
+    [[ "${output}" == *"${HOME}/.config/zsh/.zshenv"* ]]
+    [[ "${output}" == *"${HOME}/.config/zsh/.zprofile"* ]]
+    [[ "${output}" == *"${HOME}/.config/zsh/.zshrc"* ]]
+    [[ "${output}" != *"${HOME}/.zshrc"* ]]
+    [[ "${output}" != *"${HOME}/.zprofile"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/env.zsh"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/zinit.zsh"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh/history.zsh"* ]]

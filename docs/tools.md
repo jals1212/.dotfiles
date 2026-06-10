@@ -10,7 +10,7 @@ Login shell with completions and history search. Plugin inventory: [plugins.md](
 
 ### Starship — [docs](https://starship.rs/)
 
-Prompt renderer (Homebrew binary, initialized in `.zshrc`). Config at `~/.config/starship.toml`; the active theme is the `palette` selected inside its `dots:theme` fence, which `./dots theme <theme> <flavor>` rewrites in place (all per-theme palettes live in that one file). Starship re-reads its config each prompt, so no `exec zsh` is needed.
+Prompt renderer (Homebrew binary, initialized from the ZDOTDIR `.zshrc`). Config at `~/.config/starship.toml`; the active theme is the `palette` selected inside its `dots:theme` fence, which `./dots theme <theme> <flavor>` rewrites in place (all per-theme palettes live in that one file). Starship re-reads its config each prompt, so no `exec zsh` is needed.
 
 ### Zoxide — [docs](https://github.com/ajeetdsouza/zoxide)
 

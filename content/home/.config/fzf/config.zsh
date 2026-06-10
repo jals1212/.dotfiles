@@ -6,7 +6,7 @@ if command -v fd >/dev/null 2>&1; then
     export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
 
-[[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/fzf/theme.sh" ]] && source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf/theme.sh"
+[[ -f "${XDG_CONFIG_HOME}/fzf/theme.sh" ]] && source "${XDG_CONFIG_HOME}/fzf/theme.sh"
 
 if command -v fzf >/dev/null 2>&1; then
     source <(fzf --zsh)

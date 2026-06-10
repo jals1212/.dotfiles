@@ -1,14 +1,20 @@
 # Dotfiles — Zinit
 
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+_zinit_root="${XDG_DATA_HOME}/zinit"
+_zinit_entry="${_zinit_root}/zinit.git/zinit.zsh"
+
+if [[ ! -f "$_zinit_entry" ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
-    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
-    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
+    command mkdir -p "$_zinit_root" && command chmod g-rwX "$_zinit_root"
+    command git clone https://github.com/zdharma-continuum/zinit "$_zinit_root/zinit.git" && \
         print -P "%F{33} %F{34}Installation successful.%f%b" || \
         print -P "%F{160} The clone has failed.%f%b"
 fi
 
-[[ -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]] || return
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
+if [[ -f "$_zinit_entry" ]]; then
+    source "$_zinit_entry"
+    autoload -Uz _zinit
+    (( ${+_comps} )) && _comps[zinit]=_zinit
+fi
+
+unset _zinit_root _zinit_entry

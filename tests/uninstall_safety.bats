@@ -18,19 +18,21 @@ setup() {
     cp "${REPO_ROOT_REAL}/content/themes/kanagawa-dragon.yaml" "${MINI_REPO}/content/themes/kanagawa-dragon.yaml"
 
     mkdir -p \
+        "${MINI_REPO}/content/home/.config/zsh" \
         "${MINI_REPO}/content/home/.config/mise" \
         "${MINI_REPO}/content/home/.config/nvim/lua" \
         "${MINI_REPO}/content/assets/palettes/nvim" \
+        "${HOME}/.config/zsh" \
         "${HOME}/.config/nvim" \
         "${HOME}/.local/state/mise/tracked-configs"
 
-    : > "${MINI_REPO}/content/home/.zshrc"
+    : > "${MINI_REPO}/content/home/.config/zsh/.zshrc"
     : > "${MINI_REPO}/content/home/.config/mise/config.toml"
     : > "${MINI_REPO}/content/assets/palettes/nvim/kanagawa-dragon.lua"
     ln -s "${MINI_REPO}/content/assets/palettes/nvim/kanagawa-dragon.lua" \
         "${MINI_REPO}/content/home/.config/nvim/lua/dots-theme.lua"
 
-    ln -s "${MINI_REPO}/content/home/.zshrc" "${HOME}/.zshrc"
+    ln -s "${MINI_REPO}/content/home/.config/zsh/.zshrc" "${HOME}/.config/zsh/.zshrc"
     ln -s "${MINI_REPO}/content/home/.config/nvim/lua" "${HOME}/.config/nvim/lua"
     ln -s "${MINI_REPO}/content/home/.config/mise/config.toml" \
         "${HOME}/.local/state/mise/tracked-configs/example"
@@ -46,7 +48,7 @@ teardown() {
     run sh "${MINI_REPO}/src/commands/uninstall.sh" --yes
 
     [ "${status}" -eq 0 ]
-    [ ! -e "${HOME}/.zshrc" ]
+    [ ! -e "${HOME}/.config/zsh/.zshrc" ]
     [ ! -e "${HOME}/.config/nvim/lua" ]
     [ -L "${HOME}/.local/state/mise/tracked-configs/example" ]
     [ -L "${MINI_REPO}/content/home/.config/nvim/lua/dots-theme.lua" ]
@@ -58,7 +60,7 @@ teardown() {
 
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"Uninstall (dry-run)"* ]]
-    [ -L "${HOME}/.zshrc" ]
+    [ -L "${HOME}/.config/zsh/.zshrc" ]
     [ -L "${HOME}/.config/nvim/lua" ]
     [ -L "${HOME}/.local/state/mise/tracked-configs/example" ]
     [ -f "${MINI_REPO}/manifest.json" ]

@@ -34,6 +34,9 @@
 # ── Parent directories ─────────────────────────────────────────────────────────
 # Ensure every ~/.config/<app>/ directory exists before the link block runs.
 - create:
+  - ~/.local/share/zinit
+  - ~/.local/state/zsh
+  - ~/.cache/zsh
   - ~/.config/zsh
   - ~/.config/zsh/plugins/zoxide
   - ~/.config/zsh/plugins/mise
@@ -55,9 +58,10 @@
 # OS-conditional entries use if: (shell predicate; zero exit = proceed).
 - link:
     # Shell entry points
-    ~/.zshrc: content/home/.zshrc
-    ~/.zprofile: content/home/.zprofile
     ~/.zshenv: content/home/.zshenv
+    ~/.config/zsh/.zshenv: content/home/.config/zsh/.zshenv
+    ~/.config/zsh/.zprofile: content/home/.config/zsh/.zprofile
+    ~/.config/zsh/.zshrc: content/home/.config/zsh/.zshrc
 
     # Zsh config fragments
     ~/.config/zsh/env.zsh: content/home/.config/zsh/env.zsh

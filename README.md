@@ -58,6 +58,7 @@ If `@ukiyo-theme` does not refresh in an active tmux session after a switch, run
 ## How it works
 
 - **Symlinks via dotbot**: `install.conf.yaml` declares every base file under `home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
+- **Zsh via XDG/ZDOTDIR**: `~/.zshenv` is the only zsh startup file kept at `$HOME`; it sets the XDG base dirs and `ZDOTDIR=$XDG_CONFIG_HOME/zsh`, so zsh reads `.zprofile` and `.zshrc` from `~/.config/zsh`. History lives under `~/.local/state/zsh`, and compinit cache under `~/.cache/zsh`.
 - **Theme symlinks**: each theme switch re-links per-app theme files and updates the local manifest.
 - **Tmux fence**: `home/.config/tmux/tmux.conf` contains a `# >>> dots:theme >>>` / `# <<< dots:theme <<<` block holding the `@ukiyo-theme` line. The theme switcher rewrites between the fences.
 - **Starship fence**: `home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
