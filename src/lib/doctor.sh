@@ -231,25 +231,28 @@ check_starship_init() {
 # ---------------------------------------------------------------------------
 # Tmux fenced block
 # ---------------------------------------------------------------------------
-check_tmux_fence() {
-    _ctf_label="tmux fenced theme block"
+check_tmux_theme() {
+    _ctf_label="tmux theme default + local override"
     _ctf_conf="$(path_home_tmux_config)"
     if [ ! -r "${_ctf_conf}" ]; then
         _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
         return 1
     fi
-    _ctf_open="$(_doc_count_lines '^# >>> dots:theme >>>$' "${_ctf_conf}")"
-    _ctf_close="$(_doc_count_lines '^# <<< dots:theme <<<$' "${_ctf_conf}")"
-    if [ "${_ctf_open}" = 1 ] && [ "${_ctf_close}" = 1 ]; then
-        if grep -q 'set -g @ukiyo-theme' "${_ctf_conf}"; then
-            _doc_pass "${_ctf_label}"
-            return 0
-        fi
-        _doc_fail "${_ctf_label}" "fences present but no @ukiyo-theme line between them"
+    if ! grep -q "^set -g @ukiyo-theme '" "${_ctf_conf}"; then
+        _doc_fail "${_ctf_label}" "no default @ukiyo-theme line in tmux.conf"
         return 1
     fi
-    _doc_fail "${_ctf_label}" "expected exactly one open + one close fence (got open=${_ctf_open}, close=${_ctf_close})"
-    return 1
+    if ! grep -q '^source-file -q ~/.config/tmux/local.conf$' "${_ctf_conf}"; then
+        _doc_fail "${_ctf_label}" "tmux.conf does not source the machine-local override (local.conf)"
+        return 1
+    fi
+    _ctf_local="$(path_home_tmux_local)"
+    if [ -f "${_ctf_local}" ] && ! grep -q "^set -g @ukiyo-theme '" "${_ctf_local}"; then
+        _doc_fail "${_ctf_label}" "local.conf present but carries no @ukiyo-theme line"
+        return 1
+    fi
+    _doc_pass "${_ctf_label}"
+    return 0
 }
 
 # ---------------------------------------------------------------------------
@@ -368,5 +371,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_fence check_starship_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS

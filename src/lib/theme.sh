@@ -358,10 +358,13 @@ theme_apply() {
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
 
-    # --- Step 3: tmux fence (theme marker rewritten in place) ---
-    _th_apply_fence "${_ta_tmux_conf}" \
-        "set -g @ukiyo-theme '${_ta_theme}/${_ta_flavor}'" \
-        '^(set -g |run-shell )' || return 1
+    # --- Step 3: tmux machine-local override ---
+    # tmux.conf carries the default; the active choice lives in local.conf
+    # (sourced with -q), so theme switches never touch the repo file.
+    _ta_tmux_local="$(path_home_tmux_local)"
+    mkdir -p "$(dirname "${_ta_tmux_local}")"
+    printf '# Machine-local dots state — written by ./dots theme; not tracked by the repo.\nset -g @ukiyo-theme '"'"'%s/%s'"'"'\n' \
+        "${_ta_theme}" "${_ta_flavor}" > "${_ta_tmux_local}" || return 1
 
     # --- Step 3b: starship fence (active palette selected in place) ---
     # Starship has no external-theme include, so the active palette is chosen by
