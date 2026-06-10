@@ -1,6 +1,4 @@
 # Dotfiles — ZSH
 
-export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-export ZDOTDIR="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}"
-
-[[ -f $ZDOTDIR/.zshenv ]] && . $ZDOTDIR/.zshenv
+ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+[[ -f $ZDOTDIR/.zshenv ]] && source "$ZDOTDIR/.zshenv"
