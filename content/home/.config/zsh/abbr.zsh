@@ -45,10 +45,19 @@ else
 fi
 
 # Tmux
+abbr -S --quieter --force tx="tmux"
 abbr -S --quieter --force txs="tmux new-session -A -s"
 abbr -S --quieter --force txa="tmux attach -t"
 abbr -S --quieter --force txl="tmux ls"
+abbr -S --quieter --force txr="tmux rename-session -t"
+abbr -S --quieter --force txrw="tmux rename-window -t"
 abbr -S --quieter --force txk="tmux kill-session -t"
+abbr -S --quieter --force txka="tmux kill-session -t -a"
+abbr -S --quieter --force txkw="tmux kill-window -t"
+abbr -S --quieter --force txkp="tmux kill-pane -t"
+abbr -S --quieter --force txkk="tmux kill-server"
 
 # System
 abbr -S --quieter --force c=clear
+abbr -S --quieter --force x=exit
+
