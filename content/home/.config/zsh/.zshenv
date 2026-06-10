@@ -1,6 +1,5 @@
-# Dotfiles — ZSH
-
-# Loads on every shell start. Keep it small: scripts inherit this too.
+# Dotfiles — Environment
+# Runs for every zsh invocation (scripts included); keep it light.
 
 # XDG
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -11,4 +10,9 @@ export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 # ZDOTDIR
 export ZDOTDIR="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}"
 
-[[ -f "$ZDOTDIR/env.zsh" ]] && source "$ZDOTDIR/env.zsh"
+# Tools
+export MISE_DATA_DIR="${XDG_DATA_HOME}/mise"
+export MISE_CACHE_DIR="${XDG_CACHE_HOME}/mise"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PAGER="bat --paging=always"

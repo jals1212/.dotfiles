@@ -38,8 +38,6 @@
   - ~/.local/state/zsh
   - ~/.cache/zsh
   - ~/.config/zsh
-  - ~/.config/zsh/plugins/zoxide
-  - ~/.config/zsh/plugins/mise
   - ~/.config/nvim
   - ~/.config/tmux
   - ~/.config/ghostty
@@ -64,21 +62,15 @@
     ~/.config/zsh/.zshrc: content/home/.config/zsh/.zshrc
 
     # Zsh config fragments
-    ~/.config/zsh/env.zsh: content/home/.config/zsh/env.zsh
-    ~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh
     ~/.config/zsh/zinit.zsh: content/home/.config/zsh/zinit.zsh
-    ~/.config/zsh/history.zsh: content/home/.config/zsh/history.zsh
     ~/.config/zsh/aliases.zsh: content/home/.config/zsh/aliases.zsh
     ~/.config/zsh/abbr.zsh: content/home/.config/zsh/abbr.zsh
     ~/.config/zsh/functions.zsh: content/home/.config/zsh/functions.zsh
     ~/.config/zsh/keymaps.zsh: content/home/.config/zsh/keymaps.zsh
-    ~/.config/zsh/completions.zsh: content/home/.config/zsh/completions.zsh
+    ~/.config/zsh/tools.zsh: content/home/.config/zsh/tools.zsh
     ~/.config/zsh/prompt.zsh: content/home/.config/zsh/prompt.zsh
     ~/.config/zsh/p10k.zsh: content/home/.config/zsh/p10k.zsh
     ~/.config/zsh/plugins.zsh: content/home/.config/zsh/plugins.zsh
-    ~/.config/zsh/tmux.zsh: content/home/.config/zsh/tmux.zsh
-    ~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh
-    ~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh
 
     # Tool-owned shell/config entrypoints
     ~/.config/fzf/config.zsh: content/home/.config/fzf/config.zsh

@@ -139,14 +139,10 @@ check_zshrc_link()    { check_symlink_into_repo "ZDOTDIR .zshrc symlink"    "$(p
 check_zprofile_link() { check_symlink_into_repo "ZDOTDIR .zprofile symlink" "$(path_home_zprofile)"; }
 check_zshenv_link()   { check_symlink_into_repo "home .zshenv symlink"      "$(path_home_zshenv)"; }
 check_zdotdir_zshenv_link() { check_symlink_into_repo "ZDOTDIR .zshenv symlink" "$(path_home_zdotdir_zshenv)"; }
-check_zsh_env_link()  { check_symlink_into_repo "zsh env"           "$(path_home_zsh_env)"; }
-check_zsh_paths_link(){ check_symlink_into_repo "zsh paths"          "$(path_home_zsh_paths)"; }
 check_zsh_zinit_link(){ check_symlink_into_repo "zsh zinit"          "$(path_home_zsh_zinit)"; }
-check_zsh_history_link(){ check_symlink_into_repo "zsh history"      "$(path_home_zsh_history)"; }
-check_zsh_completions_link(){ check_symlink_into_repo "zsh completions" "$(path_home_zsh_completions)"; }
+check_zsh_tools_link(){ check_symlink_into_repo "zsh tools"          "$(path_home_zsh_tools)"; }
 check_zsh_prompt_link(){ check_symlink_into_repo "zsh prompt"        "$(path_home_zsh_prompt)"; }
 check_zsh_plugins_link(){ check_symlink_into_repo "zsh plugins"      "$(path_home_zsh_plugins)"; }
-check_zsh_tmux_link() { check_symlink_into_repo "zsh tmux"           "$(path_home_zsh_tmux)"; }
 check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
 check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
 check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "$(path_home_ghostty_config)"; }
@@ -393,5 +389,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_env_link check_zsh_paths_link check_zsh_zinit_link check_zsh_history_link check_zsh_completions_link check_zsh_prompt_link check_zsh_plugins_link check_zsh_tmux_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_fence check_starship_fence check_p10k_fence check_prompt_fence check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_fence check_starship_fence check_p10k_fence check_prompt_fence check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS

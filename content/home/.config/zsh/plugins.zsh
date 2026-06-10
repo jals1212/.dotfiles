@@ -1,18 +1,39 @@
 # Dotfiles — Plugins
+# Everything zinit loads, in one place. All plugins are deferred (turbo) to
+# just after the first prompt; wait slots keep the required order:
+# completions+compinit (0a) → fzf-tab (0b) → widget wrappers (0c).
 
 (( $+functions[zinit] )) || return
 
-# All plugins load deferred (turbo) just after the first prompt. Slot order
-# preserves the required sequence: compinit (0a, completions.zsh) → fzf-tab
-# (0b) → autosuggestions → syntax-highlighting (0c, registration order).
+# compinit with a daily security audit: a fresh dump (<20h) is trusted and
+# loaded with -C (skips the expensive audit); an old or missing dump triggers
+# a full rebuild. The dump is zcompiled in the background so later shells map
+# the compiled form instead of re-parsing it.
+_dots_compinit() {
+    setopt local_options extended_glob
+    local dump="${XDG_CACHE_HOME}/zsh/zcompdump-${ZSH_VERSION}"
+    [[ -d "${dump:h}" ]] || command mkdir -p "${dump:h}"
+    autoload -Uz compinit
+    if [[ -n ${dump}(#qN.mh-20) ]]; then
+        compinit -C -d "$dump"
+    else
+        compinit -d "$dump"
+    fi
+    { [[ -s "$dump" && ( ! -s "${dump}.zwc" || "$dump" -nt "${dump}.zwc" ) ]] && zcompile "$dump" } &!
+}
 
-# Zoxide
-zinit ice wait"0a" lucid has"zoxide"
-zinit light "$ZDOTDIR/plugins/zoxide"
+# Completion definitions must be loaded before compinit. cdreplay re-applies
+# compdef calls plugins issued before compinit existed.
+zinit ice wait"0a" lucid atload"_dots_compinit; zinit cdreplay -q"
+zinit light zsh-users/zsh-completions
 
-# Mise
-zinit ice wait"0a" lucid has"mise"
-zinit light "$ZDOTDIR/plugins/mise"
+# CLI tool integrations (zoxide, mise)
+zinit ice wait"0a" lucid
+zinit snippet "$ZDOTDIR/tools.zsh"
+
+# fzf-tab must load after compinit, but before widget-wrapping plugins.
+zinit ice wait"0b" lucid
+zinit light Aloxaf/fzf-tab
 
 # Abbreviations
 export ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR/abbr.zsh"

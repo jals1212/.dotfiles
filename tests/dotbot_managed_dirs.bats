@@ -24,9 +24,7 @@ teardown() {
     [[ "${output}" == *"${HOME}"* ]]
     [[ "${output}" == *"${HOME}/.config/zsh"* ]]
     [[ "${output}" != *"oh-my-posh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/plugins/zoxide"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/plugins/mise"* ]]
-    [[ "${output}" != *"${HOME}/.config/zsh/plugins/atuin"* ]]
+    [[ "${output}" != *"${HOME}/.config/zsh/plugins"* ]]
     [[ "${output}" == *"${HOME}/.config/nvim"* ]]
     [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]]
     [[ "${output}" == *"${HOME}/.config/fzf"* ]]
@@ -47,17 +45,18 @@ teardown() {
     grep -Fq "~/.config/zsh/.zshrc: content/home/.config/zsh/.zshrc" "${config}"
     ! grep -Fq "~/.zshrc:" "${config}"
     ! grep -Fq "~/.zprofile:" "${config}"
-    grep -Fq "~/.config/zsh/env.zsh: content/home/.config/zsh/env.zsh" "${config}"
     grep -Fq "~/.config/zsh/abbr.zsh: content/home/.config/zsh/abbr.zsh" "${config}"
-    grep -Fq "~/.config/zsh/paths.zsh: content/home/.config/zsh/paths.zsh" "${config}"
     grep -Fq "~/.config/zsh/zinit.zsh: content/home/.config/zsh/zinit.zsh" "${config}"
-    grep -Fq "~/.config/zsh/history.zsh: content/home/.config/zsh/history.zsh" "${config}"
-    grep -Fq "~/.config/zsh/completions.zsh: content/home/.config/zsh/completions.zsh" "${config}"
+    grep -Fq "~/.config/zsh/tools.zsh: content/home/.config/zsh/tools.zsh" "${config}"
     grep -Fq "~/.config/zsh/prompt.zsh: content/home/.config/zsh/prompt.zsh" "${config}"
+    grep -Fq "~/.config/zsh/p10k.zsh: content/home/.config/zsh/p10k.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins.zsh: content/home/.config/zsh/plugins.zsh" "${config}"
-    grep -Fq "~/.config/zsh/tmux.zsh: content/home/.config/zsh/tmux.zsh" "${config}"
-    grep -Fq "~/.config/zsh/plugins/zoxide/zoxide.plugin.zsh: content/home/.config/zsh/plugins/zoxide/zoxide.plugin.zsh" "${config}"
-    grep -Fq "~/.config/zsh/plugins/mise/mise.plugin.zsh: content/home/.config/zsh/plugins/mise/mise.plugin.zsh" "${config}"
+    ! grep -Fq "~/.config/zsh/env.zsh:" "${config}"
+    ! grep -Fq "~/.config/zsh/paths.zsh:" "${config}"
+    ! grep -Fq "~/.config/zsh/history.zsh:" "${config}"
+    ! grep -Fq "~/.config/zsh/completions.zsh:" "${config}"
+    ! grep -Fq "~/.config/zsh/tmux.zsh:" "${config}"
+    ! grep -Fq "zsh/plugins/" "${config}"
     ! grep -Fq "atuin" "${config}"
     ! grep -Fq "oh-my-posh" "${config}"
 }
@@ -73,11 +72,8 @@ teardown() {
 @test "zshrc sources fzf and eza tool entrypoints" {
     zshrc="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc"
 
-    grep -Fq 'history.zsh' "${zshrc}"
-    grep -Fq 'completions.zsh' "${zshrc}"
     grep -Fq 'prompt.zsh' "${zshrc}"
     grep -Fq 'plugins.zsh' "${zshrc}"
-    grep -Fq 'tmux.zsh' "${zshrc}"
     grep -Fq '/fzf/config.zsh' "${zshrc}"
     grep -Fq '/eza/config.zsh' "${zshrc}"
     ! grep -Fq 'FZF_DEFAULT_COMMAND=' "${zshrc}"
@@ -91,16 +87,19 @@ teardown() {
     zprofile="${REPO_ROOT_REAL}/content/home/.config/zsh/.zprofile"
     zshrc="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc"
 
-    grep -Fq 'env.zsh' "${zshenv}"
-    grep -Fq 'paths.zsh' "${zprofile}"
-    ! grep -Fq 'paths.zsh' "${zshrc}"
-    ! grep -Fq 'env.zsh' "${zshrc}"
+    grep -Fq 'ZDOTDIR' "${zshenv}"
+    grep -Fq 'EDITOR' "${zshenv}"
+    grep -Fq 'shellenv' "${zprofile}"
+    ! grep -Fq 'shellenv' "${zshrc}"
+    ! grep -Fq 'EDITOR' "${zshrc}"
+    grep -Fq 'HISTFILE' "${zshrc}"
 }
 
 @test "zsh consumers use prepared XDG variables directly" {
     for file in \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc" \
-        "${REPO_ROOT_REAL}/content/home/.config/zsh/completions.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/plugins.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/tools.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/zinit.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/fzf/config.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/eza/config.zsh"

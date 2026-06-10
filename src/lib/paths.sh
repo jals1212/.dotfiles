@@ -113,14 +113,10 @@ path_home_zshrc() { path_home_file ".config/zsh/.zshrc"; }
 path_home_zprofile() { path_home_file ".config/zsh/.zprofile"; }
 path_home_zshenv() { path_home_file ".zshenv"; }
 path_home_zdotdir_zshenv() { path_home_file ".config/zsh/.zshenv"; }
-path_home_zsh_env() { path_home_file ".config/zsh/env.zsh"; }
-path_home_zsh_paths() { path_home_file ".config/zsh/paths.zsh"; }
 path_home_zsh_zinit() { path_home_file ".config/zsh/zinit.zsh"; }
-path_home_zsh_history() { path_home_file ".config/zsh/history.zsh"; }
-path_home_zsh_completions() { path_home_file ".config/zsh/completions.zsh"; }
+path_home_zsh_tools() { path_home_file ".config/zsh/tools.zsh"; }
 path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }
 path_home_zsh_plugins() { path_home_file ".config/zsh/plugins.zsh"; }
-path_home_zsh_tmux() { path_home_file ".config/zsh/tmux.zsh"; }
 path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }
