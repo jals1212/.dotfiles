@@ -1,12 +1,9 @@
 # Dotfiles — powerlevel10k
 # Lean-style prompt; structure is theme-independent. Per-theme colors live in
-# the palette tables below; the active palette is selected inside the
-# dots:theme fence, which `./dots theme <theme> <flavor>` rewrites in place.
-# Do not edit the fenced line by hand.
+# the palette tables below; the active one is named by DOTS_THEME, which
+# `./dots theme <theme> <flavor>` records in $ZDOTDIR/local.zsh.
 
-# >>> dots:theme >>>
-_dots_p10k_palette="kanagawa_dragon"
-# <<< dots:theme <<<
+_dots_p10k_palette="${DOTS_THEME:-kanagawa_dragon}"
 
 # Same hex values as the starship.toml palettes (blue mauve green gray red).
 typeset -gA _dots_p10k_colors

@@ -47,11 +47,6 @@ _th_starship_conf_path() {
     path_content_starship_config
 }
 
-# _th_p10k_conf_path — print the absolute path to the repo p10k.zsh
-_th_p10k_conf_path() {
-    path_content_p10k_config
-}
-
 # _th_manifest_path — print the absolute path to manifest.json
 _th_manifest_path() {
     path_manifest
@@ -131,6 +126,45 @@ _th_apply_fence() {
     return 0
 }
 
+# dots_local_set <var> <value>
+#   Record a machine-local choice in ~/.config/zsh/local.zsh — a real file in
+#   $HOME (never tracked by the repo), sourced from .zshenv. Lines use the
+#   guarded form `export VAR="${VAR:-value}"` so a per-shell env override
+#   still wins over the persisted value.
+dots_local_set() {
+    _dls_var="${1:?dots_local_set: variable required}"
+    _dls_val="${2:?dots_local_set: value required}"
+    _dls_file="$(path_home_zsh_local)"
+    _dls_tmp="${_dls_file}.tmp"
+
+    if [ ! -f "${_dls_file}" ]; then
+        printf '# Machine-local dots state — written by ./dots; not tracked by the repo.\n' > "${_dls_file}"
+    fi
+    grep -v "^export ${_dls_var}=" "${_dls_file}" > "${_dls_tmp}" || true
+    printf 'export %s="${%s:-%s}"\n' "${_dls_var}" "${_dls_var}" "${_dls_val}" >> "${_dls_tmp}"
+    mv "${_dls_tmp}" "${_dls_file}"
+}
+
+# dots_local_get <var>
+#   Print the persisted value of <var> from local.zsh; non-zero when absent.
+dots_local_get() {
+    _dlg_var="${1:?dots_local_get: variable required}"
+    _dlg_file="$(path_home_zsh_local)"
+    [ -f "${_dlg_file}" ] || return 1
+    _dlg_val="$(sed -n "s/^export ${_dlg_var}=\"\${${_dlg_var}:-\(.*\)}\"$/\1/p" "${_dlg_file}" | head -1)"
+    [ -n "${_dlg_val}" ] || return 1
+    printf '%s\n' "${_dlg_val}"
+}
+
+# dots_request_reload
+#   Drop a marker the interactive `dots` zsh wrapper checks to offer an
+#   `exec zsh` once the command finishes.
+dots_request_reload() {
+    _drr_dir="$(path_dots_state_dir)"
+    [ -d "${_drr_dir}" ] || mkdir -p "${_drr_dir}"
+    : > "${_drr_dir}/reload-needed"
+}
+
 # _th_write_manifest <theme> <flavor> [prompt]
 #   Atomically write the slim manifest to REPO_ROOT/manifest.json.
 #   When [prompt] is omitted, the current manifest value is preserved, falling
@@ -146,8 +180,8 @@ _th_write_manifest() {
     if [ -z "${_twm_prompt}" ]; then
         _twm_prompt="$(_th_read_manifest_field prompt 2>/dev/null || printf '')"
     fi
-    if [ -z "${_twm_prompt}" ] && [ -f "$(path_content_zsh_prompt)" ]; then
-        _twm_prompt="$(sed -n 's/^_dots_prompt_engine="\([^"]*\)".*/\1/p' "$(path_content_zsh_prompt)" | head -1)"
+    if [ -z "${_twm_prompt}" ]; then
+        _twm_prompt="$(dots_local_get DOTS_PROMPT 2>/dev/null || printf '')"
     fi
     _twm_prompt="${_twm_prompt:-starship}"
 
@@ -340,14 +374,14 @@ theme_apply() {
             '^[[]' || return 1
     fi
 
-    # --- Step 3c: p10k fence (active palette selected in place) ---
-    # Same approach as starship: every palette lives in the one p10k.zsh and
-    # the active one is named by a single fenced assignment.
-    _ta_p10k_conf="$(_th_p10k_conf_path)"
-    if [ -f "${_ta_p10k_conf}" ]; then
-        _th_apply_fence "${_ta_p10k_conf}" \
-            "_dots_p10k_palette=\"${_ta_theme}_${_ta_flavor}\"" \
-            '^typeset' || return 1
+    # --- Step 3c: machine-local theme state ---
+    # p10k reads its palette from DOTS_THEME at source time, so the choice
+    # lives in local.zsh instead of a repo fence. A reload marker is dropped
+    # when p10k is active, since it cannot re-read the palette in place
+    # (starship re-reads its config every prompt and needs nothing).
+    dots_local_set DOTS_THEME "${_ta_theme}_${_ta_flavor}" || return 1
+    if [ "$(_th_read_manifest_field prompt 2>/dev/null || printf '')" = "p10k" ]; then
+        dots_request_reload
     fi
 
     # --- Step 4: Bat cache rebuild ---

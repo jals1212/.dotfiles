@@ -1,7 +1,6 @@
 # Dotfiles — Aliases
 
-# Dotfiles
-alias dots='~/.dotfiles/dots'
+# Dotfiles (the dots command is a function — see functions.zsh)
 alias dotfiles='$EDITOR ~/.dotfiles'
 
 # Globals

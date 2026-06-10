@@ -72,10 +72,6 @@ path_content_starship_config() {
     path_repo_file "content/home/.config/starship.toml"
 }
 
-path_content_p10k_config() {
-    path_repo_file "content/home/.config/zsh/p10k.zsh"
-}
-
 path_content_zsh_prompt() {
     path_repo_file "content/home/.config/zsh/prompt.zsh"
 }
@@ -114,6 +110,8 @@ path_home_zprofile() { path_home_file ".config/zsh/.zprofile"; }
 path_home_zshenv() { path_home_file ".zshenv"; }
 path_home_zdotdir_zshenv() { path_home_file ".config/zsh/.zshenv"; }
 path_home_zsh_zinit() { path_home_file ".config/zsh/zinit.zsh"; }
+path_home_zsh_local() { path_home_file ".config/zsh/local.zsh"; }
+path_dots_state_dir() { printf '%s/dots' "${XDG_STATE_HOME:-${HOME}/.local/state}"; }
 path_home_zsh_tools() { path_home_file ".config/zsh/tools.zsh"; }
 path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }
 path_home_zsh_plugins() { path_home_file ".config/zsh/plugins.zsh"; }

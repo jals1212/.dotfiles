@@ -1,13 +1,9 @@
 # Dotfiles — Prompt
-# The active engine is selected inside the dots:prompt fence, which
-# `./dots prompt <engine>` rewrites in place; DOTS_PROMPT overrides it for a
-# single shell. Do not edit the fenced line by hand.
+# The engine choice is machine-local: `./dots prompt <engine>` records it as
+# DOTS_PROMPT in $ZDOTDIR/local.zsh (sourced from .zshenv, never tracked by
+# the repo). Setting DOTS_PROMPT in the environment overrides it per shell.
 
-# >>> dots:prompt >>>
-_dots_prompt_engine="p10k"
-# <<< dots:prompt <<<
-
-if [[ "${DOTS_PROMPT:-$_dots_prompt_engine}" == "p10k" ]] && (( $+functions[zinit] )); then
+if [[ "${DOTS_PROMPT:-starship}" == "p10k" ]] && (( $+functions[zinit] )); then
     zinit ice depth=1
     zinit light romkatv/powerlevel10k
     [[ -f "$ZDOTDIR/p10k.zsh" ]] && source "$ZDOTDIR/p10k.zsh"
@@ -16,5 +12,3 @@ else
     # presence so startup never errors when it is absent.
     command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 fi
-
-unset _dots_prompt_engine

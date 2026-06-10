@@ -1,5 +1,27 @@
 # Dotfiles — Functions
 
+# Dotfiles
+
+# Wrapper over the dots script: a child process cannot exec its parent shell,
+# so reload-after-change lives here. When the script drops a reload marker
+# (prompt/theme changes that only apply to new shells), offer an exec zsh.
+dots() {
+    ~/.dotfiles/dots "$@"
+    local ret=$?
+    local marker="${XDG_STATE_HOME:-$HOME/.local/state}/dots/reload-needed"
+    if (( ret == 0 )) && [[ -f "$marker" && -o interactive && -t 0 && -t 1 ]]; then
+        command rm -f -- "$marker"
+        if command -v gum >/dev/null 2>&1; then
+            gum confirm "Reload shell to apply changes?" && exec zsh
+        else
+            local _reply
+            read -q "_reply?Reload shell to apply changes? [y/N] " && { print; exec zsh; }
+            print
+        fi
+    fi
+    return $ret
+}
+
 # Filesystem
 
 # cd to Finder's current directory (macOS only — relies on osascript/Finder)

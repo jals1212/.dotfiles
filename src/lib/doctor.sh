@@ -326,45 +326,24 @@ check_starship_fence() {
     _doc_fail "${_csf_label}" "expected exactly one open + one close fence (got open=${_csf_open}, close=${_csf_close})"
     return 1
 }
-check_p10k_fence() {
-    _cpf_label="p10k theme fence"
-    _cpf_conf="$(path_home_file ".config/zsh/p10k.zsh")"
-    if [ ! -r "${_cpf_conf}" ]; then
-        _doc_fail "${_cpf_label}" "unreadable: ${_cpf_conf}"
+check_local_state() {
+    _cls_label="machine-local zsh state"
+    _cls_file="$(path_home_zsh_local)"
+    if [ ! -f "${_cls_file}" ]; then
+        _doc_pass "${_cls_label} (absent; defaults apply)"
+        return 0
+    fi
+    if [ -L "${_cls_file}" ]; then
+        _doc_fail "${_cls_label}" "must be a real file, found a symlink: ${_cls_file}"
         return 1
     fi
-    _cpf_open="$(_doc_count_lines '^# >>> dots:theme >>>$' "${_cpf_conf}")"
-    _cpf_close="$(_doc_count_lines '^# <<< dots:theme <<<$' "${_cpf_conf}")"
-    if [ "${_cpf_open}" = 1 ] && [ "${_cpf_close}" = 1 ]; then
-        if grep -q '^_dots_p10k_palette=' "${_cpf_conf}"; then
-            _doc_pass "${_cpf_label}"
-            return 0
-        fi
-        _doc_fail "${_cpf_label}" "fence present but no '_dots_p10k_palette=' line between markers"
-        return 1
-    fi
-    _doc_fail "${_cpf_label}" "expected exactly one open + one close fence (got open=${_cpf_open}, close=${_cpf_close})"
-    return 1
-}
-check_prompt_fence() {
-    _cprf_label="prompt engine fence"
-    _cprf_conf="$(path_home_zsh_prompt)"
-    if [ ! -r "${_cprf_conf}" ]; then
-        _doc_fail "${_cprf_label}" "unreadable: ${_cprf_conf}"
-        return 1
-    fi
-    _cprf_open="$(_doc_count_lines '^# >>> dots:prompt >>>$' "${_cprf_conf}")"
-    _cprf_close="$(_doc_count_lines '^# <<< dots:prompt <<<$' "${_cprf_conf}")"
-    if [ "${_cprf_open}" = 1 ] && [ "${_cprf_close}" = 1 ]; then
-        if grep -q '^_dots_prompt_engine=' "${_cprf_conf}"; then
-            _doc_pass "${_cprf_label}"
-            return 0
-        fi
-        _doc_fail "${_cprf_label}" "fence present but no '_dots_prompt_engine=' line between markers"
-        return 1
-    fi
-    _doc_fail "${_cprf_label}" "expected exactly one open + one close fence (got open=${_cprf_open}, close=${_cprf_close})"
-    return 1
+    _cls_prompt="$(sed -n 's/^export DOTS_PROMPT="\${DOTS_PROMPT:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
+    case "${_cls_prompt:-starship}" in
+        starship|p10k) ;;
+        *) _doc_fail "${_cls_label}" "DOTS_PROMPT not whitelisted: ${_cls_prompt}"; return 1 ;;
+    esac
+    _doc_pass "${_cls_label}"
+    return 0
 }
 
 # ---------------------------------------------------------------------------
@@ -389,5 +368,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_fence check_starship_fence check_p10k_fence check_prompt_fence check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_fence check_starship_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS
