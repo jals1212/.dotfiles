@@ -27,10 +27,10 @@ Show active theme:
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
 2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 7 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
-3. Rewrites the `# >>> dots:theme >>>` … `# <<< dots:theme <<<` fenced block in two files: `home/.config/tmux/tmux.conf` (sets tmux-ukiyo's `@ukiyo-theme`) and `home/.config/starship.toml` (sets Starship's active `palette`).
+3. Rewrites the `# >>> dots:theme >>>` … `# <<< dots:theme <<<` fenced block in `home/.config/starship.toml` (sets Starship's active `palette`) and persists `DOTS_THEME=<theme>_<flavor>` in `~/.config/zsh/local.zsh` — machine-local state read by tmux's `@themux_theme` and the p10k palette.
 4. Runs `bat cache --build` (skipped when bat is absent).
-5. If a tmux server is running, runs `tmux source-file ~/.tmux.conf` so the new fenced block takes effect.
-6. Writes `manifest.json` atomically: `{ version: "3.0.0", theme, flavor, applied_at }`.
+5. If a tmux server is running, pushes the new `DOTS_THEME` into its global environment (`tmux set-environment -g`) and re-sources the config so themux picks it up.
+6. Writes `manifest.json` atomically: `{ version, theme, flavor, prompt, applied_at }`.
 
 If a running tmux session does not pick up the new theme, run `tmux kill-server` and restart tmux.
 
@@ -58,7 +58,9 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 
 Neovim reads the active theme from `manifest.json`; there is no mutable `~/.config/nvim/lua/dots-theme.lua` symlink.
 
-tmux and Starship are the two apps themed by a fenced rewrite instead of a per-theme symlink: `tmux.conf`'s `@ukiyo-theme` and `starship.toml`'s active `palette` are rewritten in place inside their `# >>> dots:theme >>>` … `# <<< dots:theme <<<` blocks. Starship has no external-theme include (unlike ghostty), so all of its per-theme palettes live in the one `starship.toml` and only the active `palette` line changes.
+Starship is the one app themed by a fenced rewrite instead of a per-theme symlink: `starship.toml`'s active `palette` line is rewritten in place inside its `# >>> dots:theme >>>` … `# <<< dots:theme <<<` block. Starship has no external-theme include (unlike ghostty), so all of its per-theme palettes live in the one `starship.toml` and only the active `palette` line changes.
+
+tmux needs neither a symlink nor a fence: `tmux.conf` sets themux's `@themux_theme` from the `DOTS_THEME` environment variable (whose `theme_flavor` values match themux theme names), with a tracked default for servers started without it. The switcher refreshes a running server's environment and re-sources the config, so the repo file never changes.
 
 ## Re-apply current theme
 
@@ -75,4 +77,4 @@ tmux and Starship are the two apps themed by a fenced rewrite instead of a per-t
 ./dots doctor
 ```
 
-Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, the tmux fenced block contains exactly one open + one close marker with an `@ukiyo-theme` line between them, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.
+Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, `tmux.conf` sets `@themux_theme` from `DOTS_THEME` and carries a default fallback, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.

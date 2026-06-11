@@ -90,7 +90,7 @@ Change theme:
 ./dots theme --current          # print active theme
 ```
 
-The theme switcher re-links the per-app theme files (`~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the fenced theme lines in `tmux.conf` (`@ukiyo-theme`) and `starship.toml` (`palette`), rebuilds the bat cache, reloads a running tmux server, and writes `manifest.json`.
+The theme switcher re-links the per-app theme files (`~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the fenced `palette` line in `starship.toml`, persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette), rebuilds the bat cache, reloads a running tmux server, and writes `manifest.json`.
 
 If a running tmux session does not pick up the new theme after `./dots theme`, run `tmux kill-server` and restart tmux.
 

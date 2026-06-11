@@ -130,7 +130,7 @@ Prefix is `Ctrl-a`.
 | `Ctrl-a` then `c` | New window in current path |
 | `Alt-g` | Toggle scratch session popup (80% × 80%) |
 | `Ctrl-a` then `K` | Kill all other sessions after confirm |
-| `Ctrl-a` then `T` | Open tmux-ukiyo theme menu |
+| `Ctrl-a` then `T` | Open themux theme menu |
 | `Ctrl-a` then `I` | Install TPM plugins |
 
 ### Pane resize

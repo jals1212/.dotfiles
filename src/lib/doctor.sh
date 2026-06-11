@@ -229,26 +229,21 @@ check_starship_init() {
 }
 
 # ---------------------------------------------------------------------------
-# Tmux fenced block
+# Tmux theme (driven by DOTS_THEME)
 # ---------------------------------------------------------------------------
 check_tmux_theme() {
-    _ctf_label="tmux theme default + local override"
+    _ctf_label="tmux theme from DOTS_THEME + default"
     _ctf_conf="$(path_home_tmux_config)"
     if [ ! -r "${_ctf_conf}" ]; then
         _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
         return 1
     fi
-    if ! grep -q "^set -g @ukiyo-theme '" "${_ctf_conf}"; then
-        _doc_fail "${_ctf_label}" "no default @ukiyo-theme line in tmux.conf"
+    if ! grep -Fq 'set -g @themux_theme "${DOTS_THEME}"' "${_ctf_conf}"; then
+        _doc_fail "${_ctf_label}" "tmux.conf does not set @themux_theme from DOTS_THEME"
         return 1
     fi
-    if ! grep -q '^source-file -q ~/.config/tmux/local.conf$' "${_ctf_conf}"; then
-        _doc_fail "${_ctf_label}" "tmux.conf does not source the machine-local override (local.conf)"
-        return 1
-    fi
-    _ctf_local="$(path_home_tmux_local)"
-    if [ -f "${_ctf_local}" ] && ! grep -q "^set -g @ukiyo-theme '" "${_ctf_local}"; then
-        _doc_fail "${_ctf_label}" "local.conf present but carries no @ukiyo-theme line"
+    if ! grep -q "^set -g @themux_theme '" "${_ctf_conf}"; then
+        _doc_fail "${_ctf_label}" "no default @themux_theme fallback line in tmux.conf"
         return 1
     fi
     _doc_pass "${_ctf_label}"

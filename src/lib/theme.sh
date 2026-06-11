@@ -37,11 +37,6 @@ _th_index_path() {
     path_themes_index
 }
 
-# _th_tmux_conf_path — print the absolute path to the repo tmux.conf
-_th_tmux_conf_path() {
-    path_content_tmux_conf
-}
-
 # _th_starship_conf_path — print the absolute path to the repo starship.toml
 _th_starship_conf_path() {
     path_content_starship_config
@@ -54,8 +49,8 @@ _th_manifest_path() {
 
 # _th_fence_count <file>
 #   Print the number of opening-fence lines (# >>> dots:theme >>>) in <file>.
-#   The dots:theme fence uses '#'-prefixed markers, which are valid comments in
-#   both tmux.conf and starship.toml (TOML), so one helper serves both.
+#   The dots:theme fence uses '#'-prefixed markers, which are valid comments
+#   in starship.toml (TOML), the only fenced file.
 _th_fence_count() {
     _tfc_file="${1:?_th_fence_count: file required}"
     if [ ! -f "${_tfc_file}" ]; then
@@ -344,13 +339,13 @@ theme_current() {
 
 # ---------------------------------------------------------------------------
 # theme_apply <theme> <flavor>
-#   Full theme apply: validate → dotbot → tmux fence → bat cache → manifest.
+#   Full theme apply: validate → dotbot → starship fence → local state →
+#   bat cache → tmux reload → manifest.
 #   Returns 0 on success, non-zero on any failure.
 # ---------------------------------------------------------------------------
 theme_apply() {
     _ta_theme="${1:?theme_apply: theme required}"
     _ta_flavor="${2:?theme_apply: flavor required}"
-    _ta_tmux_conf="$(_th_tmux_conf_path)"
 
     # --- Step 1: Validate ---
     theme_validate "${_ta_theme}" "${_ta_flavor}" || return 1
@@ -358,15 +353,7 @@ theme_apply() {
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
 
-    # --- Step 3: tmux machine-local override ---
-    # tmux.conf carries the default; the active choice lives in local.conf
-    # (sourced with -q), so theme switches never touch the repo file.
-    _ta_tmux_local="$(path_home_tmux_local)"
-    mkdir -p "$(dirname "${_ta_tmux_local}")"
-    printf '# Machine-local dots state — written by ./dots theme; not tracked by the repo.\nset -g @ukiyo-theme '"'"'%s/%s'"'"'\n' \
-        "${_ta_theme}" "${_ta_flavor}" > "${_ta_tmux_local}" || return 1
-
-    # --- Step 3b: starship fence (active palette selected in place) ---
+    # --- Step 3: starship fence (active palette selected in place) ---
     # Starship has no external-theme include, so the active palette is chosen by
     # a single `palette = "<theme>_<flavor>"` line inside the same dots:theme
     # fence; the per-theme palettes all live in the one starship.toml.
@@ -377,11 +364,12 @@ theme_apply() {
             '^[[]' || return 1
     fi
 
-    # --- Step 3c: machine-local theme state ---
-    # p10k reads its palette from DOTS_THEME at source time, so the choice
-    # lives in local.zsh instead of a repo fence. A reload marker is dropped
-    # when p10k is active, since it cannot re-read the palette in place
-    # (starship re-reads its config every prompt and needs nothing).
+    # --- Step 3b: machine-local theme state ---
+    # p10k reads its palette and tmux.conf its @themux_theme from DOTS_THEME,
+    # so the choice lives in local.zsh instead of a repo fence. A reload
+    # marker is dropped when p10k is active, since it cannot re-read the
+    # palette in place (starship re-reads its config every prompt and needs
+    # nothing; tmux is refreshed in Step 5).
     dots_local_set DOTS_THEME "${_ta_theme}_${_ta_flavor}" || return 1
     if [ "$(_th_read_manifest_field prompt 2>/dev/null || printf '')" = "p10k" ]; then
         dots_request_reload
@@ -395,7 +383,12 @@ theme_apply() {
     fi
 
     # --- Step 5: Tmux server reload ---
+    # tmux.conf reads @themux_theme from DOTS_THEME at parse time, and the
+    # server keeps the environment it was started with, so push the new value
+    # into its global environment before re-sourcing the config.
     if tmux info >/dev/null 2>&1; then
+        tmux set-environment -g DOTS_THEME "${_ta_theme}_${_ta_flavor}" 2>/dev/null \
+            || log_warn "tmux set-environment failed; active sessions may keep the old theme"
         tmux source-file "$(path_home_tmux_conf)" 2>/dev/null \
             || tmux source-file "$(path_home_tmux_config)" 2>/dev/null \
             || log_warn "tmux source-file failed; active sessions may need a manual reload"

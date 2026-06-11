@@ -28,7 +28,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '                       <theme>/<flavor>\n'
     printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'
     printf '                       bat theme config, fzf/eza entrypoints, Starship init\n'
-    printf '  Tmux fence         : exactly one open + close fence with @ukiyo-theme\n'
+    printf '  Tmux theme         : @themux_theme set from DOTS_THEME with a default\n'
     printf '  Slim manifest      : keys = {version, theme, flavor, applied_at};\n'
     printf '                       theme/flavor whitelisted; no legacy keys\n'
     printf '  Prompt fence       : starship.toml has one dots:theme fence + palette\n'

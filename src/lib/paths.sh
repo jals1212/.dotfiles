@@ -64,10 +64,6 @@ path_dotbot_config_files() {
     find "${_pdc_themes_dir}" -maxdepth 1 -type f -name '*.yaml' 2>/dev/null | sort
 }
 
-path_content_tmux_conf() {
-    path_repo_file "content/home/.config/tmux/tmux.conf"
-}
-
 path_content_starship_config() {
     path_repo_file "content/home/.config/starship.toml"
 }
@@ -111,7 +107,6 @@ path_home_zshenv() { path_home_file ".zshenv"; }
 path_home_zdotdir_zshenv() { path_home_file ".config/zsh/.zshenv"; }
 path_home_zsh_zinit() { path_home_file ".config/zsh/zinit.zsh"; }
 path_home_zsh_local() { path_home_file ".config/zsh/local.zsh"; }
-path_home_tmux_local() { path_home_file ".config/tmux/local.conf"; }
 path_dots_state_dir() { printf '%s/dots' "${XDG_STATE_HOME:-${HOME}/.local/state}"; }
 path_home_zsh_tools() { path_home_file ".config/zsh/tools.zsh"; }
 path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }

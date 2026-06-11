@@ -46,7 +46,7 @@ Open tmux with `tx` or `tmux`, then install or refresh plugins with `Ctrl-a I`.
 - [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) — `Ctrl-a Ctrl-s` saves tmux state; `Ctrl-a Ctrl-r` restores it.
 - [tmux-continuum](https://github.com/tmux-plugins/tmux-continuum) — periodically saves state and restores it on tmux start.
 - [tmux-which-key](https://github.com/alexwforsythe/tmux-which-key) — `Ctrl-a Space` opens a binding helper popup.
-- [tmux-ukiyo](https://github.com/Nybkox/tmux-ukiyo) — theme engine. Change the managed theme with `./dots update`; switch interactively with `Ctrl-a T` when available.
+- [themux](https://github.com/jals1212/themux) — theme engine. Reads the active theme from `$DOTS_THEME` via `@themux_theme`; change it with `./dots theme`.
 
 ## Ghostty and AeroSpace
 
