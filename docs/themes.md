@@ -32,7 +32,7 @@ Show active theme:
 5. If a tmux server is running, pushes the new `DOTS_THEME` into its global environment (`tmux set-environment -g`) and re-sources the config so themux picks it up.
 6. Writes `manifest.json` atomically: `{ version, theme, flavor, prompt, applied_at }`.
 
-If a running tmux session does not pick up the new theme, run `tmux kill-server` and restart tmux.
+Theme switches apply to running tmux servers without restarts: `theme.conf` starts with themux's reset (`themux_reset.conf`), which wipes all theme-derived state before the config rebuilds it.
 
 ## Supported themes
 
@@ -60,7 +60,7 @@ Neovim reads the active theme from `manifest.json`; there is no mutable `~/.conf
 
 Starship is the one app themed by a fenced rewrite instead of a per-theme symlink: `starship.toml`'s active `palette` line is rewritten in place inside its `# >>> dots:theme >>>` … `# <<< dots:theme <<<` block. Starship has no external-theme include (unlike ghostty), so all of its per-theme palettes live in the one `starship.toml` and only the active `palette` line changes.
 
-tmux needs neither a symlink nor a fence: `tmux.conf` sets themux's `@themux_theme` from the `DOTS_THEME` environment variable (whose `theme_flavor` values match themux theme names), with a tracked default for servers started without it. The switcher refreshes a running server's environment and re-sources the config, so the repo file never changes.
+tmux needs neither a symlink nor a fence: `theme.conf` (sourced from `tmux.conf`) sets themux's `@themux_theme` from the `DOTS_THEME` environment variable (whose `theme_flavor` values match themux theme names), with a tracked default for servers started without it. The switcher refreshes a running server's environment and re-sources the config, so the repo file never changes.
 
 ## Re-apply current theme
 
@@ -77,4 +77,4 @@ tmux needs neither a symlink nor a fence: `tmux.conf` sets themux's `@themux_the
 ./dots doctor
 ```
 
-Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, `tmux.conf` sets `@themux_theme` from `DOTS_THEME` and carries a default fallback, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.
+Doctor verifies every per-app theme symlink resolves into the repo, the symlinks agree on a single `<theme>/<flavor>` pair, the manifest matches, Neovim's manifest-driven theme helper is readable, `theme.conf` sets `@themux_theme` from `DOTS_THEME` and carries a default fallback, and `starship.toml` carries exactly one dots:theme fence with an active `palette` line.
