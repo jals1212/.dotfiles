@@ -42,7 +42,7 @@ cask "font-iosevka-term-nerd-font" if OS.mac?
 cask "ghostty" if OS.mac?
 
 # ── Window manager ───────────────────────────────────
-tap "nikitabobko/tap" if OS.mac?
+tap "nikitabobko/tap", trusted: true if OS.mac?
 cask "nikitabobko/tap/aerospace" if OS.mac?
 
 # ── GUI Apps (optional — uncomment as needed) ────────
