@@ -34,6 +34,14 @@ typeset -g POWERLEVEL9K_{LEFT,RIGHT}_SUBSEGMENT_SEPARATOR=' '
 typeset -g POWERLEVEL9K_ICON_PADDING=none
 typeset -g POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 
+# No powerline glyphs: p10k defaults the segment separators and the prompt
+# end/start symbols to triangles even without backgrounds — blank them all.
+typeset -g POWERLEVEL9K_{LEFT,RIGHT}_SEGMENT_SEPARATOR=
+typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=
+typeset -g POWERLEVEL9K_LEFT_PROMPT_LAST_SEGMENT_END_SYMBOL=
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_FIRST_SEGMENT_START_SYMBOL=
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_LAST_SEGMENT_END_SYMBOL=
+
 # Directory
 typeset -g POWERLEVEL9K_DIR_FOREGROUND="${_dots_p10k_colors[blue]}"
 typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND="${_dots_p10k_colors[blue]}"
