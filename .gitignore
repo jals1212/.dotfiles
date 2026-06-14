@@ -9,13 +9,6 @@ tmp/
 .backups/
 *.bak
 *.local.*
-.grit/
-# Orchestra skill registry runtime state
-.orchestra/.skill-registry.cache.json
-.orchestra/skill-registry.local.yaml
-# Orchestra memory local state (SQLite store + derived caches; chunks stay committed)
-.orchestra/memory/memory.db
-.orchestra/memory/memory.db-wal
-.orchestra/memory/memory.db-shm
-.orchestra/memory/manifest.json
-.orchestra/state.yaml
+
+# Local AI runtime state
+.atl/
