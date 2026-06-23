@@ -35,9 +35,10 @@ zinit snippet "$ZDOTDIR/tools.zsh"
 zinit ice wait"0b" lucid
 zinit light Aloxaf/fzf-tab
 
-# Abbreviations
-export ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR/abbr.zsh"
-zinit ice wait"0b" lucid atload'[[ -f $ABBR_USER_ABBREVIATIONS_FILE ]] && source "$ABBR_USER_ABBREVIATIONS_FILE"'
+# Abbreviations — all session-scoped, declared in abbr.zsh. Do NOT point
+# ABBR_USER_ABBREVIATIONS_FILE here: that var is zsh-abbr's own managed store
+# (it rewrites it on any non-session add/erase), which would clobber abbr.zsh.
+zinit ice wait"0b" lucid atload'[[ -f "$ZDOTDIR/abbr.zsh" ]] && source "$ZDOTDIR/abbr.zsh"'
 zinit light olets/zsh-abbr
 
 # Widget-wrapping plugins load after compinit, fzf-tab, and custom widgets.

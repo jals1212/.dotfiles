@@ -13,3 +13,11 @@ if (( $+commands[mise] )); then
     autoload -Uz add-zsh-hook
     add-zsh-hook -d precmd _mise_hook_precmd 2>/dev/null
 fi
+
+# tmux — redraw the status line on directory change so cwd-dependent modules
+# (gitmux, directory) update immediately instead of waiting out status-interval.
+if [[ -n "$TMUX" ]]; then
+    autoload -Uz add-zsh-hook
+    _tmux_status_refresh() { tmux refresh-client -S 2>/dev/null }
+    add-zsh-hook chpwd _tmux_status_refresh
+fi
