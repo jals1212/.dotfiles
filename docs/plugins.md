@@ -22,9 +22,9 @@ These load automatically in new shells after `./dots update` has been applied. R
   - `mise install`
   - `mise ls`
 - fzf powers shell history search:
-  - `Ctrl-R` opens history search.
-  - `Ctrl-P` opens the same history picker.
-  - `Up` keeps the normal zsh history behavior.
+  - `Ctrl-R` opens fzf's own history widget.
+  - `Up` opens a custom fzf history widget (deduplicated, query seeded from the current line).
+  - `Ctrl-P` / `Ctrl-N` step inline through matching history entries (no fzf).
 
 ### Editing assistance
 
@@ -34,7 +34,7 @@ These load automatically in new shells after `./dots update` has been applied. R
   - Run `abbr help` for more commands.
   - Configured Git abbreviations include `gst`, `gco`, `gcb`, `gcmsg`, `gd`, `gds`, `gl`, `gp`, `gpsup`, `grbi`, `gstp`, and `gswc`.
 - [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text suggestions from history. Accept with `→` or `End`.
-- [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) colors commands as you type so missing commands and invalid syntax stand out early.
+- [fast-syntax-highlighting](https://github.com/zdharma-continuum/fast-syntax-highlighting) colors commands as you type so missing commands and invalid syntax stand out early.
 
 ## tmux plugins
 

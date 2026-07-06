@@ -94,6 +94,7 @@
     # Tmux
     ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
     ~/.config/tmux/theme.conf: content/home/.config/tmux/theme.conf
+    ~/.config/tmux/scripts/session-picker.sh: content/home/.config/tmux/scripts/session-picker.sh
 
     # Herdr
     ~/.config/herdr/config.toml: content/home/.config/herdr/config.toml

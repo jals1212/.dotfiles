@@ -172,7 +172,8 @@ Requires `fzf` on PATH (already in dotfiles stack).
 | Key | Action |
 | --- | --- |
 | `Ctrl-a` then `f` | fzf session picker (80% × 70% popup) |
-| `Ctrl-a` then `w` | fzf window picker across all sessions (80% × 70% popup) |
+| `Ctrl-a` then `w` | fzf session/window tree picker (80% × 70% popup) |
+| `Ctrl-a` then `g` | LazyGit popup in the current pane's directory (80% × 80%) |
 
 ### Status indicators
 
