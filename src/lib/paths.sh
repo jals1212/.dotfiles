@@ -119,7 +119,6 @@ path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }
 path_home_nvim_lua_dir() { path_home_file ".config/nvim/lua"; }
-path_home_nvim_theme_helper() { path_home_file ".config/nvim/lua/config/dots_theme.lua"; }
 path_home_tmux_config() { path_home_file ".config/tmux/tmux.conf"; }
 path_home_tmux_theme() { path_home_file ".config/tmux/theme.conf"; }
 path_home_ghostty_config() { path_home_file ".config/ghostty/config"; }

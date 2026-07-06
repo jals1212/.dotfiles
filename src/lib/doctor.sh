@@ -164,15 +164,6 @@ check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "$(path_
 check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "$(path_home_lazygit_theme)"; }
 check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "$(path_home_bottom_theme)"; }
 check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "$(path_home_ghostty_theme)"; }
-check_nvim_theme_helper() {
-    _cnth_path="$(path_home_nvim_theme_helper)"
-    if [ -r "${_cnth_path}" ]; then
-        _doc_pass "nvim manifest theme helper"
-        return 0
-    fi
-    _doc_fail "nvim manifest theme helper" "unreadable: ${_cnth_path}"
-    return 1
-}
 
 # ---------------------------------------------------------------------------
 # Theme symlinks agreement
@@ -389,5 +380,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS
