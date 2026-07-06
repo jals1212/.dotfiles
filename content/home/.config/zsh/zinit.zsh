@@ -12,6 +12,9 @@ if [[ ! -f "$_zinit_entry" ]]; then
 fi
 
 if [[ -f "$_zinit_entry" ]]; then
+    # Skip zinit's zi/zpl/zplg/zini aliases; zi belongs to zoxide
+    typeset -gA ZINIT
+    ZINIT[NO_ALIASES]=1
     source "$_zinit_entry"
     autoload -Uz _zinit
     (( ${+_comps} )) && _comps[zinit]=_zinit
