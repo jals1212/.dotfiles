@@ -68,6 +68,10 @@ path_content_starship_config() {
     path_repo_file "content/home/.config/starship.toml"
 }
 
+path_content_herdr_config() {
+    path_repo_file "content/home/.config/herdr/config.toml"
+}
+
 path_content_zsh_prompt() {
     path_repo_file "content/home/.config/zsh/prompt.zsh"
 }
@@ -119,6 +123,7 @@ path_home_nvim_theme_helper() { path_home_file ".config/nvim/lua/config/dots_the
 path_home_tmux_config() { path_home_file ".config/tmux/tmux.conf"; }
 path_home_tmux_theme() { path_home_file ".config/tmux/theme.conf"; }
 path_home_ghostty_config() { path_home_file ".config/ghostty/config"; }
+path_home_herdr_config() { path_home_file ".config/herdr/config.toml"; }
 path_home_mise_config() { path_home_file ".config/mise/config.toml"; }
 
 path_home_starship_config() { path_home_file ".config/starship.toml"; }

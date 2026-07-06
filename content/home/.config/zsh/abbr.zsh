@@ -58,7 +58,19 @@ abbr -S --quieter --force txkw="tmux kill-window -t"
 abbr -S --quieter --force txkp="tmux kill-pane -t"
 abbr -S --quieter --force txK="tmux kill-server"
 
+# Herdr
+abbr -S --quieter --force hr="herdr"
+abbr -S --quieter --force hrr="herdr --remote"
+abbr -S --quieter --force hra="herdr session attach"
+abbr -S --quieter --force hrl="herdr session list"
+abbr -S --quieter --force hrk="herdr session stop"
+abbr -S --quieter --force hrK="herdr server stop"
+abbr -S --quieter --force hrss="herdr status server"
+abbr -S --quieter --force hrwl="herdr workspace list"
+abbr -S --quieter --force hrwc="herdr workspace create --label"
+abbr -S --quieter --force hraa="herdr agent attach"
+abbr -S --quieter --force hrta="herdr terminal attach"
+
 # System
 abbr -S --quieter --force c=clear
 abbr -S --quieter --force x=exit
-

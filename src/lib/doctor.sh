@@ -98,6 +98,7 @@ check_contains() {
 check_brew()    { check_command "Homebrew" brew; }
 check_zsh()     { check_command "zsh" zsh; }
 check_tmux()    { check_command "tmux" tmux; }
+check_herdr()   { check_command "herdr" herdr; }
 check_nvim()    { check_command "neovim" nvim; }
 check_git()     { check_command "git" git; }
 check_jq()      { check_command "jq" jq; }
@@ -147,6 +148,7 @@ check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home
 check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
 check_tmux_theme_link() { check_symlink_into_repo "tmux theme"       "$(path_home_tmux_theme)"; }
 check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "$(path_home_ghostty_config)"; }
+check_herdr_link()    { check_symlink_into_repo "herdr config"      "$(path_home_herdr_config)"; }
 check_mise_link()     { check_symlink_into_repo "mise config"       "$(path_home_mise_config)"; }
 check_starship_link() { check_symlink_into_repo "starship config"   "$(path_home_starship_config)"; }
 check_bat_config_link() { check_symlink_into_repo "bat config"       "$(path_home_bat_config)"; }
@@ -325,6 +327,26 @@ check_starship_fence() {
     _doc_fail "${_csf_label}" "expected exactly one open + one close fence (got open=${_csf_open}, close=${_csf_close})"
     return 1
 }
+check_herdr_theme_fence() {
+    _chtf_label="herdr theme fence"
+    _chtf_conf="$(path_home_herdr_config)"
+    if [ ! -r "${_chtf_conf}" ]; then
+        _doc_fail "${_chtf_label}" "unreadable: ${_chtf_conf}"
+        return 1
+    fi
+    _chtf_open="$(_doc_count_lines '^# >>> dots:theme >>>$' "${_chtf_conf}")"
+    _chtf_close="$(_doc_count_lines '^# <<< dots:theme <<<$' "${_chtf_conf}")"
+    if [ "${_chtf_open}" = 1 ] && [ "${_chtf_close}" = 1 ]; then
+        if grep -q '^name = ' "${_chtf_conf}"; then
+            _doc_pass "${_chtf_label}"
+            return 0
+        fi
+        _doc_fail "${_chtf_label}" "fence present but no 'name =' line between markers"
+        return 1
+    fi
+    _doc_fail "${_chtf_label}" "expected exactly one open + one close fence (got open=${_chtf_open}, close=${_chtf_close})"
+    return 1
+}
 check_local_state() {
     _cls_label="machine-local zsh state"
     _cls_file="$(path_home_zsh_local)"
@@ -367,5 +389,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_nvim_theme_helper check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS

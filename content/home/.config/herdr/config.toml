@@ -1,0 +1,11 @@
+[keys]
+prefix = "ctrl+a"
+
+[ui]
+agent_panel_sort = "spaces"
+
+[theme]
+# >>> dots:theme >>>
+name = "kanagawa"
+# <<< dots:theme <<<
+auto_switch = false

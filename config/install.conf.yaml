@@ -41,6 +41,7 @@
   - ~/.config/nvim
   - ~/.config/tmux
   - ~/.config/ghostty
+  - ~/.config/herdr
   - ~/.config/aerospace
   - ~/.config/mise
   - ~/.config/bat
@@ -93,6 +94,9 @@
     # Tmux
     ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
     ~/.config/tmux/theme.conf: content/home/.config/tmux/theme.conf
+
+    # Herdr
+    ~/.config/herdr/config.toml: content/home/.config/herdr/config.toml
 
     # Ghostty — config file + shaders directory link
     ~/.config/ghostty/config: content/home/.config/ghostty/config

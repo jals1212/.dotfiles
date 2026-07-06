@@ -8,6 +8,7 @@ node = ["latest", "lts"]
 pnpm = "latest"
 python = "latest"
 ruby = "latest"
+rust = "latest"
 
 [settings]
 

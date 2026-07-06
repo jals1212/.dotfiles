@@ -25,6 +25,10 @@ shell-integration-features = no-cursor
 mouse-hide-while-typing = true
 scrollback-limit = 1000000
 
+# ── Quick terminal ────────────────────────
+keybind = global:cmd+grave_accent=new_window
+keybind = global:cmd+shift+grave_accent=new_window
+
 # ── Theme ────────────────────────────────────────────
 # The active flavor's palette is written to ~/.config/ghostty/themes/dots
 # by `dots install` / `dots update`; this file references it natively.
@@ -32,11 +36,11 @@ theme = dots
 custom-shader = shaders/cursor_smear.glsl
 
 # ── Input ────────────────────────────────────────────
-# Only the left Option key acts as Alt; right Option stays as macOS Option.
-macos-option-as-alt = left
+# Only the right Option key acts as Alt; left Option stays as macOS Option.
+macos-option-as-alt = right
 
 # Disable Ghostty native tab shortcuts without blocking panes/splits or tmux.
-keybind = cmd+t=unbind
+keybind = cmd+t=new_window
 keybind = cmd+shift+BracketLeft=unbind
 keybind = cmd+shift+BracketRight=unbind
 keybind = ctrl+tab=unbind

@@ -90,7 +90,7 @@ Change theme:
 ./dots theme --current          # print active theme
 ```
 
-The theme switcher re-links the per-app theme files (`~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the fenced `palette` line in `starship.toml`, persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette), rebuilds the bat cache, reloads a running tmux server, and writes `manifest.json`.
+The theme switcher re-links the per-app theme files (`~/.config/bat/themes/dots.tmTheme`, etc.), rewrites the fenced Starship `palette` and Herdr `theme.name` lines, persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette), rebuilds the bat cache, reloads running tmux/Herdr servers, and writes `manifest.json`.
 
 If a running tmux session does not pick up the new theme after `./dots theme`, run `tmux kill-server` and restart tmux.
 
@@ -114,7 +114,7 @@ After install or updates:
 ./dots doctor
 ```
 
-Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (home `.zshenv`, ZDOTDIR zsh files/fragments, nvim, tmux, ghostty, mise, bat, fzf, eza), theme symlinks, theme agreement, content markers (tmux prefix, ghostty theme, bat/fzf/eza config, Starship init), tmux fence, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
+Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `herdr`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (home `.zshenv`, ZDOTDIR zsh files/fragments, nvim, tmux, ghostty, herdr, mise, bat, fzf, eza), theme symlinks, theme agreement, content markers (tmux prefix, ghostty theme, bat/fzf/eza config, Starship init), tmux fence, Starship/Herdr fences, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
 
 If doctor reports a fail, the most common fix:
 

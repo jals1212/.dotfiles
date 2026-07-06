@@ -27,6 +27,7 @@ teardown() {
     [[ "${output}" != *"${HOME}/.config/zsh/plugins"* ]]
     [[ "${output}" == *"${HOME}/.config/nvim"* ]]
     [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]]
+    [[ "${output}" == *"${HOME}/.config/herdr"* ]]
     [[ "${output}" == *"${HOME}/.config/fzf"* ]]
     [[ "${output}" != *"${HOME}/.config/fzf/themes"* ]]
     [[ "${output}" == *"${HOME}/.config/eza"* ]]
@@ -149,6 +150,7 @@ teardown() {
     [[ "${output}" == *"${HOME}/.config/eza/theme.sh"* ]]
     [[ "${output}" != *"${HOME}/.config/eza/themes/dots.sh"* ]]
     [[ "${output}" == *"${HOME}/.config/bat/config"* ]]
+    [[ "${output}" == *"${HOME}/.config/herdr/config.toml"* ]]
     [[ "${output}" != *"${HOME}/.local/state/mise/tracked-configs"* ]]
     [[ "${output}" != *"${HOME}/.config/nvim/lua/dots-theme.lua"* ]]
 }
@@ -176,9 +178,10 @@ teardown() {
     ! grep -Fq "oh-my-posh" "${brewfile}"
 }
 
-@test "theme configs do not declare starship (base link, fence-switched)" {
+@test "theme configs do not declare starship or herdr (base links, fence-switched)" {
     for f in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
         ! grep -Fq "starship" "${f}"
+        ! grep -Fq "herdr" "${f}"
         ! grep -Fq "atuin" "${f}"
         ! grep -Fq "oh-my-posh" "${f}"
     done
@@ -198,4 +201,13 @@ teardown() {
     grep -Eq '^palette = ' "${conf}"
     grep -Fq "[palettes.kanagawa_dragon]" "${conf}"
     grep -Fq "[palettes.catppuccin_mocha]" "${conf}"
+}
+
+@test "herdr config carries a dots:theme fence" {
+    conf="${REPO_ROOT_REAL}/content/home/.config/herdr/config.toml"
+
+    grep -Fq "# >>> dots:theme >>>" "${conf}"
+    grep -Fq "# <<< dots:theme <<<" "${conf}"
+    grep -Eq '^name = ' "${conf}"
+    grep -Fq "auto_switch = false" "${conf}"
 }

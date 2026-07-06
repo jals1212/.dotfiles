@@ -13,6 +13,7 @@ brew "neovim"
 brew "luarocks" # for neovim plugins
 brew "ripgrep"
 brew "ast-grep"
+brew "herdr"
 brew "tmux"
 brew "zoxide"
 

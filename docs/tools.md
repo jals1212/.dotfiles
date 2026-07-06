@@ -30,6 +30,10 @@ Terminal emulator (macOS cask). Splits and resize bindings documented in [keymap
 
 Multiplexer. Prefix `Ctrl-a`. Use `tx` to attach to or create the main session. Plugin inventory in [plugins.md](plugins.md#tmux-plugins). Full key table: [keymaps.md](keymaps.md#tmux). Aliases for session management: `tx`, `txa`, `txl`, `txk` (see [aliases.md](aliases.md)).
 
+### Herdr
+
+Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctrl-a`; agent panel sorted by spaces. Theme follows `./dots theme` through the fenced `theme.name` setting.
+
 ### AeroSpace — [docs](https://nikitabobko.github.io/AeroSpace/guide)
 
 Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout cycling, service mode in [keymaps.md](keymaps.md#aerospace). Config: `~/.config/aerospace/aerospace.toml`.

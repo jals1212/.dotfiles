@@ -31,8 +31,8 @@ Non-interactive:
 | Command | What it does |
 |---|---|
 | `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. |
-| `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the Starship (`palette`) fenced line; persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette); rebuilds the bat cache; reloads a running tmux server; writes the slim manifest. |
-| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, slim manifest schema, submodule presence, stale dotbot-backup warning. |
+| `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the Starship (`palette`) and Herdr (`theme.name`) fenced lines; persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette); rebuilds the bat cache; reloads running tmux/Herdr servers; writes the slim manifest. |
+| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning. |
 | `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
 | `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. Optionally commits gitlink advances. |
 | `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
@@ -62,6 +62,7 @@ If `@themux_theme` does not refresh in an active tmux session after a switch, ru
 - **Theme symlinks**: each theme switch re-links per-app theme files and updates the local manifest.
 - **Tmux theme**: `home/.config/tmux/tmux.conf` sets themux's `@themux_theme` from `$DOTS_THEME` — machine-local state in `~/.config/zsh/local.zsh` whose `theme_flavor` values match themux theme names — falling back to a tracked default. The theme switcher updates the running tmux server's environment and re-sources the config; the repo file never changes.
 - **Starship fence**: `home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
+- **Herdr fence**: `home/.config/herdr/config.toml` is a base symlink. The theme switcher maps the active dots theme to Herdr's built-in theme name, rewrites the fenced `theme.name`, and reloads a running Herdr server.
 - **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
 - **Brewfile + Mise**: `brew bundle --file=Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
 

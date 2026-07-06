@@ -42,6 +42,11 @@ _th_starship_conf_path() {
     path_content_starship_config
 }
 
+# _th_herdr_conf_path — print the absolute path to the repo Herdr config
+_th_herdr_conf_path() {
+    path_content_herdr_config
+}
+
 # _th_manifest_path — print the absolute path to manifest.json
 _th_manifest_path() {
     path_manifest
@@ -158,6 +163,40 @@ dots_request_reload() {
     _drr_dir="$(path_dots_state_dir)"
     [ -d "${_drr_dir}" ] || mkdir -p "${_drr_dir}"
     : > "${_drr_dir}/reload-needed"
+}
+
+# _th_herdr_theme_name <theme> <flavor>
+#   Map dots theme/flavor pairs to Herdr's built-in theme names.
+_th_herdr_theme_name() {
+    _htn_theme="${1:?_th_herdr_theme_name: theme required}"
+    _htn_flavor="${2:?_th_herdr_theme_name: flavor required}"
+
+    case "${_htn_theme}:${_htn_flavor}" in
+        kanagawa:lotus) printf 'kanagawa-lotus' ;;
+        kanagawa:*) printf 'kanagawa' ;;
+        catppuccin:latte) printf 'catppuccin-latte' ;;
+        catppuccin:*) printf 'catppuccin' ;;
+        *) return 1 ;;
+    esac
+}
+
+# _th_apply_herdr_theme <theme> <flavor>
+#   Rewrite the fenced Herdr [theme].name line in the repo config.
+_th_apply_herdr_theme() {
+    _aht_theme="${1:?_th_apply_herdr_theme: theme required}"
+    _aht_flavor="${2:?_th_apply_herdr_theme: flavor required}"
+    _aht_conf="$(_th_herdr_conf_path)"
+
+    [ -f "${_aht_conf}" ] || return 0
+
+    _aht_name="$(_th_herdr_theme_name "${_aht_theme}" "${_aht_flavor}")" || {
+        log_error "No Herdr theme mapping for ${_aht_theme}/${_aht_flavor}"
+        return 1
+    }
+
+    _th_apply_fence "${_aht_conf}" \
+        "name = \"${_aht_name}\"" \
+        '^auto_switch[[:space:]]*='
 }
 
 # _th_write_manifest <theme> <flavor> [prompt]
@@ -364,7 +403,12 @@ theme_apply() {
             '^[[]' || return 1
     fi
 
-    # --- Step 3b: machine-local theme state ---
+    # --- Step 3b: Herdr config fence ---
+    # Herdr ships built-in theme names, so dots maps its richer flavor matrix
+    # to the closest Herdr built-in and keeps auto_switch disabled.
+    _th_apply_herdr_theme "${_ta_theme}" "${_ta_flavor}" || return 1
+
+    # --- Step 3c: machine-local theme state ---
     # p10k reads its palette and tmux.conf its @themux_theme from DOTS_THEME,
     # so the choice lives in local.zsh instead of a repo fence. A reload
     # marker is dropped when p10k is active, since it cannot re-read the
@@ -394,7 +438,13 @@ theme_apply() {
             || log_warn "tmux source-file failed; active sessions may need a manual reload"
     fi
 
-    # --- Step 6: Write manifest ---
+    # --- Step 6: Herdr server reload ---
+    if command -v herdr >/dev/null 2>&1 && herdr status server >/dev/null 2>&1; then
+        herdr server reload-config >/dev/null 2>&1 \
+            || log_warn "herdr reload-config failed; active clients may keep the old theme"
+    fi
+
+    # --- Step 7: Write manifest ---
     _th_write_manifest "${_ta_theme}" "${_ta_flavor}" || {
         log_error "Failed to write manifest"
         return 1

@@ -9,11 +9,19 @@ Tool-level keybindings (tmux, Ghostty, AeroSpace, Neovim) live in [keymaps.md](k
 Abbreviations expand in place before the command runs. Type the short form, then press `Space`.
 
 - `c` → `clear`.
-- `tx` → `tmux new-session -A -s main` — attach or create the `main` session.
+- `tx` → `tmux`.
 - `txs <name>` → create or attach to a named session.
 - `txa <name>` → attach to a named session.
 - `txl` → list sessions.
 - `txk <name>` → kill a session.
+- `hr` → `herdr`.
+- `hrr <target>` → attach to a remote Herdr session.
+- `hra <name>` → attach to a named Herdr session.
+- `hrl` → list Herdr sessions.
+- `hrss` → show Herdr server status.
+- `hrwl` / `hrwc <label>` → list or create Herdr workspaces.
+- `hraa <target>` / `hrta <id>` → attach to an agent or terminal.
+- `hrk <name>` / `hrK` → stop a named session or the default server; this exits panes.
 - Git shortcuts expand to full commands, for example:
   - `gst` → `git status`
   - `gco` → `git checkout`

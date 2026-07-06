@@ -9,7 +9,18 @@ fi
 [[ -f "${XDG_CONFIG_HOME}/fzf/theme.sh" ]] && source "${XDG_CONFIG_HOME}/fzf/theme.sh"
 
 if command -v fzf >/dev/null 2>&1; then
-    source <(fzf --zsh)
+    # fzf-tab (zsh/plugins.zsh) owns Tab completion, so load only fzf's key
+    # bindings (Ctrl-T, Alt-C). Skipping fzf's completion module avoids binding
+    # Tab to fzf-completion just to have fzf-tab shadow it at turbo load. Sourcing
+    # the static file also skips the `fzf --zsh` subprocess on every startup.
+    # Fall back to the full integration when the standalone file is absent.
+    _fzf_keys="${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/key-bindings.zsh"
+    if [[ -r "$_fzf_keys" ]]; then
+        source "$_fzf_keys"
+    else
+        source <(fzf --zsh)
+    fi
+    unset _fzf_keys
 fi
 
 # History picker: global fuzzy search over the whole (deduplicated) history,
