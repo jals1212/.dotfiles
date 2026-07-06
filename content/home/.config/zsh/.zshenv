@@ -16,6 +16,7 @@ export MISE_CACHE_DIR="${XDG_CACHE_HOME}/mise"
 export EDITOR="nvim"
 export VISUAL="nvim"
 export PAGER="bat --paging=always"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # Machine-local state (DOTS_PROMPT, DOTS_THEME, ...) written by ./dots.
 # A real file in $HOME — never symlinked, never tracked by the repo.

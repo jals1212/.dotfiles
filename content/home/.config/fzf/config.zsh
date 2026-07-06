@@ -1,19 +1,23 @@
 # Dotfiles — fzf
 
 if command -v fd >/dev/null 2>&1; then
-    export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
+    export FZF_DEFAULT_COMMAND="fd --type f --hidden --strip-cwd-prefix --exclude .git"
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
     export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
 
 [[ -f "${XDG_CONFIG_HOME}/fzf/theme.sh" ]] && source "${XDG_CONFIG_HOME}/fzf/theme.sh"
 
+# UI defaults appended after the theme (theme.sh overwrites FZF_DEFAULT_OPTS).
+export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height=60% --layout=reverse --border=rounded --preview-window=right:65%:wrap:border-left"
+
+# Previews: bat for Ctrl-T files, eza tree for Alt-C directories.
+export FZF_CTRL_T_OPTS="--preview 'bat --theme=dots --color=always --style=plain,numbers --line-range=:500 {}'"
+export FZF_ALT_C_OPTS="--preview 'eza --tree --icons --color=always --level=2 {}'"
+
 if command -v fzf >/dev/null 2>&1; then
-    # fzf-tab (zsh/plugins.zsh) owns Tab completion, so load only fzf's key
-    # bindings (Ctrl-T, Alt-C). Skipping fzf's completion module avoids binding
-    # Tab to fzf-completion just to have fzf-tab shadow it at turbo load. Sourcing
-    # the static file also skips the `fzf --zsh` subprocess on every startup.
-    # Fall back to the full integration when the standalone file is absent.
+    # fzf-tab (plugins.zsh) owns Tab; load only key-bindings here, skipping
+    # the completion module and the `fzf --zsh` subprocess. Falls back if absent.
     _fzf_keys="${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/key-bindings.zsh"
     if [[ -r "$_fzf_keys" ]]; then
         source "$_fzf_keys"
@@ -23,9 +27,7 @@ if command -v fzf >/dev/null 2>&1; then
     unset _fzf_keys
 fi
 
-# History picker: global fuzzy search over the whole (deduplicated) history,
-# seeded with the current line. Bound to Ctrl-R and Up (Atuin-style: Up opens the
-# interactive search). Inline Ctrl-P/Ctrl-N stepping lives in zsh/keymaps.zsh.
+# Up-only history widget (Ctrl-R stays on fzf's own above); deduped, seeded from $LBUFFER.
 _dots_fzf_history_widget() {
     local selected
     local -a fzf_opts
@@ -59,7 +61,6 @@ _dots_fzf_history_widget() {
 
 if [[ -o interactive ]] && command -v fzf >/dev/null 2>&1; then
     zle -N _dots_fzf_history_widget
-    bindkey '^R'   _dots_fzf_history_widget
     bindkey '^[[A' _dots_fzf_history_widget
     [[ -n "${terminfo[kcuu1]:-}" ]] && bindkey "${terminfo[kcuu1]}" _dots_fzf_history_widget
 fi

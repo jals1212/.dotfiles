@@ -18,9 +18,8 @@ bindkey '^x^e' edit-command-line
 bindkey '\e[1;5C' forward-word
 bindkey '\e[1;5D' backward-word
 
-# History: inline contextual stepping on Ctrl-P / Ctrl-N through entries
-# beginning with the text already typed. Up and Ctrl-R open the fzf history
-# widget instead (see fzf/config.zsh).
+# Ctrl-P/Ctrl-N: inline stepping through history entries matching what's typed.
+# Up/Ctrl-R fzf widgets live in fzf/config.zsh, not here.
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search

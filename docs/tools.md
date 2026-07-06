@@ -68,7 +68,7 @@ TUI JSON browser. Suffix-aliased: open with `file.json` (suffix alias). Direct: 
 
 ### fzf — [docs](https://junegunn.github.io/fzf/)
 
-Fuzzy finder. Drives shell history search with `Ctrl-R` and `Ctrl-P`, plus file/directory pickers when available. tmux pickers live at prefix `f` (sessions) and prefix `w` (windows). Aliases `fzfbat` / `fzfnvim` open previewed pickers.
+Fuzzy finder with previews on `Ctrl-T` (files) and `Alt-C` (directories). `Ctrl-R` opens fzf's own history search; `Up` opens a custom one — see [aliases.md](aliases.md#shell-keybindings). tmux pickers live at prefix `f` (sessions) and prefix `w` (session/window tree).
 
 ## Git and docker
 
