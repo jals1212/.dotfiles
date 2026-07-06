@@ -57,14 +57,17 @@ Drop-in aliases that swap classic tools for friendlier alternatives. Full tool d
 - `du` → [`dust`](https://github.com/bootandy/dust).
 - `top` → [`btm`](https://clementtsang.github.io/bottom/) (bottom).
 - `ping` → [`gping`](https://github.com/orf/gping).
-- `git` → [`hub`](https://hub.github.com/) (passes through to git for unknown commands).
+- `cd` → [`zoxide`](https://github.com/ajeetdsouza/zoxide) (`z`).
 
 If you need the original tool, prefix with `\`: `\cat`, `\grep`, `\ls`.
 
 ## Shortcuts
 
 - `..`, `...`, `....` → climb 1/2/3 levels.
-- `vim`, `v` → `nvim`.
+- `-` → previous directory (`cd -`).
+- `j`, `jj` → [`zoxide`](https://github.com/ajeetdsouza/zoxide) jump (`z`) and interactive pick (`zi`).
+- `dotfiles` → open `~/.dotfiles` in `$EDITOR`.
+- `fp` → `fzf` with a `bat` preview.
 - `lg` → [`lazygit`](https://github.com/jesseduffield/lazygit).
 - `ld` → [`lazydocker`](https://github.com/jesseduffield/lazydocker).
 
@@ -81,11 +84,6 @@ Zsh runs [suffix aliases](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.h
 
 - `dots` → run the dotfiles CLI from anywhere. Subcommands are documented in [install.md](install.md#everyday-commands).
 - `dotfiles` → open the repo in `$EDITOR`.
-
-## fzf previews
-
-- `fzfbat` → `fzf` with `bat` preview pane (selection prints the path).
-- `fzfnvim` → same picker, opens the choice in Neovim.
 
 ## Functions
 

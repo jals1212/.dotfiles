@@ -1,13 +1,38 @@
 # Dotfiles — Aliases
 
-# Dotfiles (the dots command is a function — see functions.zsh)
-alias dotfiles='$EDITOR ~/.dotfiles'
+# Modern replacements
+alias cat='bat'
+alias cd='z'
+alias du='dust'
+alias find='fd'
+alias grep='rg'
+alias la='eza -la --icons --group-directories-first'
+alias ll='eza -l --icons --group-directories-first'
+alias ls='eza --icons --group-directories-first'
+alias lt='eza -T --icons --level=2'
+alias ping='gping'
+alias top='btm'
+
+# Portable `open` (Linux uses xdg-open; macOS has open natively)
+[[ "$(uname)" != "Darwin" ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
+
+# Shortcuts
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias -- -='cd -'
+alias dotfiles='$EDITOR ~/.dotfiles' # the dots command is a function — see functions.zsh
+alias fp='fzf --preview="bat --theme=dots --color=always {}"'
+alias j='z'
+alias jj='zi'
+alias ld='lazydocker'
+alias lg='lazygit'
 
 # Globals
+alias -g J='| jq' # Pipe to jq
 alias -g NE='2>/dev/null' # Redirect stderr to /dev/null
 alias -g NO='>/dev/null' # Redirect stdout to /dev/null
 alias -g NUL='>/dev/null 2>&1' # Redirect both stdout and stderr to /dev/null
-alias -g J='| jq' # Pipe to jq
 # Copy output to clipboard (cross-platform)
 if [[ "$(uname)" == "Darwin" ]]; then
   alias -g C='| pbcopy'
@@ -16,28 +41,6 @@ elif command -v wl-copy >/dev/null 2>&1; then
 elif command -v xclip >/dev/null 2>&1; then
   alias -g C='| xclip -selection clipboard'   # X11
 fi
-
-# Modern replacements
-alias ls='eza --icons --group-directories-first'
-alias ll='eza -l --icons --group-directories-first'
-alias la='eza -la --icons --group-directories-first'
-alias lt='eza -T --icons --level=2'
-alias cat='bat'
-alias grep='rg'
-alias find='fd'
-alias du='dust'
-alias top='btm'
-alias ping='gping'
-
-# Shortcuts
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias lg='lazygit'
-alias ld='lazydocker'
-
-# Portable `open` (Linux uses xdg-open; macOS has open natively)
-[[ "$(uname)" != "Darwin" ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
 
 # Suffixes
 alias -s csv='$EDITOR'
@@ -53,6 +56,3 @@ alias -s ts='$EDITOR'
 alias -s txt=bat
 alias -s yaml='$EDITOR'
 alias -s yml='$EDITOR'
-
-# FZF previews
-alias fp='fzf --preview="bat --theme=dots --color=always {}"'

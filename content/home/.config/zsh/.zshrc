@@ -15,6 +15,9 @@ setopt hist_ignore_space
 setopt hist_reduce_blanks
 setopt share_history
 
+# Globbing
+setopt numeric_glob_sort
+
 # User commands and base keymaps load before plugins can add/wrap widgets.
 [[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
 [[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
