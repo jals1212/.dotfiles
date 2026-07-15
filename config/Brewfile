@@ -22,6 +22,10 @@ brew "starship"
 
 # ── Dev tools ────────────────────────────────────────
 brew "bottom"
+brew "colima"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
 brew "dos2unix"
 brew "dust"
 brew "gping"
@@ -48,6 +52,5 @@ cask "nikitabobko/tap/aerospace" if OS.mac?
 
 # ── GUI Apps (optional — uncomment as needed) ────────
 cask "brave-browser"
-cask "orbstack"
 cask "visual-studio-code"
 cask "windows-app"

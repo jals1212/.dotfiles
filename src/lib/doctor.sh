@@ -57,6 +57,17 @@ check_command() {
     return 1
 }
 
+# check_docker_plugin <label> <subcommand>
+#   Verifies CLI discovery only; `<subcommand> version` does not require a daemon.
+check_docker_plugin() {
+    if command -v docker >/dev/null 2>&1 && docker "${2}" version >/dev/null 2>&1; then
+        _doc_pass "${1} present"
+        return 0
+    fi
+    _doc_fail "${1} present" "Docker CLI plugin unavailable: docker ${2}"
+    return 1
+}
+
 # check_symlink_into_repo <label> <path>
 #   Pass: <path> exists, is a symlink, target resolves under $REPO_ROOT.
 check_symlink_into_repo() {
@@ -99,6 +110,10 @@ check_brew()    { check_command "Homebrew" brew; }
 check_zsh()     { check_command "zsh" zsh; }
 check_tmux()    { check_command "tmux" tmux; }
 check_herdr()   { check_command "herdr" herdr; }
+check_colima()  { check_command "Colima" colima; }
+check_docker()  { check_command "Docker CLI" docker; }
+check_docker_buildx() { check_docker_plugin "Docker Buildx" buildx; }
+check_docker_compose() { check_docker_plugin "Docker Compose" compose; }
 check_nvim()    { check_command "neovim" nvim; }
 check_git()     { check_command "git" git; }
 check_jq()      { check_command "jq" jq; }
@@ -380,5 +395,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_colima check_docker check_docker_buildx check_docker_compose check_nvim check_git check_jq check_gum check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS

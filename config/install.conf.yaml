@@ -50,6 +50,7 @@
   - ~/.config/fzf
   - ~/.config/lazygit
   - ~/.config/bottom
+  - ~/.docker/cli-plugins
 
 # ── Symlinks ───────────────────────────────────────────────────────────────────
 # Every non-theme file under home/ mapped to its $HOME counterpart.
@@ -77,6 +78,11 @@
     ~/.config/fzf/config.zsh: content/home/.config/fzf/config.zsh
     ~/.config/eza/config.zsh: content/home/.config/eza/config.zsh
     ~/.config/bat/config: content/home/.config/bat/config
+
+    # Docker CLI plugins — shims resolve Homebrew binaries without owning
+    # ~/.docker/config.json, which may contain machine-local state.
+    ~/.docker/cli-plugins/docker-buildx: content/home/.docker/cli-plugins/docker-buildx
+    ~/.docker/cli-plugins/docker-compose: content/home/.docker/cli-plugins/docker-compose
 
     # Starship prompt — static base config; theme palette is switched in place
     # via the dots:theme fenced marker by `./dots theme`, not a per-theme link.
