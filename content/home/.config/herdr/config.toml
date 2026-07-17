@@ -3,7 +3,7 @@ onboarding = false
 prefix = "ctrl+a"
 
 [ui]
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
 show_agent_labels_on_pane_borders = false
 
 [theme]
@@ -17,3 +17,4 @@ delivery = "terminal"
 
 [experimental]
 pane_history = true
+switch_ascii_input_source_in_prefix = true
