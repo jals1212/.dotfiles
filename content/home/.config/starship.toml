@@ -5,6 +5,7 @@
 # Do not edit the fenced line by hand.
 
 add_newline = false
+scan_timeout = 100
 
 format = """
 $directory$git_branch$git_status$nodejs$golang$python$cmd_duration
