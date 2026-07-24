@@ -72,13 +72,13 @@ Fuzzy finder with previews on `Ctrl-T` (files) and `Alt-C` (directories). `Ctrl-
 
 ## Git and docker
 
-### Colima — [docs](https://github.com/abiosoft/colima)
+### OrbStack — [docs](https://docs.orbstack.dev/)
 
-Local container runtime. Start it manually with `colima start`; this selects the Colima Docker context. Stop it with `colima stop`. No global `DOCKER_HOST` is needed.
+Local container runtime. Start it with `orb start` and stop it with `orb stop`. OrbStack activates the `orbstack` Docker context automatically, so no global `DOCKER_HOST` is needed.
 
 ### Docker CLI — [docs](https://docs.docker.com/reference/cli/docker/)
 
-Docker client with the Homebrew Compose and Buildx packages. Dotbot exposes both through `~/.docker/cli-plugins` without managing `~/.docker/config.json`. Verify with `docker version`, `docker compose version`, and `docker buildx version` after starting Colima.
+OrbStack provides and updates Docker, Compose, and Buildx. Verify them with `docker version`, `docker compose version`, and `docker buildx version` after starting OrbStack.
 
 ### Git + hub — [git docs](https://git-scm.com/doc) · [hub docs](https://hub.github.com/)
 

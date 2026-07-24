@@ -71,14 +71,6 @@ abbr -S --quieter --force hrwc="herdr workspace create --label"
 abbr -S --quieter --force hraa="herdr agent attach"
 abbr -S --quieter --force hrta="herdr terminal attach"
 
-# Colima
-abbr -S --quieter --force clm="colima"
-abbr -S --quieter --force clms="colima start --vm-type vz --vz-rosetta --activate"
-abbr -S --quieter --force clmS="colima stop"
-abbr -S --quieter --force clmst="colima status"
-abbr -S --quieter --force clmr="colima restart"
-abbr -S --quieter --force clmssh="colima ssh"
-
 # System
 abbr -S --quieter --force c=clear
 abbr -S --quieter --force x=exit

@@ -75,17 +75,17 @@ Interactive `./dots update` replaces the old re-sync flow: the `Change theme?` p
 
 ## Local Docker runtime
 
-Colima is installed but does not start at login. Start it when needed, then verify the Docker workflow:
+OrbStack owns the Docker engine and command-line toolchain. Start it when needed, then verify the workflow:
 
 ```sh
-colima start
-docker context show          # colima
+orb start
+docker context show          # orbstack
 docker version
 docker compose version
 docker buildx version
 ```
 
-`colima start` selects its Docker context, so do not set a global `DOCKER_HOST`. Dotbot links small shims into `~/.docker/cli-plugins` so Docker discovers the Homebrew Compose and Buildx binaries without managing the machine-local `~/.docker/config.json`.
+OrbStack provides and updates Docker, Compose, and Buildx. Do not install competing Homebrew Docker CLI packages or set a global `DOCKER_HOST`; OrbStack activates its `orbstack` Docker context automatically.
 
 ## Themes
 
@@ -128,7 +128,7 @@ After install or updates:
 ./dots doctor
 ```
 
-Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `herdr`, `colima`, `docker`, `docker buildx`, `docker compose`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (home `.zshenv`, ZDOTDIR zsh files/fragments, nvim, tmux, ghostty, herdr, mise, bat, fzf, eza), theme symlinks, theme agreement, content markers (tmux prefix, ghostty theme, bat/fzf/eza config, Starship init), tmux fence, Starship/Herdr fences, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
+Doctor checks: required commands (`python3`, `brew`, `zsh`, `tmux`, `herdr`, `orb`, `docker`, `docker buildx`, `docker compose`, `nvim`, `git`, `jq`, `gum`), submodule presence (`dotbot`, `dotbot-brew`, `dotbot-mise`), required symlinks (home `.zshenv`, ZDOTDIR zsh files/fragments, nvim, tmux, ghostty, herdr, mise, bat, fzf, eza), theme symlinks, theme agreement, content markers (tmux prefix, ghostty theme, bat/fzf/eza config, Starship init), tmux fence, Starship/Herdr fences, slim manifest schema, stale `*.dotbot-backup.*` files (WARN).
 
 If doctor reports a fail, the most common fix:
 
