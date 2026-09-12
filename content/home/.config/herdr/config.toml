@@ -13,7 +13,7 @@ name = "kanagawa"
 auto_switch = false
 
 [ui.toast]
-delivery = "terminal"
+delivery = "herdr"
 
 [experimental]
 pane_history = true
