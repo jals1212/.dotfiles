@@ -92,6 +92,51 @@ tmux-autostart() {
     fi
 }
 
+# Remote agents (Tailscale + Moshi)
+
+# Wrapper over `moshi-hook host setup`: Easy Pair appends a fresh SSH key to
+# authorized_keys with no restrictions, so every pairing silently reopens the
+# "any tailnet node can log in" hole. The daemon also reads its pairing only at
+# startup, so a pairing done while it runs leaves it in socket-only mode with no
+# remote approvals and no visible error. Both fixes must follow every pairing.
+moshi-pair() {
+    local harden="$HOME/.config/remote-agents/harden-authorized-keys.sh"
+
+    if [[ ! -x "$harden" ]]; then
+        print -u2 "moshi-pair: missing or non-executable $harden"
+        print -u2 "moshi-pair: refusing to pair without the hardening step"
+        return 1
+    fi
+
+    command moshi-hook host setup "$@" || return $?
+
+    print
+    print "--- re-applying SSH key restrictions ---"
+    "$harden" || {
+        print -u2 "moshi-pair: hardening FAILED - your key may be unrestricted"
+        print -u2 "moshi-pair: inspect ~/.ssh/authorized_keys before relying on this host"
+        return 1
+    }
+
+    print
+    print "--- restarting moshi-hook daemon ---"
+    launchctl kickstart -k "gui/$(id -u)/sh.brew.moshi-hook" || {
+        print -u2 "moshi-pair: daemon restart failed - notifications may not arrive"
+        return 1
+    }
+
+    # The daemon reports pairing from the keychain even when the running process
+    # has no HostID, so verify against its runtime log instead of `status`.
+    sleep 2
+    local log="$HOME/Library/Application Support/Moshi/hook.log"
+    if grep -q 'ws bridge connected' <(tail -n 20 "$log" 2>/dev/null); then
+        print "moshi-pair: OK - key restricted and daemon bridge connected"
+    else
+        print -u2 "moshi-pair: WARNING - no 'ws bridge connected' in the recent log"
+        print -u2 "moshi-pair: check with: tail -f '$log'"
+    fi
+}
+
 # Widgets
 
 # Clear screen but keep current command buffer
