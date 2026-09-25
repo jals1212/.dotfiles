@@ -14,7 +14,7 @@ $character"""
 right_format = "$time"
 
 # >>> dots:theme >>>
-palette = "kanagawa_dragon"
+palette = "catppuccin_mocha"
 # <<< dots:theme <<<
 
 [directory]
