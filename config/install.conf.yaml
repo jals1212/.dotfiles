@@ -118,6 +118,11 @@
       path: content/home/.config/duti/vscodium.duti
       if: '[ "$(uname)" = Darwin ]'
 
+    # Finder Quick Action "Open in VSCodium" (right-click > Quick Actions), macOS only
+    "~/Library/Services/Open in VSCodium.workflow":
+      path: "content/home/Library/Services/Open in VSCodium.workflow"
+      if: '[ "$(uname)" = Darwin ]'
+
 # ── Default apps (macOS) ───────────────────────────────────────────────────────
 # Register VSCodium as the default GUI app for code/text files via duti.
 # Guarded: no-op off macOS, or when duti or VSCodium.app is missing.

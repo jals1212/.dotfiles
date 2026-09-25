@@ -37,3 +37,12 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
     grep -Fxq 'export EDITOR="nvim"' "${zshenv}"
     grep -Fxq 'export VISUAL="nvim"' "${zshenv}"
 }
+
+@test "Finder Quick Action opens VSCodium and is linked on macOS" {
+    wf="${REPO_ROOT_REAL}/content/home/Library/Services/Open in VSCodium.workflow/Contents"
+    grep -Fq '<string>/Applications/VSCodium.app</string>' "${wf}/document.wflow"
+    ! grep -Fq 'Visual Studio Code' "${wf}/document.wflow"
+    grep -Fq '<string>Open in VSCodium</string>' "${wf}/Info.plist"
+    grep -A1 -F '"~/Library/Services/Open in VSCodium.workflow":' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
+        | grep -Fq 'path: "content/home/Library/Services/Open in VSCodium.workflow"'
+}
