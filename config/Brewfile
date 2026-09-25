@@ -46,8 +46,11 @@ cask "ghostty" if OS.mac?
 tap "nikitabobko/tap", trusted: true if OS.mac?
 cask "nikitabobko/tap/aerospace" if OS.mac?
 
+# ── File associations ────────────────────────────────
+brew "duti" if OS.mac? # sets VSCodium as default app for code/text files
+
 # ── GUI Apps (optional — uncomment as needed) ────────
 cask "brave-browser"
 cask "orbstack"
-cask "visual-studio-code"
+cask "vscodium" if OS.mac?
 cask "windows-app"

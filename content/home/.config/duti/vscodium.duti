@@ -1,0 +1,43 @@
+# VSCodium default-app associations for macOS (applied with: duti ~/.config/duti/vscodium.duti)
+# Format: <bundle-id> <UTI> <role>
+# Use concrete UTIs only: on current macOS, duti's ".ext" form resolves unknown
+# extensions to dynamic dyn.* UTIs, which LaunchServices rejects (error -50).
+# Extensions without a system UTI (.vue, .go, .rs, .cs, .jsx, ...) are claimed by
+# VSCodium's own Info.plist. .ts is omitted: macOS maps it to MPEG-2 video.
+# .html and .xml are intentionally omitted to keep browser/plist handling intact.
+# Terminal $EDITOR/$VISUAL stay nvim (see ~/.config/zsh/.zshenv).
+
+# Generic text and code
+com.vscodium public.plain-text all
+com.vscodium public.source-code all
+com.vscodium public.script all
+
+# Data and config
+com.vscodium public.json all
+com.vscodium public.yaml all
+com.vscodium public.toml all
+com.vscodium com.microsoft.ini all
+com.vscodium public.comma-separated-values-text all
+com.vscodium com.apple.log all
+com.vscodium net.daringfireball.markdown all
+com.vscodium org.iso.sql all
+
+# Shell
+com.vscodium public.shell-script all
+com.vscodium public.bash-script all
+com.vscodium public.zsh-script all
+
+# Languages
+com.vscodium public.python-script all
+com.vscodium public.ruby-script all
+com.vscodium public.c-source all
+com.vscodium public.c-header all
+com.vscodium public.c-plus-plus-source all
+com.vscodium public.c-plus-plus-header all
+com.vscodium com.sun.java-source all
+com.vscodium public.swift-source all
+
+# Web
+com.vscodium com.netscape.javascript-source all
+com.vscodium com.microsoft.typescript all
+com.vscodium public.css all

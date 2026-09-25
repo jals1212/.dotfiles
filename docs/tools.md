@@ -38,6 +38,12 @@ Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctr
 
 Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout cycling, service mode in [keymaps.md](keymaps.md#aerospace). Config: `~/.config/aerospace/aerospace.toml`.
 
+## Editors
+
+### VSCodium — [docs](https://vscodium.com/)
+
+GUI editor (macOS cask). `./install` uses `duti` to register VSCodium (`com.vscodium`) as the default app for code and text files, from `~/.config/duti/vscodium.duti`; `.html` and `.xml` are left to their existing handlers. Re-apply manually with `duti ~/.config/duti/vscodium.duti`. Terminal `$EDITOR`/`$VISUAL` stay `nvim`.
+
 ## File viewing and listing
 
 ### bat — [docs](https://github.com/sharkdp/bat)

@@ -50,6 +50,7 @@
   - ~/.config/fzf
   - ~/.config/lazygit
   - ~/.config/bottom
+  - ~/.config/duti
 
 # ── Symlinks ───────────────────────────────────────────────────────────────────
 # Every non-theme file under home/ mapped to its $HOME counterpart.
@@ -111,6 +112,25 @@
     ~/.config/aerospace/aerospace.toml:
       path: content/home/.config/aerospace/aerospace.toml
       if: '[ "$(uname)" = Darwin ]'
+
+    # duti — VSCodium default-app associations, macOS only
+    ~/.config/duti/vscodium.duti:
+      path: content/home/.config/duti/vscodium.duti
+      if: '[ "$(uname)" = Darwin ]'
+
+# ── Default apps (macOS) ───────────────────────────────────────────────────────
+# Register VSCodium as the default GUI app for code/text files via duti.
+# Guarded: no-op off macOS, or when duti or VSCodium.app is missing.
+# Terminal $EDITOR/$VISUAL remain nvim.
+- shell:
+  - description: Set VSCodium as default app for code/text files (macOS, duti)
+    command: |
+      if [ "$(uname)" = Darwin ] && command -v duti >/dev/null 2>&1 && [ -d /Applications/VSCodium.app ]; then
+        duti ~/.config/duti/vscodium.duti || true
+      fi
+    quiet: true
+    stdout: true
+    stderr: true
 
 # ── Mise ───────────────────────────────────────────────────────────────────────
 # dotbot-mise plugin: runs `mise install`.
