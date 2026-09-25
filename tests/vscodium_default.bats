@@ -19,6 +19,7 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
     while IFS= read -r line; do
         case "${line}" in
             '' | '#'*) continue ;;
+            'com.vscodium .'*) echo "extension entry (resolves to dyn.* UTI): ${line}"; return 1 ;;
             'com.vscodium '*) count=$((count + 1)) ;;
             *) echo "unexpected line: ${line}"; return 1 ;;
         esac
@@ -27,7 +28,8 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
 }
 
 @test "install.conf.yaml links the duti settings file" {
-    grep -Fq 'content/home/.config/duti/vscodium.duti' "${REPO_ROOT_REAL}/config/install.conf.yaml"
+    grep -A1 -E '^[[:space:]]+~/\.config/duti/vscodium\.duti:[[:space:]]*$' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
+        | grep -Eq '^[[:space:]]+path:[[:space:]]+content/home/\.config/duti/vscodium\.duti[[:space:]]*$'
 }
 
 @test "terminal EDITOR and VISUAL stay nvim" {

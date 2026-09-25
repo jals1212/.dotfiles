@@ -125,8 +125,8 @@
 - shell:
   - description: Set VSCodium as default app for code/text files (macOS, duti)
     command: |
-      if [ "$(uname)" = Darwin ] && command -v duti >/dev/null 2>&1 && [ -d /Applications/VSCodium.app ]; then
-        duti ~/.config/duti/vscodium.duti || true
+      if [ "$(uname)" = Darwin ] && command -v duti >/dev/null 2>&1 && open -Ra VSCodium >/dev/null 2>&1; then
+        duti ~/.config/duti/vscodium.duti || echo "warning: duti could not apply ~/.config/duti/vscodium.duti" >&2
       fi
     quiet: true
     stdout: true
