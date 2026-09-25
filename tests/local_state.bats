@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
 # tests/local_state.bats
 # Verifies the machine-local state file (~/.config/zsh/local.zsh) that records
 # prompt/theme choices without touching the repo, and the reload marker.
@@ -72,7 +73,7 @@ teardown() {
 
     grep -Fq 'local.zsh' "${zshenv}"
     grep -Fq 'DOTS_PROMPT' "${promptzsh}"
-    ! grep -Fq 'dots:prompt' "${promptzsh}"
+    run ! grep -Fq 'dots:prompt' "${promptzsh}"
     grep -Fq 'DOTS_THEME' "${p10k}"
-    ! grep -Fq 'dots:theme' "${p10k}"
+    run ! grep -Fq 'dots:theme' "${p10k}"
 }

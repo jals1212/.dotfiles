@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
 # tests/dotbot_managed_dirs.bats
 # Verifies Dotbot-managed directory discovery derives from Dotbot configs.
 
@@ -44,22 +45,22 @@ teardown() {
     grep -Fq "~/.config/zsh/.zshenv: content/home/.config/zsh/.zshenv" "${config}"
     grep -Fq "~/.config/zsh/.zprofile: content/home/.config/zsh/.zprofile" "${config}"
     grep -Fq "~/.config/zsh/.zshrc: content/home/.config/zsh/.zshrc" "${config}"
-    ! grep -Fq "~/.zshrc:" "${config}"
-    ! grep -Fq "~/.zprofile:" "${config}"
+    run ! grep -Fq "~/.zshrc:" "${config}"
+    run ! grep -Fq "~/.zprofile:" "${config}"
     grep -Fq "~/.config/zsh/abbr.zsh: content/home/.config/zsh/abbr.zsh" "${config}"
     grep -Fq "~/.config/zsh/zinit.zsh: content/home/.config/zsh/zinit.zsh" "${config}"
     grep -Fq "~/.config/zsh/tools.zsh: content/home/.config/zsh/tools.zsh" "${config}"
     grep -Fq "~/.config/zsh/prompt.zsh: content/home/.config/zsh/prompt.zsh" "${config}"
     grep -Fq "~/.config/zsh/p10k.zsh: content/home/.config/zsh/p10k.zsh" "${config}"
     grep -Fq "~/.config/zsh/plugins.zsh: content/home/.config/zsh/plugins.zsh" "${config}"
-    ! grep -Fq "~/.config/zsh/env.zsh:" "${config}"
-    ! grep -Fq "~/.config/zsh/paths.zsh:" "${config}"
-    ! grep -Fq "~/.config/zsh/history.zsh:" "${config}"
-    ! grep -Fq "~/.config/zsh/completions.zsh:" "${config}"
-    ! grep -Fq "~/.config/zsh/tmux.zsh:" "${config}"
-    ! grep -Fq "zsh/plugins/" "${config}"
-    ! grep -Fq "atuin" "${config}"
-    ! grep -Fq "oh-my-posh" "${config}"
+    run ! grep -Fq "~/.config/zsh/env.zsh:" "${config}"
+    run ! grep -Fq "~/.config/zsh/paths.zsh:" "${config}"
+    run ! grep -Fq "~/.config/zsh/history.zsh:" "${config}"
+    run ! grep -Fq "~/.config/zsh/completions.zsh:" "${config}"
+    run ! grep -Fq "~/.config/zsh/tmux.zsh:" "${config}"
+    run ! grep -Fq "zsh/plugins/" "${config}"
+    run ! grep -Fq "atuin" "${config}"
+    run ! grep -Fq "oh-my-posh" "${config}"
 }
 
 @test "base dotbot config declares tool-owned shell config links" {
@@ -77,10 +78,10 @@ teardown() {
     grep -Fq 'plugins.zsh' "${zshrc}"
     grep -Fq '/fzf/config.zsh' "${zshrc}"
     grep -Fq '/eza/config.zsh' "${zshrc}"
-    ! grep -Fq 'FZF_DEFAULT_COMMAND=' "${zshrc}"
-    ! grep -Fq 'eza/themes/dots.sh' "${zshrc}"
-    ! grep -Fq 'BAT_THEME=' "${zshrc}"
-    ! grep -Fq 'XDG_CONFIG_HOME:-' "${zshrc}"
+    run ! grep -Fq 'FZF_DEFAULT_COMMAND=' "${zshrc}"
+    run ! grep -Fq 'eza/themes/dots.sh' "${zshrc}"
+    run ! grep -Fq 'BAT_THEME=' "${zshrc}"
+    run ! grep -Fq 'XDG_CONFIG_HOME:-' "${zshrc}"
 }
 
 @test "zsh startup files place environment, login, and interactive setup" {
@@ -91,8 +92,8 @@ teardown() {
     grep -Fq 'ZDOTDIR' "${zshenv}"
     grep -Fq 'EDITOR' "${zshenv}"
     grep -Fq 'shellenv' "${zprofile}"
-    ! grep -Fq 'shellenv' "${zshrc}"
-    ! grep -Fq 'EDITOR' "${zshrc}"
+    run ! grep -Fq 'shellenv' "${zshrc}"
+    run ! grep -Fq 'EDITOR' "${zshrc}"
     grep -Fq 'HISTFILE' "${zshrc}"
 }
 
@@ -105,7 +106,7 @@ teardown() {
         "${REPO_ROOT_REAL}/content/home/.config/fzf/config.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/eza/config.zsh"
     do
-        ! grep -Eq 'XDG_(CONFIG|CACHE|DATA|STATE)_HOME:-' "${file}"
+        run ! grep -Eq 'XDG_(CONFIG|CACHE|DATA|STATE)_HOME:-' "${file}"
     done
 }
 
@@ -116,8 +117,8 @@ teardown() {
     grep -Fq "path: content/home/.config/nvim/*" "${config}"
     grep -Fq "~/.config/nvim/:" "${config}"
     grep -Fq "path: content/home/.config/nvim/.*" "${config}"
-    ! grep -Fq "~/.config/nvim/init.lua: content/home/.config/nvim/init.lua" "${config}"
-    ! grep -Fq "~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json" "${config}"
+    run ! grep -Fq "~/.config/nvim/init.lua: content/home/.config/nvim/init.lua" "${config}"
+    run ! grep -Fq "~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json" "${config}"
 }
 
 @test "dotbot_managed_links lists declared destinations only" {
@@ -159,8 +160,8 @@ teardown() {
     for f in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
         grep -Fq "~/.config/fzf/theme.sh" "${f}"
         grep -Fq "~/.config/eza/theme.sh" "${f}"
-        ! grep -Fq "~/.config/fzf/themes/dots.sh" "${f}"
-        ! grep -Fq "~/.config/eza/themes/dots.sh" "${f}"
+        run ! grep -Fq "~/.config/fzf/themes/dots.sh" "${f}"
+        run ! grep -Fq "~/.config/eza/themes/dots.sh" "${f}"
     done
 }
 
@@ -174,16 +175,16 @@ teardown() {
     brewfile="${REPO_ROOT_REAL}/config/Brewfile"
 
     grep -Fq 'brew "starship"' "${brewfile}"
-    ! grep -Fq "atuin" "${brewfile}"
-    ! grep -Fq "oh-my-posh" "${brewfile}"
+    run ! grep -Fq "atuin" "${brewfile}"
+    run ! grep -Fq "oh-my-posh" "${brewfile}"
 }
 
 @test "theme configs do not declare starship or herdr (base links, fence-switched)" {
     for f in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
-        ! grep -Fq "starship" "${f}"
-        ! grep -Fq "herdr" "${f}"
-        ! grep -Fq "atuin" "${f}"
-        ! grep -Fq "oh-my-posh" "${f}"
+        run ! grep -Fq "starship" "${f}"
+        run ! grep -Fq "herdr" "${f}"
+        run ! grep -Fq "atuin" "${f}"
+        run ! grep -Fq "oh-my-posh" "${f}"
     done
 }
 

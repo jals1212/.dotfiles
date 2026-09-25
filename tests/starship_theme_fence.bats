@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
 # tests/starship_theme_fence.bats
 # Verifies the dots:theme fence rewrite that switches the active starship palette.
 
@@ -23,7 +24,7 @@ teardown() {
     run _th_apply_fence "${f}" 'palette = "catppuccin_mocha"' '^[[]'
     [ "${status}" -eq 0 ]
     grep -Fq 'palette = "catppuccin_mocha"' "${f}"
-    ! grep -Fq 'palette = "kanagawa_dragon"' "${f}"
+    run ! grep -Fq 'palette = "kanagawa_dragon"' "${f}"
 
     [ "$(grep -c '# >>> dots:theme >>>' "${f}")" -eq 1 ]
     [ "$(grep -c '# <<< dots:theme <<<' "${f}")" -eq 1 ]

@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
 # tests/upgrade_safety.bats
 # Ensures ./dots upgrade is non-destructive unless explicitly confirmed.
 
@@ -52,9 +53,9 @@ teardown() {
     run sh "${REPO_COPY}/dots" upgrade
 
     [ "${status}" -eq 0 ]
-    ! grep -q 'brew bundle cleanup' "${CALLS}"
-    ! grep -q 'mise prune' "${CALLS}"
     [[ "${output}" == *"skipping brew cleanup"* ]]
+    run ! grep -q 'brew bundle cleanup' "${CALLS}"
+    run ! grep -q 'mise prune' "${CALLS}"
 }
 
 
@@ -63,17 +64,17 @@ teardown() {
 
     [ "${status}" -eq 0 ]
     grep -q 'brew bundle cleanup --file=' "${CALLS}"
-    ! grep -q -- '--force' "${CALLS}"
-    ! grep -q 'mise prune' "${CALLS}"
+    run ! grep -q -- '--force' "${CALLS}"
+    run ! grep -q 'mise prune' "${CALLS}"
 }
 
 @test "upgrade cleanup without yes remains non-destructive on non-TTY" {
     run sh "${REPO_COPY}/dots" upgrade --cleanup
 
     [ "${status}" -eq 0 ]
-    ! grep -q -- '--force' "${CALLS}"
-    ! grep -q 'mise prune' "${CALLS}"
     [[ "${output}" == *"is destructive; rerun with --yes"* ]]
+    run ! grep -q -- '--force' "${CALLS}"
+    run ! grep -q 'mise prune' "${CALLS}"
 }
 
 @test "upgrade cleanup and prune require explicit yes to apply" {

@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
 # Verifies the Herdr theme bridge used by ./dots theme.
 
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
@@ -41,7 +42,7 @@ teardown() {
     run _th_apply_herdr_theme catppuccin latte
     [ "${status}" -eq 0 ]
     grep -Fq 'name = "catppuccin-latte"' "${f}"
-    ! grep -Fq 'name = "kanagawa"' "${f}"
+    run ! grep -Fq 'name = "kanagawa"' "${f}"
     grep -Fq 'auto_switch = false' "${f}"
     [ "$(grep -c '# >>> dots:theme >>>' "${f}")" -eq 1 ]
     [ "$(grep -c '# <<< dots:theme <<<' "${f}")" -eq 1 ]
