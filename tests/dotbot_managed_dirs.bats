@@ -106,6 +106,8 @@ teardown() {
         "${REPO_ROOT_REAL}/content/home/.config/fzf/config.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/eza/config.zsh"
     do
+        # A missing file makes grep exit 2, which `run !` would accept.
+        [ -f "${file}" ]
         run ! grep -Eq 'XDG_(CONFIG|CACHE|DATA|STATE)_HOME:-' "${file}"
     done
 }
@@ -181,6 +183,8 @@ teardown() {
 
 @test "theme configs do not declare starship or herdr (base links, fence-switched)" {
     for f in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
+        # Also fails on an unmatched glob, which leaves the literal pattern.
+        [ -f "${f}" ]
         run ! grep -Fq "starship" "${f}"
         run ! grep -Fq "herdr" "${f}"
         run ! grep -Fq "atuin" "${f}"
