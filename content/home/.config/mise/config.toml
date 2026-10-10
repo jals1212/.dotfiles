@@ -5,7 +5,7 @@
 dotnet = "latest"
 go = "latest"
 node = "lts"
-pnpm = "latest"
+pnpm = "12.9.0"
 python = "latest"
 ruby = "latest"
 rust = "latest"
