@@ -2,6 +2,8 @@
 # Run `./dots update` (or `./dots upgrade` to prune removed versions) after edits.
 
 [tools]
+# "latest" on purpose: a fresh install gets the newest release, so two
+# machines can differ. Pin a version here (or per project) when that matters.
 dotnet = "latest"
 go = "latest"
 node = "lts"
@@ -11,6 +13,7 @@ ruby = "latest"
 rust = "latest"
 
 [settings]
+idiomatic_version_file_enable_tools = ["node"]
 
 [settings.ruby]
 compile = false
