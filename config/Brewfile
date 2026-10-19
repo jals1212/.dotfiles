@@ -1,6 +1,12 @@
 # Dotfiles — Brewfile
 # Managed by `dots` TUI installer
 
+# ── Taps ─────────────────────────────────────────────
+tap "gentleman-programming/tap", trusted: true
+tap "rjyo/moshi", trusted: true
+tap "nikitabobko/tap", trusted: true if OS.mac?
+tap "open-pencil/tap", trusted: true if OS.mac?
+
 # ── Core CLI ─────────────────────────────────────────
 brew "bat"
 brew "eza"
@@ -13,15 +19,19 @@ brew "neovim"
 brew "luarocks" # for neovim plugins
 brew "ripgrep"
 brew "ast-grep"
+brew "sd"
 brew "herdr"
 brew "tmux"
+brew "gitmux" # tmux status-line git module
 brew "zoxide"
 
 # ── Shell enhancements ───────────────────────────────
 brew "starship"
 
 # ── Dev tools ────────────────────────────────────────
+brew "actionlint"
 brew "bottom"
+brew "clang-format"
 brew "dos2unix"
 brew "dust"
 brew "gping"
@@ -29,6 +39,33 @@ brew "jless"
 brew "jq"
 brew "lazydocker"
 brew "lazygit"
+brew "make"
+brew "shellcheck"
+brew "vhs"
+
+# ── AI agents ────────────────────────────────────────
+brew "pi-coding-agent"
+brew "gentleman-programming/tap/engram"
+brew "gentleman-programming/tap/gentle-ai"
+brew "gentleman-programming/tap/gga"
+cask "claude-code@latest" if OS.mac?
+cask "codex" if OS.mac?
+
+# ── Remote access (Tailscale + mosh + Moshi) ─────────
+brew "tailscale"
+brew "mosh"
+brew "rjyo/moshi/moshi-hook" if OS.mac? # see moshi-pair in zsh/functions.zsh
+
+# ── Cloud CLIs ───────────────────────────────────────
+brew "azure-cli"
+brew "cloudflare-wrangler"
+brew "vercel"
+
+# ── Misc ─────────────────────────────────────────────
+brew "cbonsai"
+brew "gphoto2"
+brew "hidapi"
+brew "mole" if OS.mac?
 
 # ── Interactive / TUI helpers ─────────────────────────
 brew "gum"
@@ -43,14 +80,16 @@ cask "font-iosevka-term-nerd-font" if OS.mac?
 cask "ghostty" if OS.mac?
 
 # ── Window manager ───────────────────────────────────
-tap "nikitabobko/tap", trusted: true if OS.mac?
 cask "nikitabobko/tap/aerospace" if OS.mac?
 
 # ── File associations ────────────────────────────────
 brew "duti" if OS.mac? # sets VSCodium as default app for code/text files
 
-# ── GUI Apps (optional — uncomment as needed) ────────
-cask "brave-browser"
-cask "orbstack"
+# ── GUI Apps (casks are macOS-only) ──────────────────
+cask "brave-browser" if OS.mac?
+cask "keka" if OS.mac?
+cask "microsoft-teams" if OS.mac?
+cask "open-pencil/tap/open-pencil" if OS.mac?
+cask "orbstack" if OS.mac?
 cask "vscodium" if OS.mac?
-cask "windows-app"
+cask "windows-app" if OS.mac?
