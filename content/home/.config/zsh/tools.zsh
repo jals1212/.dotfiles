@@ -1,5 +1,5 @@
 # Dotfiles — CLI tool integrations
-# Loaded as a deferred zinit snippet from plugins.zsh.
+# Loaded (eagerly) as a zinit snippet from plugins.zsh, after compinit.
 
 # Zoxide
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
@@ -10,6 +10,8 @@ if (( $+commands[mise] )); then
     # `mise activate` registers a per-prompt env refresh (~50ms each prompt).
     # Directory changes are the only trigger we need — the chpwd hook stays,
     # and the activate script already applied the starting directory's env.
+    # Trade-off: after `mise use` or editing a mise.toml, the current shell
+    # keeps the old env until the next `cd` (or run `cd .`).
     autoload -Uz add-zsh-hook
     add-zsh-hook -d precmd _mise_hook_precmd 2>/dev/null
 fi

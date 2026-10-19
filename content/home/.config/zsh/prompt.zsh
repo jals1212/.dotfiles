@@ -4,7 +4,7 @@
 # the repo). Setting DOTS_PROMPT in the environment overrides it per shell.
 
 if [[ "${DOTS_PROMPT:-starship}" == "p10k" ]] && (( $+functions[zinit] )); then
-    zinit ice depth=1
+    zinit ice ver"a0c9dbe80be404ff58e3ce5d7cf312582e370635" # pinned, see plugins.zsh
     zinit light romkatv/powerlevel10k
     [[ -f "$ZDOTDIR/p10k.zsh" ]] && source "$ZDOTDIR/p10k.zsh"
 else
