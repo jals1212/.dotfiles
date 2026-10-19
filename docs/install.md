@@ -26,9 +26,9 @@ cd ~/.dotfiles
 1. Detects missing `python3` / `git` / Linux build deps and installs them via `apt-get`, `dnf`, or `pacman` (Linux) or triggers `xcode-select --install` (macOS).
 2. Runs `git submodule update --init --recursive` to materialize `dotbot/`, `plugins/dotbot-brew/`, `plugins/dotbot-mise/`.
 3. Sees that `manifest.json` is absent → auto-runs `update --yes` with hardcoded defaults (kanagawa/dragon).
-4. Invokes `./install` (the dotbot wrapper), which runs dotbot against `install.conf.yaml`:
+4. Invokes `./install` (the dotbot wrapper), which runs dotbot against `config/install.conf.yaml`:
    - `shell:` installs Homebrew if missing.
-   - `brewfile:` runs `brew bundle --file=Brewfile`.
+   - `brewfile:` runs `brew bundle --file=config/Brewfile`.
    - `create:` ensures every `~/.config/<app>/` parent exists.
    - `link:` creates every symlink from `$HOME` into the repo.
    - `mise:` runs `mise install`.
@@ -53,7 +53,7 @@ Supported flags on `./dots update`:
 --pull                     # git pull --ff-only before invoking dotbot
 ```
 
-The `--tools` flag is **removed**. Managed packages are declared in `Brewfile` (brew formulae/casks/taps) and `home/.config/mise/config.toml` (runtime versions). Edit those files and re-run `./dots update`.
+The `--tools` flag is **removed**. Managed packages are declared in `config/Brewfile` (brew formulae/casks/taps) and `content/home/.config/mise/config.toml` (runtime versions). Edit those files and re-run `./dots update`.
 
 ## Everyday commands
 
@@ -114,8 +114,8 @@ There is no `./dots backup` or `./dots restore`. Recovery paths:
 
 | Situation | Action |
 | --- | --- |
-| You broke a file in `$HOME` (it's a symlink to repo) | `git checkout -- home/<path>` in the repo. |
-| You broke a file in the repo | `git checkout <good-sha> -- home/<path>`. |
+| You broke a file in `$HOME` (it's a symlink to repo) | `git checkout -- content/home/<path>` in the repo. |
+| You broke a file in the repo | `git checkout <good-sha> -- content/home/<path>`. |
 | You need the original file from before bootstrap | Look in `$HOME` for `<path>.dotbot-backup.<timestamp>` siblings. |
 | The symlink farm is corrupt | `./dots update --yes` (idempotent re-link). |
 | You want to roll back the whole repo | `git checkout <good-sha>` then `./dots update --yes`. |

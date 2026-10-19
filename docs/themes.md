@@ -27,7 +27,7 @@ Show active theme:
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
 2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 7 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
-3. Rewrites fenced theme blocks in `home/.config/starship.toml` (`palette`) and `home/.config/herdr/config.toml` (`theme.name`), then persists `DOTS_THEME=<theme>_<flavor>` in `~/.config/zsh/local.zsh` — machine-local state read by tmux's `@themux_theme` and the p10k palette.
+3. Rewrites fenced theme blocks in `content/home/.config/starship.toml` (`palette`) and `content/home/.config/herdr/config.toml` (`theme.name`), then persists `DOTS_THEME=<theme>_<flavor>` in `~/.config/zsh/local.zsh` — machine-local state read by tmux's `@themux_theme` and the p10k palette.
 4. Runs `bat cache --build` (skipped when bat is absent).
 5. If a tmux server is running, pushes the new `DOTS_THEME` into its global environment (`tmux set-environment -g`) and re-sources the config so themux picks it up.
 6. If a Herdr server is running, asks it to reload `config.toml`.

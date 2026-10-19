@@ -57,14 +57,14 @@ If `@themux_theme` does not refresh in an active tmux session after a switch, ru
 
 ## How it works
 
-- **Symlinks via dotbot**: `install.conf.yaml` declares every base file under `home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
+- **Symlinks via dotbot**: `config/install.conf.yaml` declares every base file under `content/home/` as a `link:` entry. `./install` runs dotbot which creates symlinks in `$HOME`. Edits in `$HOME` write through to the repo via the symlinks.
 - **Zsh via XDG/ZDOTDIR**: `~/.zshenv` is the only zsh startup file kept at `$HOME`; it sets the XDG base dirs and `ZDOTDIR=$XDG_CONFIG_HOME/zsh`, so zsh reads `.zprofile` and `.zshrc` from `~/.config/zsh`. History lives under `~/.local/state/zsh`, and compinit cache under `~/.cache/zsh`.
 - **Theme symlinks**: each theme switch re-links per-app theme files and updates the local manifest.
-- **Tmux theme**: `home/.config/tmux/tmux.conf` sets themux's `@themux_theme` from `$DOTS_THEME` — machine-local state in `~/.config/zsh/local.zsh` whose `theme_flavor` values match themux theme names — falling back to a tracked default. The theme switcher updates the running tmux server's environment and re-sources the config; the repo file never changes.
-- **Starship fence**: `home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
-- **Herdr fence**: `home/.config/herdr/config.toml` is a base symlink. The theme switcher maps the active dots theme to Herdr's built-in theme name, rewrites the fenced `theme.name`, and reloads a running Herdr server.
+- **Tmux theme**: `content/home/.config/tmux/tmux.conf` sets themux's `@themux_theme` from `$DOTS_THEME` — machine-local state in `~/.config/zsh/local.zsh` whose `theme_flavor` values match themux theme names — falling back to a tracked default. The theme switcher updates the running tmux server's environment and re-sources the config; the repo file never changes.
+- **Starship fence**: `content/home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
+- **Herdr fence**: `content/home/.config/herdr/config.toml` is a base symlink. The theme switcher maps the active dots theme to Herdr's built-in theme name, rewrites the fenced `theme.name`, and reloads a running Herdr server. Changing settings from Herdr's own UI rewrites the file and replaces the symlink with a regular file; `./dots doctor` flags it — copy the new settings into the repo before `./dots update` re-links it.
 - **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
-- **Brewfile + Mise**: `brew bundle --file=Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
+- **Brewfile + Mise**: `brew bundle --file=config/Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
 
 ## Adding a new theme
 
@@ -75,7 +75,7 @@ If `@themux_theme` does not refresh in an active tmux session after a switch, ru
 
 ## Adding a mise tool
 
-Edit `home/.config/mise/config.toml`:
+Edit `content/home/.config/mise/config.toml`:
 
 ```toml
 [tools]
