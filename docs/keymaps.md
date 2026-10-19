@@ -123,14 +123,13 @@ Prefix is `Ctrl-a`.
 | `Ctrl-a` then `r` | Reload tmux config |
 | `Ctrl-a` then `h/j/k/l` | Select pane left/down/up/right |
 | `Alt-Left/Right/Up/Down` | Select pane by direction |
-| `Shift-Left/Right` | Previous/next window |
+| `Ctrl-a` then `Shift-Left/Right` | Previous/next window |
 | `Alt-H/L` | Previous/next window |
-| `Ctrl-a` then `v` or `|` | Horizontal split in current path |
-| `Ctrl-a` then `d` or `-` | Vertical split in current path |
+| `Ctrl-a` then `%`, `\` or `\|` | Side-by-side split in current path |
+| `Ctrl-a` then `"`, `-` or `_` | Stacked split in current path |
 | `Ctrl-a` then `c` | New window in current path |
 | `Alt-g` | Toggle scratch session popup (80% × 80%) |
-| `Ctrl-a` then `K` | Kill all other sessions after confirm |
-| `Ctrl-a` then `T` | Open themux theme menu |
+| `Ctrl-a` then `X` | Kill all other sessions after confirm |
 | `Ctrl-a` then `I` | Install TPM plugins |
 
 ### Pane resize
