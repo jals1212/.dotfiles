@@ -51,6 +51,7 @@
   - ~/.config/lazygit
   - ~/.config/bottom
   - ~/.config/duti
+  - ~/.config/remote-agents
 
 # ── Symlinks ───────────────────────────────────────────────────────────────────
 # Every non-theme file under home/ mapped to its $HOME counterpart.
@@ -116,6 +117,11 @@
     # duti — VSCodium default-app associations, macOS only
     ~/.config/duti/vscodium.duti:
       path: content/home/.config/duti/vscodium.duti
+      if: '[ "$(uname)" = Darwin ]'
+
+    # Remote agents — SSH key hardening run by the moshi-pair zsh function, macOS only
+    ~/.config/remote-agents/harden-authorized-keys.sh:
+      path: content/home/.config/remote-agents/harden-authorized-keys.sh
       if: '[ "$(uname)" = Darwin ]'
 
     # Finder Quick Action "Open in VSCodium" (right-click > Quick Actions), macOS only
