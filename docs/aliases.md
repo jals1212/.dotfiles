@@ -9,6 +9,7 @@ Tool-level keybindings (tmux, Ghostty, AeroSpace, Neovim) live in [keymaps.md](k
 Abbreviations expand in place before the command runs. Type the short form, then press `Space`.
 
 - `c` → `clear`.
+- `cd` → `z`, `find` → `fd`, `grep` → `rg` — expanded visibly, so you can edit the flags (or the command) before running.
 - `tx` → `tmux`.
 - `txs <name>` → create or attach to a named session.
 - `txa <name>` → attach to a named session.
@@ -22,6 +23,9 @@ Abbreviations expand in place before the command runs. Type the short form, then
 - `hrwl` / `hrwc <label>` → list or create Herdr workspaces.
 - `hraa <target>` / `hrta <id>` → attach to an agent or terminal.
 - `hrk <name>` / `hrK` → stop a named session or the default server; this exits panes.
+- `gsh` → `gentle-shell`; `gshc` / `gshr` continue or pick a Pi session (`-- --continue` / `-- --resume`).
+- `gshl` → `gentle-shell --link`; `gshv` → `--version`; `gshh` → `home`; `gshs` → `setup`.
+- `gshu` / `gshum` / `gshur` → `upgrade`, `upgrade --channel main`, `upgrade --rollback`.
 - Git shortcuts expand to full commands, for example:
   - `gst` → `git status`
   - `gco` → `git checkout`
@@ -52,14 +56,13 @@ Drop-in aliases that swap classic tools for friendlier alternatives. Full tool d
 
 - `ls`, `ll`, `la`, `lt` → [`eza`](https://eza.rocks/) with icons + dirs first; `lt` is a 2-level tree.
 - `cat` → [`bat`](https://github.com/sharkdp/bat).
-- `grep` → [`rg`](https://github.com/BurntSushi/ripgrep).
-- `find` → [`fd`](https://github.com/sharkdp/fd).
 - `du` → [`dust`](https://github.com/bootandy/dust).
 - `top` → [`btm`](https://clementtsang.github.io/bottom/) (bottom).
 - `ping` → [`gping`](https://github.com/orf/gping).
-- `cd` → [`zoxide`](https://github.com/ajeetdsouza/zoxide) (`z`).
 
-If you need the original tool, prefix with `\`: `\cat`, `\grep`, `\ls`.
+`cd`, `find` and `grep` are abbreviations instead (see above): they expand to [`z`](https://github.com/ajeetdsouza/zoxide), [`fd`](https://github.com/sharkdp/fd) and [`rg`](https://github.com/BurntSushi/ripgrep) on `Space`, so pasted commands with classic flags are easy to fix.
+
+If you need the original tool, prefix with `\`: `\cat`, `\ls`.
 
 ## Shortcuts
 

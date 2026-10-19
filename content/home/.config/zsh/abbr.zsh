@@ -2,6 +2,12 @@
 
 (( $+functions[abbr] )) || return
 
+# Modern replacements — expanded visibly so pasted commands keep their flags
+# editable before running (fd/rg flags differ from find/grep).
+abbr -S --quieter --force cd=z
+abbr -S --quieter --force find=fd
+abbr -S --quieter --force grep=rg
+
 # Git
 abbr -S --quieter --force g=git
 abbr git -S --quieter --force ga=add
@@ -70,6 +76,18 @@ abbr -S --quieter --force hrwl="herdr workspace list"
 abbr -S --quieter --force hrwc="herdr workspace create --label"
 abbr -S --quieter --force hraa="herdr agent attach"
 abbr -S --quieter --force hrta="herdr terminal attach"
+
+# Gentle Shell
+abbr -S --quieter --force gsh="gentle-shell"
+abbr -S --quieter --force gshc="gentle-shell -- --continue"
+abbr -S --quieter --force gshr="gentle-shell -- --resume"
+abbr -S --quieter --force gshl="gentle-shell --link"
+abbr -S --quieter --force gshv="gentle-shell --version"
+abbr -S --quieter --force gshh="gentle-shell home"
+abbr -S --quieter --force gshs="gentle-shell setup"
+abbr -S --quieter --force gshu="gentle-shell upgrade"
+abbr -S --quieter --force gshum="gentle-shell upgrade --channel main"
+abbr -S --quieter --force gshur="gentle-shell upgrade --rollback"
 
 # System
 abbr -S --quieter --force c=clear

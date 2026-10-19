@@ -1,11 +1,9 @@
 # Dotfiles — Aliases
 
-# Modern replacements
+# Modern replacements (flag-incompatible ones — cd/find/grep — are
+# abbreviations in abbr.zsh, so the real command stays one edit away)
 alias cat='bat'
-alias cd='z'
 alias du='dust'
-alias find='fd'
-alias grep='rg'
 alias la='eza -la --icons --group-directories-first'
 alias ll='eza -l --icons --group-directories-first'
 alias ls='eza --icons --group-directories-first'
