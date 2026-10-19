@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # lib/prompt.sh — prompt engine selection (starship | p10k)
 # POSIX sh. Source this file; do not execute directly.
 # Requires: lib/paths.sh, lib/log.sh, lib/theme.sh (manifest + local state).

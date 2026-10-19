@@ -16,14 +16,14 @@ fi
 
 if ! command -v log_error >/dev/null 2>&1; then
     if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib log.sh)" ]; then
-        # shellcheck disable=SC1091
+        # shellcheck disable=SC1090,SC1091
         . "$(path_src_lib log.sh)"
     fi
 fi
 
 if ! command -v dotbot_theme_apply >/dev/null 2>&1; then
     if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib dotbot.sh)" ]; then
-        # shellcheck disable=SC1091
+        # shellcheck disable=SC1090,SC1091
         . "$(path_src_lib dotbot.sh)"
     fi
 fi
