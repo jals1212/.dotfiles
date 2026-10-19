@@ -10,6 +10,10 @@ export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 # ZDOTDIR
 export ZDOTDIR="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}"
 
+# Homebrew on PATH for non-login shells too (e.g. `ssh host cmd`, mosh-server)
+typeset -U path
+[[ -d /opt/homebrew/bin ]] && path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
+
 # Tools
 export MISE_DATA_DIR="${XDG_DATA_HOME}/mise"
 export MISE_CACHE_DIR="${XDG_CACHE_HOME}/mise"
