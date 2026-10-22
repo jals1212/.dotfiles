@@ -15,6 +15,21 @@ name = "catppuccin"
 # <<< dots:theme <<<
 auto_switch = false
 
+[ui.sidebar.agents]
+# Default rows plus the two Gentle Shell active-work summary rows and the
+# ci-local run ($ci, reported by @jals1212/ci-local-pi), colored by state.
+rows = [
+  ["state_icon", "machine", "workspace", "tab"],
+  ["agent"],
+  ["$summary",],
+  ["$summary2"],
+  [{ token = "$ci", rules = [
+    { contains = "\u2717", fg = "#f38ba8" },
+    { contains = "\u2713", fg = "#a6e3a1" },
+    { contains = "\u29d7", fg = "#f9e2af" },
+  ] }],
+]
+
 [ui.toast]
 delivery = "herdr"
 
