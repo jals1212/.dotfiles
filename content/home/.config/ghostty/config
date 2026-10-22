@@ -71,6 +71,11 @@ keybind = alt+digit_7=unbind
 keybind = alt+digit_8=unbind
 keybind = alt+digit_9=unbind
 
+# Ghostty's default cmd+left/right sends ^A/^E, and ^A is the herdr prefix.
+# Send Home/End instead (zsh binds them in keymaps.zsh).
+keybind = super+arrow_left=esc:[H
+keybind = super+arrow_right=esc:[F
+
 # ── Copy/paste ───────────────────────────────────────
 # Ghostty copies its own selection here; inside tmux, copy is handled by
 # tmux (set-clipboard on + tmux-yank), so each layer copies what it owns.
