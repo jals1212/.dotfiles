@@ -28,11 +28,40 @@ dots() {
 # agent home: for the base it is a symlink to ~/.gentle-shell/gentle-ai, and when
 # pi-spaces enters a space it moves the path into that space, so each space keeps
 # its own. Not exported, so a plain pi keeps ~/.pi/gentle-ai.
-gentle-shell() {
+_gsh_config_home() {
     local home=$HOME/.gentle-shell/agent
     [[ -d $home && ! -e $home/gentle-config && ! -L $home/gentle-config ]] && ln -s ../gentle-ai "$home/gentle-config"
-    GENTLE_PI_CONFIG_HOME=$home/gentle-config command gentle-shell "$@"
+    print -r -- $home/gentle-config
 }
+
+gentle-shell() {
+    GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) command gentle-shell "$@"
+}
+
+# pi-space with Gentle Shell and its spaces:
+# gshw [<space> [pi args...] | base | list | --new <name> | --remove <name>]
+gshw() {
+    GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) pi-space --command 'gentle-shell --' --dir "$HOME/.gentle-shell/spaces" "$@"
+}
+
+_gshw() {
+    # Real folders only: the glob skips dot folders such as .backups.
+    local -a spaces=( $HOME/.gentle-shell/spaces/*(N/:t) )
+    if (( CURRENT == 2 )); then
+        _alternative \
+            'spaces:space:compadd -a spaces' \
+            'commands:command:((base\:"the home Gentle Shell starts with" list\:"list the spaces" --new\:"create a space" --remove\:"delete a space"))'
+    elif (( CURRENT == 3 )) && [[ $words[2] == --remove ]]; then
+        compadd -a spaces
+    fi
+}
+# compinit runs later, in plugins.zsh: register the completion at the first prompt.
+_gshw_compdef() {
+    (( $+functions[compdef] )) && compdef _gshw gshw
+    add-zsh-hook -d precmd _gshw_compdef
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _gshw_compdef
 
 # Filesystem
 

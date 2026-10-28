@@ -88,7 +88,6 @@ abbr -S --quieter --force gshs="gentle-shell setup"
 abbr -S --quieter --force gshu="gentle-shell upgrade"
 abbr -S --quieter --force gshum="gentle-shell upgrade --channel main"
 abbr -S --quieter --force gshur="gentle-shell upgrade --rollback"
-abbr -S --quieter --force gshw="GENTLE_PI_CONFIG_HOME=~/.gentle-shell/agent/gentle-config pi-space --command 'gentle-shell --' --dir ~/.gentle-shell/spaces"
 
 # System
 abbr -S --quieter --force c=clear
