@@ -22,6 +22,18 @@ dots() {
     return $ret
 }
 
+# Gentle Shell
+
+# Gentle's config (banner, model routing, profiles) read from a folder inside the
+# agent home: for the base it is a symlink to ~/.gentle-shell/gentle-ai, and when
+# pi-spaces enters a space it moves the path into that space, so each space keeps
+# its own. Not exported, so a plain pi keeps ~/.pi/gentle-ai.
+gentle-shell() {
+    local home=$HOME/.gentle-shell/agent
+    [[ -d $home && ! -e $home/gentle-config && ! -L $home/gentle-config ]] && ln -s ../gentle-ai "$home/gentle-config"
+    GENTLE_PI_CONFIG_HOME=$home/gentle-config command gentle-shell "$@"
+}
+
 # Filesystem
 
 # cd to Finder's current directory (macOS only — relies on osascript/Finder)
