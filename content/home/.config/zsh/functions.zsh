@@ -39,29 +39,33 @@ gentle-shell() {
 }
 
 # pi-space with Gentle Shell and its spaces:
-# gshw [<space> [pi args...] | base | list | --new <name> | --remove <name>]
-gshw() {
+# gsh-spaces [<space>|base [pi args...] | list [<space>|--every] | new <name> | rename <old> <new>
+#             | remove <name> | update|install|uninstall <space>|--every ...]
+gsh-spaces() {
     GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) pi-space --command 'gentle-shell --' --dir "$HOME/.gentle-shell/spaces" "$@"
 }
 
-_gshw() {
+_gsh-spaces() {
     # Real folders only: the glob skips dot folders such as .backups.
     local -a spaces=( $HOME/.gentle-shell/spaces/*(N/:t) )
     if (( CURRENT == 2 )); then
         _alternative \
             'spaces:space:compadd -a spaces' \
-            'commands:command:((base\:"the home Gentle Shell starts with" list\:"list the spaces" --new\:"create a space" --remove\:"delete a space"))'
-    elif (( CURRENT == 3 )) && [[ $words[2] == --remove ]]; then
-        compadd -a spaces
+            'commands:command:((base\:"the home Gentle Shell starts with" list\:"list the spaces, or the packages of one" new\:"create a space" rename\:"rename a space" remove\:"delete a space" update\:"update the packages of a space" install\:"install a package in a space" uninstall\:"remove a package from a space"))'
+    elif (( CURRENT == 3 )); then
+        case $words[2] in
+            remove|rename) compadd -a spaces ;;
+            list|update|install|uninstall) compadd -a spaces; compadd -- base --every ;;
+        esac
     fi
 }
 # compinit runs later, in plugins.zsh: register the completion at the first prompt.
-_gshw_compdef() {
-    (( $+functions[compdef] )) && compdef _gshw gshw
-    add-zsh-hook -d precmd _gshw_compdef
+_gsh-spaces_compdef() {
+    (( $+functions[compdef] )) && compdef _gsh-spaces gsh-spaces
+    add-zsh-hook -d precmd _gsh-spaces_compdef
 }
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd _gshw_compdef
+add-zsh-hook precmd _gsh-spaces_compdef
 
 # Filesystem
 
