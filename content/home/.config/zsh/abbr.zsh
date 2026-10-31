@@ -89,7 +89,7 @@ abbr -S --quieter --force gshu="gentle-shell upgrade"
 abbr -S --quieter --force gshum="gentle-shell upgrade --channel main"
 abbr -S --quieter --force gshur="gentle-shell upgrade --rollback"
 # Spaces of Gentle Shell through its pi-spaces profile (~/.pi-spaces/config.json).
-abbr -S --quieter --force gsh-space="pi-space --profile gsh"
+abbr -S --quieter --force gsh-space="pi-space --profile gentle"
 
 # System
 abbr -S --quieter --force c=clear

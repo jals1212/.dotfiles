@@ -1,8 +1,8 @@
 {
   "schema": "pi-spaces.config/v1",
-  "default": "gsh",
+  "default": "gentle",
   "profiles": {
-    "gsh": {
+    "gentle": {
       "home": "~/.gentle-shell/agent",
       "command": "gentle-shell --",
       "setup": "gentle-shell --home {home} setup",
