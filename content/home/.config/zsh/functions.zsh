@@ -22,57 +22,6 @@ dots() {
     return $ret
 }
 
-# Gentle Shell
-
-# Gentle's config (banner, model routing, profiles) read from a folder inside the
-# agent home: for the base it is a symlink to ~/.gentle-shell/gentle-ai, and when
-# pi-spaces enters a space it moves the path into that space, so each space keeps
-# its own. Not exported, so a plain pi keeps ~/.pi/gentle-ai.
-_gsh_config_home() {
-    local home=$HOME/.gentle-shell/agent
-    [[ -d $home && ! -e $home/gentle-config && ! -L $home/gentle-config ]] && ln -s ../gentle-ai "$home/gentle-config"
-    print -r -- $home/gentle-config
-}
-
-gentle-shell() {
-    GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) command gentle-shell "$@"
-}
-
-# pi-space with Gentle Shell and its spaces:
-# gsh-space [<space>|base [pi args...] | list [<space>|--every] | new <name> | setup <space>|--every
-#             | rename <old> <new> | remove <name> | update|install|uninstall <space>|--every ...]
-# new and setup install Gentle Shell's own packages in the space (gentle-shell setup), with the
-# space's own gentle-config; run setup --every again after a Gentle Shell upgrade.
-# PI_SPACES_SETUP rather than --setup: a pi-space older than 0.5.0 ignores the variable.
-gsh-space() {
-    GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) \
-    PI_SPACES_SETUP='env GENTLE_PI_CONFIG_HOME={home}/gentle-config gentle-shell --home {home} setup' \
-        pi-space --command 'gentle-shell --' --dir "$HOME/.gentle-shell/spaces" "$@"
-}
-
-_gsh-space() {
-    # Real folders only: the glob skips dot folders such as .backups.
-    local -a spaces=( $HOME/.gentle-shell/spaces/*(N/:t) )
-    if (( CURRENT == 2 )); then
-        _alternative \
-            'spaces:space:compadd -a spaces' \
-            'commands:command:((base\:"the home Gentle Shell starts with" list\:"list the spaces, or the packages of one" new\:"create a space and set it up" setup\:"install the Gentle Shell packages in a space" rename\:"rename a space" remove\:"delete a space" update\:"update the packages of a space" install\:"install a package in a space" uninstall\:"remove a package from a space"))'
-    elif (( CURRENT == 3 )); then
-        case $words[2] in
-            remove|rename) compadd -a spaces ;;
-            setup) compadd -a spaces; compadd -- --every ;;
-            list|update|install|uninstall) compadd -a spaces; compadd -- base --every ;;
-        esac
-    fi
-}
-# compinit runs later, in plugins.zsh: register the completion at the first prompt.
-_gsh-space_compdef() {
-    (( $+functions[compdef] )) && compdef _gsh-space gsh-space
-    add-zsh-hook -d precmd _gsh-space_compdef
-}
-autoload -Uz add-zsh-hook
-add-zsh-hook precmd _gsh-space_compdef
-
 # Filesystem
 
 # cd to Finder's current directory (macOS only — relies on osascript/Finder)
