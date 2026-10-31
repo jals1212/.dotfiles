@@ -39,13 +39,13 @@ gentle-shell() {
 }
 
 # pi-space with Gentle Shell and its spaces:
-# gsh-spaces [<space>|base [pi args...] | list [<space>|--every] | new <name> | rename <old> <new>
+# gsh-space [<space>|base [pi args...] | list [<space>|--every] | new <name> | rename <old> <new>
 #             | remove <name> | update|install|uninstall <space>|--every ...]
-gsh-spaces() {
+gsh-space() {
     GENTLE_PI_CONFIG_HOME=$(_gsh_config_home) pi-space --command 'gentle-shell --' --dir "$HOME/.gentle-shell/spaces" "$@"
 }
 
-_gsh-spaces() {
+_gsh-space() {
     # Real folders only: the glob skips dot folders such as .backups.
     local -a spaces=( $HOME/.gentle-shell/spaces/*(N/:t) )
     if (( CURRENT == 2 )); then
@@ -60,12 +60,12 @@ _gsh-spaces() {
     fi
 }
 # compinit runs later, in plugins.zsh: register the completion at the first prompt.
-_gsh-spaces_compdef() {
-    (( $+functions[compdef] )) && compdef _gsh-spaces gsh-spaces
-    add-zsh-hook -d precmd _gsh-spaces_compdef
+_gsh-space_compdef() {
+    (( $+functions[compdef] )) && compdef _gsh-space gsh-space
+    add-zsh-hook -d precmd _gsh-space_compdef
 }
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd _gsh-spaces_compdef
+add-zsh-hook precmd _gsh-space_compdef
 
 # Filesystem
 
