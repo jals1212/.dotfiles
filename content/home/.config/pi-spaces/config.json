@@ -1,12 +1,13 @@
 {
   "schema": "pi-spaces.config/v1",
-  "default": "gentle",
   "profiles": {
     "gentle": {
       "home": "~/.gentle-shell/agent",
-      "command": "gentle-shell --",
+      "command": "gentle-shell --home {home}",
       "setup": "gentle-shell --home {home} setup",
-      "spaceEnv": { "GENTLE_PI_CONFIG_HOME": "{home}/gentle-config" }
+      "spaceEnv": {
+        "GENTLE_PI_CONFIG_HOME": "{home}/gentle-config"
+      }
     }
   }
 }

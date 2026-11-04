@@ -44,6 +44,7 @@
   - ~/.config/herdr
   - ~/.config/aerospace
   - ~/.config/mise
+  - ~/.config/pi-spaces
   - ~/.config/bat
   - ~/.config/bat/themes
   - ~/.config/eza
@@ -79,8 +80,9 @@
     ~/.config/fzf/config.zsh: content/home/.config/fzf/config.zsh
     ~/.config/eza/config.zsh: content/home/.config/eza/config.zsh
     ~/.config/bat/config: content/home/.config/bat/config
-    # pi-spaces profiles: how pi-space starts Gentle Shell and prepares its spaces.
-    ~/.pi-spaces/config.json: content/home/.pi-spaces/config.json
+    # pi-spaces profiles: how pi-space starts Gentle Shell and prepares its spaces
+    # (found in ~/.config/pi-spaces since @jals1212/pi-spaces 0.9.0 and pi-space 0.10.0).
+    ~/.config/pi-spaces/config.json: content/home/.config/pi-spaces/config.json
 
     # Starship prompt — static base config; theme palette is switched in place
     # via the dots:theme fenced marker by `./dots theme`, not a per-theme link.
