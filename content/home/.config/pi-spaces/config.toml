@@ -1,0 +1,17 @@
+# pi-spaces config: https://github.com/jals1212/pi-spaces#profiles
+#
+# The built-in profile "pi" is always there: base runs `pi`, a space runs
+# `pi --space {name}`, home ~/.pi/agent, spaces in ~/.pi/spaces.
+
+schema = "pi-spaces.config/v2"
+
+[profiles.gentle]
+home = "~/.gentle-shell/agent"
+spaceEnv = { GENTLE_PI_CONFIG_HOME = "{space}/gentle-ai" }
+
+# Base runs plain gentle-shell: any --home makes it read ~/.pi/gentle-ai
+# instead of its own ~/.gentle-shell/gentle-ai.
+[profiles.gentle.commands]
+base = "gentle-shell"
+space = "gentle-shell --home {home}"
+setup = "gentle-shell --home {home} setup"
