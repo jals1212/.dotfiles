@@ -7,7 +7,12 @@
       "setup": "gentle-shell --home {home} setup",
       "spaceEnv": {
         "GENTLE_PI_CONFIG_HOME": "{home}/gentle-config"
-      }
+      },
+      "homeless": [
+        "upgrade",
+        "self-uninstall",
+        "memory"
+      ]
     }
   }
 }
