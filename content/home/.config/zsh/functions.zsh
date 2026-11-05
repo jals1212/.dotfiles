@@ -84,6 +84,36 @@ tmux() {
     return $ret
 }
 
+# Global npm CLIs live in mise (npm: backend; see mise/config.toml). A global
+# `npm i -g` lands in the active node's lib/node_modules, whose bin comes first
+# in PATH, so it silently shadows mise's copy and is lost on a Node change.
+# Refuse global installs, updates and links; `command npm` skips this check.
+npm() {
+    local arg verb global=0 next_location=0
+    for arg in "$@"; do
+        if (( next_location )); then
+            [[ $arg == global ]] && global=1
+            next_location=0
+            continue
+        fi
+        case $arg in
+            -g|--global|--location=global) global=1 ;;
+            --location) next_location=1 ;;
+            -*) ;;
+            *) [[ -z $verb ]] && verb=$arg ;;
+        esac
+    done
+    case $verb in
+        i|in|ins|inst|insta|instal|install|isnt|isnta|isntal|isntall|add|update|up|upgrade|udpate|link|ln)
+            if (( global )); then
+                print -u2 "npm: global packages live in mise: mise use -g npm:<package> (command npm skips this check)"
+                return 1
+            fi
+            ;;
+    esac
+    command npm "$@"
+}
+
 # Start tmux for interactive TTY shells not already inside one.
 # Opt out per-shell with DOTS_NO_TMUX=1.
 tmux-autostart() {

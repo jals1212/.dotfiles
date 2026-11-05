@@ -44,7 +44,6 @@ brew "shellcheck"
 brew "vhs"
 
 # ── AI agents ────────────────────────────────────────
-brew "pi-coding-agent"
 brew "gentleman-programming/tap/engram"
 brew "gentleman-programming/tap/gentle-ai"
 brew "gentleman-programming/tap/gga"
