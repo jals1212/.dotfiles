@@ -1,7 +1,7 @@
 #!/bin/sh
-# lib/select.sh — interactive theme/flavor picker helpers (gum-backed)
+# lib/select.sh — interactive theme/flavor/prompt pickers (lib/tui.sh)
 # POSIX sh. Source this file; do not execute directly.
-# Requires: gum (brew install gum), jq.
+# Requires: lib/tui.sh (tui_choose, tui_card), jq.
 #
 # The tools picker was removed in migrate-to-dotbot: managed packages live in
 # Brewfile and home/.config/mise/config.toml, not in a per-run picker.
@@ -64,17 +64,6 @@ _flavors_from_index() {
             exit
         }
     ' "${_ffi_index}" | sed '/^$/d' | sort
-}
-
-# ---------------------------------------------------------------------------
-# _styled_header <text> [theme]
-#   Returns a gum-styled picker header using the active/theme accent colour.
-# ---------------------------------------------------------------------------
-_styled_header() {
-    _sh_text="${1:?_styled_header: text required}"
-    _sh_theme="${2:-kanagawa}"
-    _check_gum
-    gum style --foreground "$(_header_color_code "${_sh_theme}")" "${_sh_text}"
 }
 
 # ---------------------------------------------------------------------------
@@ -146,14 +135,12 @@ validate_flavor() {
 
 # ---------------------------------------------------------------------------
 # select_theme <repo_root> [current_theme]
-#   Presents a gum choose picker over themes derived from the shared theme
+#   Presents a tui_choose picker over themes derived from the shared theme
 #   index (content/themes/index.yaml). Pre-focuses current_theme when provided.
 # ---------------------------------------------------------------------------
 select_theme() {
     _st_root="${1}"
     _st_current="${2:-}"
-
-    _check_gum
 
     _st_themes="$(_themes_from_index "${_st_root}")" || {
         log_error "Theme index missing or unreadable: ${_st_root}/content/themes/index.yaml"
@@ -163,32 +150,21 @@ select_theme() {
         log_error "No themes found in ${_st_root}/content/themes/index.yaml"
         exit 1
     fi
-    _st_header_text="Select theme:"
-    _st_header="$(_styled_header "${_st_header_text}" "${_st_current:-kanagawa}")"
-
-    _st_selected_arg=""
-    if [ -n "${_st_current}" ]; then
-        _st_selected_arg="--selected=${_st_current}"
-    fi
-
+    _TUI_PICK_ACCENT="$(_header_color_code "${_st_current:-kanagawa}")"
     # shellcheck disable=SC2086
-    _st_chosen="$(printf '%s\n' ${_st_themes} | gum choose --header "${_st_header}" ${_st_selected_arg})"
-
-    [ -z "${_st_chosen}" ] && exit 130
+    _st_chosen="$(tui_choose "Select theme:" "${_st_current}" ${_st_themes})" || exit 130
     printf '%s' "${_st_chosen}"
 }
 
 # ---------------------------------------------------------------------------
 # select_flavor <repo_root> <theme> [current_flavor]
-#   Presents a gum choose picker over flavors for the given theme, derived
+#   Presents a tui_choose picker over flavors for the given theme, derived
 #   from the shared theme index (content/themes/index.yaml).
 # ---------------------------------------------------------------------------
 select_flavor() {
     _sf_root="${1}"
     _sf_theme="${2:?select_flavor: theme required}"
     _sf_current="${3:-}"
-
-    _check_gum
 
     _sf_flavors="$(_flavors_from_index "${_sf_root}" "${_sf_theme}")" || {
         log_error "Theme index missing or unreadable: ${_sf_root}/content/themes/index.yaml"
@@ -198,62 +174,35 @@ select_flavor() {
         log_error "No flavors found for theme ${_sf_theme} in the theme index"
         exit 1
     fi
-    _sf_header_text="Select flavor for ${_sf_theme}:"
-    _sf_header="$(_styled_header "${_sf_header_text}" "${_sf_theme}")"
-
-    _sf_selected_arg=""
-    if [ -n "${_sf_current}" ]; then
-        _sf_selected_arg="--selected=${_sf_current}"
-    fi
-
+    _TUI_PICK_ACCENT="$(_header_color_code "${_sf_theme}")"
     # shellcheck disable=SC2086
-    _sf_chosen="$(printf '%s\n' ${_sf_flavors} | gum choose --header "${_sf_header}" ${_sf_selected_arg})"
-
-    [ -z "${_sf_chosen}" ] && exit 130
+    _sf_chosen="$(tui_choose "Select flavor for ${_sf_theme}:" "${_sf_current}" ${_sf_flavors})" || exit 130
     printf '%s' "${_sf_chosen}"
 }
 
 # ---------------------------------------------------------------------------
 # select_prompt [current_engine]
-#   Presents a gum choose picker over the supported prompt engines.
+#   Presents a tui_choose picker over the supported prompt engines.
 #   Pre-focuses current_engine when provided.
 # ---------------------------------------------------------------------------
 select_prompt() {
     _sp_current="${1:-}"
 
-    _check_gum
-
-    _sp_header="$(_styled_header "Select prompt engine:")"
-
-    _sp_selected_arg=""
-    if [ -n "${_sp_current}" ]; then
-        _sp_selected_arg="--selected=${_sp_current}"
-    fi
-
-    # shellcheck disable=SC2086
-    _sp_chosen="$(printf '%s\n' starship p10k | gum choose --header "${_sp_header}" ${_sp_selected_arg})"
-
-    [ -z "${_sp_chosen}" ] && exit 130
+    _sp_chosen="$(tui_choose "Select prompt engine:" "${_sp_current}" starship p10k)" || exit 130
     printf '%s' "${_sp_chosen}"
 }
 
 # ---------------------------------------------------------------------------
 # confirm_apply <theme> <flavor>
-#   Presents a gum-styled summary card listing theme + flavor and prompts
+#   Presents a summary card listing theme + flavor and prompts
 #   the operator to confirm. Returns 0 on yes, 1 on no/cancel.
 # ---------------------------------------------------------------------------
 confirm_apply() {
     _ca_theme="${1:?confirm_apply: theme required}"
     _ca_flavor="${2:?confirm_apply: flavor required}"
 
+    tui_card "$(_header_color_code "${_ca_theme}")" "Selection summary" \
+        "Theme:  ${_ca_theme}" "Flavor: ${_ca_flavor}"
     _check_gum
-    gum style \
-        --border rounded \
-        --border-foreground "$(_header_color_code "${_ca_theme}")" \
-        --padding "1 2" \
-        --bold \
-        "Selection summary
-Theme: ${_ca_theme}
-Flavor: ${_ca_flavor}"
     gum confirm "Apply selection?"
 }

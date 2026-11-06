@@ -1,7 +1,7 @@
 #!/bin/sh
 # lib/tui.sh — shared TUI presentation helpers
 # POSIX sh. Source this file; do not execute directly.
-# Requires: lib/log.sh, lib/header.sh, jq, gum (log_success only).
+# Requires: lib/log.sh, lib/header.sh, jq.
 
 # shellcheck source=src/lib/log.sh
 # shellcheck source=src/lib/header.sh
@@ -80,22 +80,36 @@ tui_elapsed_seconds() {
 log_success() {
     _ls_title="${1:?log_success: title required}"
     shift || true
+    tui_card "$(_header_color_code "$(_tui_active_theme)")" \
+        "${_ls_title} · $(tui_elapsed_seconds)s" "$@"
+}
 
-    _ls_accent="$(_header_color_code "$(_tui_active_theme)")"
-    _ls_elapsed="$(tui_elapsed_seconds)"
-    _ls_text="${_ls_title} · ${_ls_elapsed}s"
+# _tui_color_on <fd> — true when <fd> is a 256-color terminal.
+_tui_color_on() {
+    [ -t "${1:-1}" ] || return 1
+    _tco_colors="$(tput colors 2>/dev/null || printf '8')"
+    [ "${_tco_colors}" -ge 256 ] 2>/dev/null
+}
 
-    for _ls_line in "$@"; do
-        _ls_text="${_ls_text}
-${_ls_line}"
-    done
-
-    gum style \
-        --border rounded \
-        --border-foreground "${_ls_accent}" \
-        --padding "1 2" \
-        --bold \
-        "${_ls_text}"
+# tui_card <accent> <title> [line...] — a block behind an accent bar:
+#   │ <title>      (bold, accent)
+#   │ <line>
+# Plain text when stdout is not a 256-color terminal.
+tui_card() {
+    _tc_accent="${1:?tui_card: accent required}"
+    _tc_title="${2:?tui_card: title required}"
+    shift 2
+    if _tui_color_on 1; then
+        printf '\033[38;5;%sm│\033[0m \033[1;38;5;%sm%s\033[0m\n' "${_tc_accent}" "${_tc_accent}" "${_tc_title}"
+        for _tc_line in "$@"; do
+            printf '\033[38;5;%sm│\033[0m %s\n' "${_tc_accent}" "${_tc_line}"
+        done
+    else
+        printf '│ %s\n' "${_tc_title}"
+        for _tc_line in "$@"; do
+            printf '│ %s\n' "${_tc_line}"
+        done
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -176,55 +190,99 @@ _tui_read_key() {
     esac
 }
 
-# render_action_menu [last] — interactive action picker. Draws on stderr,
-# reads keys from fd 3 (opened on /dev/tty when the caller did not open it)
-# and prints the chosen value on stdout: "quit" for q, esc or end of input.
-# [last] (a value) starts under the cursor.
-render_action_menu() {
+# _tui_open_keys — make sure fd 3 (where keys are read) is open; the caller
+# may have opened it (the ./dots menu loop, tests), otherwise use /dev/tty.
+_tui_open_keys() {
     { true <&3; } 2>/dev/null || exec 3</dev/tty
-    _ram_cur="$(_tui_menu_index "${1:-}")"
-    [ -n "${_ram_cur}" ] || _ram_cur=1
-    _ram_n="$(_tui_menu_count)"
-    _ram_accent="$(_header_color_code "$(_tui_active_theme)")"
-    _ram_color=0
-    if [ -t 2 ]; then
-        _ram_colors="$(tput colors 2>/dev/null || printf '8')"
-        [ "${_ram_colors}" -ge 256 ] 2>/dev/null && _ram_color=1
-    fi
+}
 
-    _ram_stty=""
+# _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.
+# Draws "<frame-fn> <cursor> <accent> <color>" on stderr after each key and
+# prints the chosen 1-based index, or 0 for q, esc or end of input. Needs
+# _TUI_PICK_ACCENT set by the caller.
+_tui_pick() {
+    _tp_frame_fn="$1"
+    _tp_n="$2"
+    _tp_cur="$3"
+    _tui_open_keys
+    _tp_color=0
+    _tui_color_on 2 && _tp_color=1
+
+    _tp_stty=""
     if [ -t 3 ]; then
-        _ram_stty="$(stty -g <&3)"
+        _tp_stty="$(stty -g <&3)"
         stty -icanon -echo min 1 time 0 <&3
     fi
-    _ram_restore() {
-        [ -n "${_ram_stty}" ] && stty "${_ram_stty}" <&3
+    _tp_restore() {
+        [ -n "${_tp_stty}" ] && stty "${_tp_stty}" <&3
         [ -t 2 ] && printf '\033[?25h' >&2
         return 0
     }
-    trap '_ram_restore; exit 130' INT TERM
+    trap '_tp_restore; exit 130' INT TERM
     [ -t 2 ] && printf '\033[?25l' >&2
 
-    _ram_lines=0
+    _tp_lines=0
     while :; do
-        _ram_frame="$(_tui_menu_frame "${_ram_cur}" "${_ram_accent}" "${_ram_color}")"
+        _tp_frame="$("${_tp_frame_fn}" "${_tp_cur}" "${_TUI_PICK_ACCENT:-141}" "${_tp_color}")"
         if [ -t 2 ]; then
-            [ "${_ram_lines}" -gt 0 ] && printf '\033[%dA' "${_ram_lines}" >&2
-            printf '%s\n' "${_ram_frame}" | awk '{ printf "\033[2K%s\n", $0 }' >&2
+            [ "${_tp_lines}" -gt 0 ] && printf '\033[%dA' "${_tp_lines}" >&2
+            printf '%s\n' "${_tp_frame}" | awk '{ printf "\033[2K%s\n", $0 }' >&2
         else
-            printf '%s\n' "${_ram_frame}" >&2
+            printf '%s\n' "${_tp_frame}" >&2
         fi
-        _ram_lines="$(printf '%s\n' "${_ram_frame}" | wc -l | tr -d ' ')"
+        _tp_lines="$(printf '%s\n' "${_tp_frame}" | wc -l | tr -d ' ')"
         case "$(_tui_read_key)" in
-            up) [ "${_ram_cur}" -gt 1 ] && _ram_cur=$((_ram_cur - 1)) ;;
-            down) [ "${_ram_cur}" -lt "${_ram_n}" ] && _ram_cur=$((_ram_cur + 1)) ;;
-            enter) _ram_pick="$(_tui_menu_value "${_ram_cur}")"; break ;;
-            quit) _ram_pick="quit"; break ;;
+            up) [ "${_tp_cur}" -gt 1 ] && _tp_cur=$((_tp_cur - 1)) ;;
+            down) [ "${_tp_cur}" -lt "${_tp_n}" ] && _tp_cur=$((_tp_cur + 1)) ;;
+            enter) _tp_pick="${_tp_cur}"; break ;;
+            quit) _tp_pick=0; break ;;
         esac
     done
-    _ram_restore
+    _tp_restore
     trap - INT TERM
-    printf '%s\n' "${_ram_pick}"
+    printf '%s\n' "${_tp_pick}"
+}
+
+# render_action_menu [last] — the ./dots action picker. Draws on stderr, reads
+# keys from fd 3 and prints the chosen value on stdout: "quit" for q, esc or
+# end of input. [last] (a value) starts under the cursor.
+render_action_menu() {
+    _ram_cur="$(_tui_menu_index "${1:-}")"
+    [ -n "${_ram_cur}" ] || _ram_cur=1
+    _TUI_PICK_ACCENT="$(_header_color_code "$(_tui_active_theme)")"
+    _ram_idx="$(_tui_pick _tui_menu_frame "$(_tui_menu_count)" "${_ram_cur}")"
+    if [ "${_ram_idx:-0}" -eq 0 ]; then
+        printf 'quit\n'
+    else
+        _tui_menu_value "${_ram_idx}"
+    fi
+}
+
+# _tui_choose_frame <cursor> <accent> <color> — frame for tui_choose, from
+# _TUI_CHOOSE_HEADER and the newline-separated _TUI_CHOOSE_ITEMS.
+_tui_choose_frame() {
+    printf '%s\n' "${_TUI_CHOOSE_ITEMS}" | awk -v cur="$1" -v acc="$2" -v color="$3" -v hdr="${_TUI_CHOOSE_HEADER}" '
+        function paint(code, text) { return color ? "\033[" code "m" text "\033[0m" : text }
+        NR == 1 { print paint("1;38;5;" acc, hdr) }
+        { print (NR == cur) ? paint("1;38;5;" acc, "> " $0) : "  " $0 }
+        END { print ""; print paint("2", "↑↓/jk move · enter select · q cancel") }
+    '
+}
+
+# tui_choose <header> <current> <item...> — pick one item. Prints it and
+# returns 0; prints nothing and returns 1 on q, esc or end of input.
+# <current> (an item, or empty) starts under the cursor.
+tui_choose() {
+    _TUI_CHOOSE_HEADER="${1:?tui_choose: header required}"
+    _tch_current="${2:-}"
+    shift 2
+    _TUI_CHOOSE_ITEMS="$(printf '%s\n' "$@")"
+    _tch_cur="$(printf '%s\n' "${_TUI_CHOOSE_ITEMS}" | awk -v v="${_tch_current}" '$0 == v { print NR; exit }')"
+    [ -n "${_tch_cur}" ] || _tch_cur=1
+    _TUI_PICK_ACCENT="${_TUI_PICK_ACCENT:-$(_header_color_code "$(_tui_active_theme)")}"
+    _tch_idx="$(_tui_pick _tui_choose_frame "$#" "${_tch_cur}")"
+    [ "${_tch_idx:-0}" -gt 0 ] || return 1
+    printf '%s\n' "${_TUI_CHOOSE_ITEMS}" | sed -n "${_tch_idx}p"
 }
 
 # _tui_git_summary — "✓ clean", "N changed", "N unpushed" or both; empty when
@@ -263,9 +321,7 @@ render_menu_status() {
     _rms_git="$(_tui_git_summary)"
     [ -n "${_rms_git}" ] && _rms_rest="${_rms_rest} · ${_rms_git}"
 
-    _rms_colors=0
-    [ -t 1 ] && _rms_colors="$(tput colors 2>/dev/null || printf '8')"
-    if [ "${_rms_colors}" -ge 256 ] 2>/dev/null; then
+    if _tui_color_on 1; then
         printf '\033[1;38;5;%sm%s\033[0m \033[2m· %s\033[0m\n' \
             "$(_header_color_code "${_rms_theme}")" "jals1212 DOTS" "${_rms_rest}"
     else

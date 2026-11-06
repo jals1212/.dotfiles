@@ -44,30 +44,17 @@ JSON
     [ "${output}" = "theme=kanagawa subtitle=Doctor" ]
 }
 
-@test "log_success invokes gum style with expected flags" {
-    cat > "${MOCKBIN}/gum" <<'SH'
-#!/bin/sh
-printf '%s\n' "$*" > "${GUM_ARGS_FILE}"
-printf 'gum:%s\n' "$*"
-SH
-    chmod +x "${MOCKBIN}/gum"
-    export GUM_ARGS_FILE="${SANDBOX}/gum.args"
+@test "log_success prints a card with the elapsed-time title and its lines" {
+    TUI_START_EPOCH="$(date +%s)"
+    export TUI_START_EPOCH
 
-    run log_success "Apply complete" "theme=kanagawa/dragon" "manifest=${REPO_ROOT}/manifest.json"
+    run log_success "Apply complete" "theme=kanagawa/dragon" "manifest=m.json"
 
     [ "${status}" -eq 0 ]
-    grep -q -- "--border rounded" "${GUM_ARGS_FILE}"
-    grep -q -- "--border-foreground 141" "${GUM_ARGS_FILE}"
-    grep -q -- "--padding 1 2" "${GUM_ARGS_FILE}"
-    grep -q -- "--bold" "${GUM_ARGS_FILE}"
+    [ "${output}" = "$(printf '│ Apply complete · 0s\n│ theme=kanagawa/dragon\n│ manifest=m.json')" ]
 }
 
 @test "log_success title carries elapsed-time suffix" {
-    cat > "${MOCKBIN}/gum" <<'SH'
-#!/bin/sh
-printf '%s\n' "$*"
-SH
-    chmod +x "${MOCKBIN}/gum"
     TUI_START_EPOCH="$(($(date +%s) - 3))"
     export TUI_START_EPOCH
 
@@ -75,6 +62,56 @@ SH
 
     [ "${status}" -eq 0 ]
     [[ "${output}" =~ Apply\ complete\ ·\ [0-9]+s ]]
+}
+
+@test "tui_card prints the title and lines behind a bar" {
+    run tui_card 141 "Current active theme" "Theme:  kanagawa" "Flavor: dragon"
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf '│ Current active theme\n│ Theme:  kanagawa\n│ Flavor: dragon')" ]
+}
+
+# --- generic picker ------------------------------------------------------
+
+# _choose <current> <keys> <items...> — tui_choose reading <keys> from fd 3.
+_choose() {
+    _cur="$1"; _k="$2"; shift 2
+    printf "${_k}" > "${SANDBOX}/keys"
+    tui_choose "Select flavor for kanagawa:" "${_cur}" "$@" 3<"${SANDBOX}/keys" 2>"${SANDBOX}/choose.err"
+}
+
+@test "tui_choose returns the item picked with j/k and enter" {
+    run _choose "" 'jj\n' dragon lotus wave
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "wave" ]
+}
+
+@test "tui_choose starts on the current item" {
+    run _choose "lotus" '\n' dragon lotus wave
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "lotus" ]
+}
+
+@test "tui_choose q, esc and end of input cancel with status 1 and no output" {
+    run _choose "" 'q' dragon lotus wave
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+
+    run _choose "" '\033' dragon lotus wave
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+
+    run _choose "" '' dragon lotus wave
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+}
+
+@test "tui_choose draws its header, items and key hints" {
+    run _choose "lotus" 'q' dragon lotus wave
+
+    [ "$(cat "${SANDBOX}/choose.err")" = "$(printf 'Select flavor for kanagawa:\n  dragon\n> lotus\n  wave\n\n↑↓/jk move · enter select · q cancel')" ]
 }
 
 # --- compact menu status line -------------------------------------------
