@@ -6,8 +6,8 @@
 # machines can differ. Pin a version here (or per project) when that matters.
 dotnet = "latest"
 go = "latest"
-node = "24.21.0"
-pnpm = "12.9.0"
+node = "latest"
+pnpm = "latest"
 python = "latest"
 ruby = "latest"
 rust = "latest"
