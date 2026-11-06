@@ -92,14 +92,14 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "JALS DOTS · catppuccin/mocha · starship" ]
+    [ "${output}" = "jals1212 DOTS · catppuccin/mocha · starship" ]
 }
 
 @test "render_menu_status omits prompt when manifest has none" {
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "JALS DOTS · kanagawa" ]
+    [ "${output}" = "jals1212 DOTS · kanagawa" ]
 }
 
 @test "render_menu_status reports a clean git tree" {
@@ -113,7 +113,7 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "JALS DOTS · kanagawa/dragon · p10k · ✓ clean" ]
+    [ "${output}" = "jals1212 DOTS · kanagawa/dragon · p10k · ✓ clean" ]
 }
 
 @test "render_menu_status counts uncommitted git changes" {
@@ -126,7 +126,7 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "JALS DOTS · kanagawa · 2 changed" ]
+    [ "${output}" = "jals1212 DOTS · kanagawa · 2 changed" ]
 }
 
 # --- action menu --------------------------------------------------------

@@ -82,7 +82,7 @@ _require_bsd_script() {
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"JALS DOTS"*"· kanagawa/dragon"* ]]
+    [[ "${output}" == *"jals1212 DOTS"*"· kanagawa/dragon"* ]]
     grep -q "|update .*|upgrade .*|clean .*|doctor .*|theme .*|prompt .*|uninstall .*|help .*|quit" "${GUM_ARGS_FILE}"
 }
 
