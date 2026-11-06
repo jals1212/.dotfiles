@@ -15,9 +15,6 @@ setup() {
     . "${REPO_ROOT_REAL}/src/lib/paths.sh"
     # shellcheck source=../src/lib/header.sh
     . "${REPO_ROOT_REAL}/src/lib/header.sh"
-    render_header() {
-        printf 'theme=%s subtitle=%s\n' "$1" "$2"
-    }
     # shellcheck source=../src/lib/tui.sh
     . "${REPO_ROOT_REAL}/src/lib/tui.sh"
 }
@@ -26,22 +23,40 @@ teardown() {
     rm -rf "${SANDBOX}"
 }
 
-@test "render_command_banner reads manifest theme and flavor" {
+@test "render_command_banner is one line: brand, title, theme/flavor and prompt" {
     cat > "${REPO_ROOT}/manifest.json" <<'JSON'
-{"theme":"catppuccin","flavor":"mocha"}
+{"theme":"catppuccin","flavor":"mocha","prompt":"starship"}
 JSON
 
-    run render_command_banner "Apply"
-
-    [ "${status}" -eq 0 ]
-    [ "${output}" = "theme=catppuccin/mocha subtitle=Apply" ]
-}
-
-@test "render_command_banner falls back to kanagawa" {
     run render_command_banner "Doctor"
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "theme=kanagawa subtitle=Doctor" ]
+    [ "${output}" = "jals1212 DOTS · Doctor · catppuccin/mocha · starship" ]
+}
+
+@test "render_command_banner falls back to kanagawa and shows git state" {
+    git -C "${REPO_ROOT}" init -q
+    git -C "${REPO_ROOT}" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+
+    run render_command_banner "Doctor"
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "jals1212 DOTS · Doctor · kanagawa · ✓ clean" ]
+}
+
+@test "render_subcommand_banner prints the one-line header outside the menu" {
+    run env -u DOTS_MENU_DISPATCH sh -c '. "$1/src/lib/paths.sh"; . "$1/src/lib/log.sh"; . "$1/src/lib/tui.sh"; render_subcommand_banner Clean' _ "${REPO_ROOT_REAL}"
+
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == "jals1212 DOTS · Clean"* ]]
+    [ "$(printf '%s\n' "${output}" | wc -l | tr -d ' ')" -eq 1 ]
+}
+
+@test "render_subcommand_banner prints nothing under DOTS_MENU_DISPATCH=1" {
+    DOTS_MENU_DISPATCH=1 run render_subcommand_banner "Clean"
+
+    [ "${status}" -eq 0 ]
+    [ -z "${output}" ]
 }
 
 @test "log_success prints a card with the elapsed-time title and its lines" {

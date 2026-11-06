@@ -76,7 +76,7 @@ fi
 # Banner (render_subcommand_banner is a no-op under DOTS_MENU_DISPATCH)
 # ---------------------------------------------------------------------------
 tui_start_timer
-render_subcommand_banner "Prompt Switcher"
+render_subcommand_banner "Prompt"
 
 # ---------------------------------------------------------------------------
 # Argument parsing

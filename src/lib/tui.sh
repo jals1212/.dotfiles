@@ -13,7 +13,7 @@ if ! command -v path_manifest >/dev/null 2>&1; then
     fi
 fi
 
-if ! command -v render_header >/dev/null 2>&1; then
+if ! command -v _header_color_code >/dev/null 2>&1; then
     if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib header.sh)" ]; then
         # shellcheck disable=SC1091
         . "$(path_src_lib header.sh)"
@@ -50,10 +50,10 @@ tui_subtitle_for() {
     esac
 }
 
+# render_command_banner [title] — the subcommand header: the menu status line
+# with the subcommand title after the brand.
 render_command_banner() {
-    _rcb_subtitle="${1:-}"
-    _rcb_theme="$(_tui_active_theme)"
-    render_header "${_rcb_theme}" "${_rcb_subtitle}"
+    render_menu_status "${1:-}"
 }
 
 render_subcommand_banner() {
@@ -379,9 +379,9 @@ _tui_git_summary() {
     printf '%s' "${_tgs_out}"
 }
 
-# render_menu_status — one-line menu header:
-#   jals1212 DOTS · <theme[/flavor]> · <prompt> · <git summary>
-# Prompt and git parts are omitted when unknown. Brand in the theme accent and
+# render_menu_status [title] — one-line header, for the menu and subcommands:
+#   jals1212 DOTS · [<title> ·] <theme[/flavor]> · <prompt> · <git summary>
+# The title (a subcommand name) is omitted for the menu. Prompt and git parts are omitted when unknown. Brand in the theme accent and
 # the rest dimmed when stdout is a 256-color tty; plain text otherwise.
 render_menu_status() {
     _rms_theme="$(_tui_active_theme)"
@@ -391,6 +391,7 @@ render_menu_status() {
         _rms_prompt="$(jq -r '.prompt // empty' "${_rms_manifest}" 2>/dev/null || printf '')"
     fi
     _rms_rest="${_rms_theme}"
+    [ -n "${1:-}" ] && _rms_rest="${1} · ${_rms_rest}"
     [ -n "${_rms_prompt}" ] && _rms_rest="${_rms_rest} · ${_rms_prompt}"
     _rms_git="$(_tui_git_summary)"
     [ -n "${_rms_git}" ] && _rms_rest="${_rms_rest} · ${_rms_git}"
