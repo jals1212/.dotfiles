@@ -17,10 +17,11 @@ auto_switch = false
 
 [ui.sidebar.agents]
 # Default rows plus the two Gentle Shell active-work summary rows and the
-# ci-local run ($ci, reported by @jals1212/ci-local-pi), colored by state.
+# ci-local run ($ci, reported by @jals1212/ci-local-pi), colored by state, and
+# the Pi space next to the agent ($space, reported by @jals1212/pi-spaces).
 rows = [
   ["state_icon", "machine", "workspace", "tab"],
-  ["agent"],
+  ["agent", "$space"],
   ["$summary",],
   ["$summary2"],
   [{ token = "$ci", rules = [
