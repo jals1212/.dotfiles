@@ -171,6 +171,8 @@ _tui_read_key() {
         '
 '|"$(printf '\r')") printf 'enter' ;;
         q|Q) printf 'quit' ;;
+        y|Y) printf 'yes' ;;
+        n|N) printf 'no' ;;
         k) printf 'up' ;;
         j) printf 'down' ;;
         "$(printf '\033')")
@@ -256,6 +258,47 @@ render_action_menu() {
     else
         _tui_menu_value "${_ram_idx}"
     fi
+}
+
+# tui_confirm <question> <default y|n> — one-key yes/no on fd 3.
+# Returns 0 for y, 1 for n, the default for enter, and 130 for q, esc or end
+# of input. Other keys are ignored. Draws "<question> [y/N] <answer>" on stderr.
+tui_confirm() {
+    _tcf_q="${1:?tui_confirm: question required}"
+    _tcf_default="${2:?tui_confirm: default y|n required}"
+    case "${_tcf_default}" in
+        y) _tcf_hint='[Y/n]' ;;
+        n) _tcf_hint='[y/N]' ;;
+        *) log_error "tui_confirm: default must be y or n"; return 2 ;;
+    esac
+    _tui_open_keys
+    if _tui_color_on 2; then
+        printf '\033[1m%s\033[0m \033[2m%s\033[0m ' "${_tcf_q}" "${_tcf_hint}" >&2
+    else
+        printf '%s %s ' "${_tcf_q}" "${_tcf_hint}" >&2
+    fi
+    _tcf_stty=""
+    if [ -t 3 ]; then
+        _tcf_stty="$(stty -g <&3)"
+        stty -icanon -echo min 1 time 0 <&3
+    fi
+    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; exit 130' INT TERM
+    while :; do
+        case "$(_tui_read_key)" in
+            yes) _tcf_ans=y; break ;;
+            no) _tcf_ans=n; break ;;
+            enter) _tcf_ans="${_tcf_default}"; break ;;
+            quit) _tcf_ans=""; break ;;
+        esac
+    done
+    [ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3
+    trap - INT TERM
+    printf '%s\n' "${_tcf_ans}" >&2
+    case "${_tcf_ans}" in
+        y) return 0 ;;
+        n) return 1 ;;
+        *) return 130 ;;
+    esac
 }
 
 # _tui_choose_frame <cursor> <accent> <color> — frame for tui_choose, from

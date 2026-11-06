@@ -11,13 +11,9 @@ dots() {
     local marker="${XDG_STATE_HOME:-$HOME/.local/state}/dots/reload-needed"
     if (( ret == 0 )) && [[ -f "$marker" && -o interactive && -t 0 && -t 1 ]]; then
         command rm -f -- "$marker"
-        if command -v gum >/dev/null 2>&1; then
-            gum confirm "Reload shell to apply changes?" && exec zsh
-        else
-            local _reply
-            read -q "_reply?Reload shell to apply changes? [y/N] " && { print; exec zsh; }
-            print
-        fi
+        local _reply
+        read -q "_reply?Reload shell to apply changes? [y/N] " && { print; exec zsh; }
+        print
     fi
     return $ret
 }

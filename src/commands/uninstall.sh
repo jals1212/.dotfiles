@@ -108,18 +108,11 @@ fi
 # ---------------------------------------------------------------------------
 if [ "${_yes}" != 1 ]; then
     if [ -t 0 ] && [ -t 1 ]; then
-        if command -v gum >/dev/null 2>&1; then
-            if ! gum confirm "Remove the declared dotbot-managed symlinks listed above and manifest.json?"; then
-                log_info "uninstall aborted"
-                exit 0
-            fi
-        else
-            printf 'Remove the declared dotbot-managed symlinks listed above and manifest.json? [y/N] '
-            read -r _ans
-            case "${_ans}" in
-                y|Y|yes|YES) ;;
-                *) log_info "uninstall aborted"; exit 0 ;;
-            esac
+        # Only an explicit y removes anything; n, enter, q, esc and end of
+        # input all abort.
+        if ! tui_confirm "Remove the declared dotbot-managed symlinks listed above and manifest.json?" n; then
+            log_info "uninstall aborted"
+            exit 0
         fi
     else
         log_error "uninstall on non-TTY requires --yes"

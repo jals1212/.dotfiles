@@ -84,3 +84,29 @@ teardown() {
     grep -q 'brew bundle cleanup --force' "${CALLS}"
     grep -q 'mise prune --yes' "${CALLS}"
 }
+
+# _tty_upgrade <keys> <args...> — run ./dots upgrade on a PTY, keys on fd 3.
+_tty_upgrade() {
+    printf "$1" > "${SANDBOX}/keys"
+    shift
+    run script -q /dev/null sh -c 'k="$1"; shift; exec 3<"$k"; sh "$@"' _ "${SANDBOX}/keys" "${REPO_COPY}/dots" upgrade "$@"
+}
+
+@test "upgrade cleanup on a TTY stays non-destructive when the answer is n, esc or enter" {
+    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    for keys in 'n' '\033' '\n'; do
+        _tty_upgrade "${keys}" --cleanup --prune
+        [ "${status}" -eq 0 ]
+        run ! grep -q -- '--force' "${CALLS}"
+        run ! grep -q 'mise prune' "${CALLS}"
+    done
+}
+
+@test "upgrade cleanup on a TTY applies after y" {
+    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _tty_upgrade 'yy' --cleanup --prune
+
+    [ "${status}" -eq 0 ]
+    grep -q 'brew bundle cleanup --force' "${CALLS}"
+    grep -q 'mise prune --yes' "${CALLS}"
+}

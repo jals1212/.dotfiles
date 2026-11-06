@@ -157,7 +157,7 @@ if [ "${_yes}" -eq 0 ] && [ -z "${_arg_theme}" ] && [ -z "${_arg_flavor}" ] && [
     tui_card "$(_header_color_code "${_active_theme}")" "Current active theme" \
         "Theme:  ${_active_theme}" "Flavor: ${_active_flavor}"
 
-    if gum confirm --default=false "Change theme?"; then
+    if tui_confirm "Change theme?" n; then
         _active_theme="$(select_theme "${REPO_ROOT}" "${_active_theme}")"
         _active_flavor="$(select_flavor "${REPO_ROOT}" "${_active_theme}" "${_active_flavor}")"
 

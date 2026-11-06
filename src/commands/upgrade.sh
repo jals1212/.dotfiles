@@ -81,8 +81,9 @@ _upgrade_confirm_destructive() {
         return 0
     fi
 
-    if [ -t 0 ] && [ -t 1 ] && command -v gum >/dev/null 2>&1; then
-        gum confirm "Destructive action: ${_ucd_what}. Continue?"
+    if [ -t 0 ] && [ -t 1 ]; then
+        # Only an explicit y proceeds; enter defaults to No.
+        tui_confirm "Destructive action: ${_ucd_what}. Continue?" n
         return $?
     fi
 

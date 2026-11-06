@@ -239,3 +239,54 @@ _menu() {
     grep -qx "↑↓/jk move · enter run · q quit" "${SANDBOX}/menu.err"
     [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor theme prompt uninstall help quit " ]
 }
+
+# --- confirm ---------------------------------------------------------------
+
+# _confirm <default> <keys> — tui_confirm reading <keys> from fd 3.
+_confirm() {
+    printf "$2" > "${SANDBOX}/keys"
+    tui_confirm "Apply selection?" "$1" 3<"${SANDBOX}/keys" 2>"${SANDBOX}/confirm.err"
+}
+
+@test "tui_confirm y or Y answers yes" {
+    run _confirm n 'y'
+    [ "${status}" -eq 0 ]
+    run _confirm n 'Y'
+    [ "${status}" -eq 0 ]
+}
+
+@test "tui_confirm n or N answers no" {
+    run _confirm y 'n'
+    [ "${status}" -eq 1 ]
+    run _confirm y 'N'
+    [ "${status}" -eq 1 ]
+}
+
+@test "tui_confirm enter takes the default" {
+    run _confirm n '\n'
+    [ "${status}" -eq 1 ]
+    run _confirm y '\n'
+    [ "${status}" -eq 0 ]
+}
+
+@test "tui_confirm q, esc and end of input cancel with 130" {
+    run _confirm y 'q'
+    [ "${status}" -eq 130 ]
+    run _confirm y '\033'
+    [ "${status}" -eq 130 ]
+    run _confirm y ''
+    [ "${status}" -eq 130 ]
+}
+
+@test "tui_confirm ignores other keys until an answer" {
+    run _confirm n 'xjz y'
+    [ "${status}" -eq 0 ]
+}
+
+@test "tui_confirm shows the question with the default capitalised" {
+    run _confirm n 'n'
+    [ "$(head -1 "${SANDBOX}/confirm.err")" = "Apply selection? [y/N] n" ]
+
+    run _confirm y 'y'
+    [ "$(head -1 "${SANDBOX}/confirm.err")" = "Apply selection? [Y/n] y" ]
+}

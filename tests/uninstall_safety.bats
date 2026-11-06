@@ -65,3 +65,40 @@ teardown() {
     [ -L "${HOME}/.local/state/mise/tracked-configs/example" ]
     [ -f "${MINI_REPO}/manifest.json" ]
 }
+
+# _tty_uninstall <keys> — run uninstall on a PTY with <keys> on fd 3.
+_tty_uninstall() {
+    printf "$1" > "${SANDBOX}/keys"
+    run script -q /dev/null sh -c 'exec 3<"$1"; sh "$2"' _ "${SANDBOX}/keys" "${MINI_REPO}/src/commands/uninstall.sh"
+}
+
+@test "uninstall on a TTY keeps everything when the answer is n" {
+    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _tty_uninstall 'n'
+
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"uninstall aborted"* ]]
+    [ -L "${HOME}/.config/zsh/.zshrc" ]
+    [ -L "${HOME}/.config/nvim/lua" ]
+    [ -f "${MINI_REPO}/manifest.json" ]
+}
+
+@test "uninstall on a TTY keeps everything on esc, enter or end of input" {
+    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    for keys in '\033' '\n' ''; do
+        _tty_uninstall "${keys}"
+        [ "${status}" -eq 0 ]
+        [[ "${output}" == *"uninstall aborted"* ]]
+        [ -L "${HOME}/.config/zsh/.zshrc" ]
+        [ -f "${MINI_REPO}/manifest.json" ]
+    done
+}
+
+@test "uninstall on a TTY removes the declared symlinks when the answer is y" {
+    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _tty_uninstall 'y'
+
+    [ "${status}" -eq 0 ]
+    [ ! -e "${HOME}/.config/zsh/.zshrc" ]
+    [ ! -e "${MINI_REPO}/manifest.json" ]
+}

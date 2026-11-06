@@ -91,17 +91,6 @@ read_current_selection() {
 }
 
 # ---------------------------------------------------------------------------
-# _check_gum
-#   Verifies gum is available; exits 1 with error if not.
-# ---------------------------------------------------------------------------
-_check_gum() {
-    if ! command -v gum >/dev/null 2>&1; then
-        log_error "gum is required (install with: brew install gum)."
-        exit 1
-    fi
-}
-
-# ---------------------------------------------------------------------------
 # validate_theme <theme>
 #   Confirms <theme> is one of the supported themes.
 # ---------------------------------------------------------------------------
@@ -203,6 +192,5 @@ confirm_apply() {
 
     tui_card "$(_header_color_code "${_ca_theme}")" "Selection summary" \
         "Theme:  ${_ca_theme}" "Flavor: ${_ca_flavor}"
-    _check_gum
-    gum confirm "Apply selection?"
+    tui_confirm "Apply selection?" y
 }
