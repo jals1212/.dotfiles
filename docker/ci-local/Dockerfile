@@ -1,7 +1,7 @@
 # The Linux runner `pnpm exec ci-local` runs the CI steps in (ci-local.config.sh):
 # ci-local's base image (the Node of `.nvmrc` on Debian bookworm, the Docker
 # client, sudo, corepack) plus what .github/workflows/ci.yml installs around the
-# steps on its Ubuntu runner: bats, zsh and shellcheck (apt), with git, make and
+# steps on its Ubuntu runner: bats, zsh, shellcheck and jq (apt), with git, make and
 # python3 that the hosted image has and the suite uses (submodule paths, the
 # Makefile, vendor/dotbot's pyyaml checks).
 #
@@ -13,5 +13,5 @@ FROM ${CI_LOCAL_BASE}
 
 # The base leaves the user root, so apt needs no sudo.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends bats zsh shellcheck git make python3 \
+ && apt-get install -y --no-install-recommends bats zsh shellcheck jq git make python3 \
  && rm -rf /var/lib/apt/lists/*
