@@ -85,6 +85,18 @@ python = "3.12"
 
 Run `./dots update` to install. Run `./dots upgrade` to prune removed versions.
 
+## Development
+
+```sh
+brew install bats-core shellcheck
+make -f config/Makefile lint   # shellcheck (severity warning): dots, src/install, own *.sh; skips vendor/
+make -f config/Makefile test   # bats tests/ — fails when bats is not installed
+```
+
+Run both before every push; the suite is written for macOS and runs all of it there.
+
+CI (`.github/workflows/ci.yml`) runs the same two targets on a pull request to `main` and by hand (`workflow_dispatch`), never again after the merge. It skips draft pull requests (open them as drafts, mark ready once local runs are green), pull requests that only change `odd/`, `README.md`, `AGENTS.md` or `CLAUDE.md`, and cancels a run when a newer push supersedes it. It runs on Ubuntu to spend fewer Actions minutes, so the tests that drive a PTY with BSD `script` skip there; start a manual run with the `macos-15` runner to cover them.
+
 ## Documentation
 
 - [Install guide](docs/install.md) — install, update, theme, doctor, clean, upgrade, uninstall.

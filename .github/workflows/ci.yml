@@ -1,0 +1,82 @@
+# shellcheck (src/, dots, own scripts) and the bats suite, via the same two
+# `make` targets a developer runs locally (config/Makefile).
+#
+# Actions minutes are paid for (private repo), so this runs as little as it can
+# while every code change is still judged once before it merges. Same rules as
+# the user's `github-actions-savings` skill:
+#
+# - On pull requests to `main` only; no `push` trigger, so nothing runs again
+#   on `main` after the merge. `workflow_dispatch` checks `main` by hand.
+# - Not for a pull request that only changes plans and prose no test or script
+#   reads (`odd/`, README, agent context files). `docs/` is NOT skipped. The
+#   list is pinned by tests/ci_workflow.bats.
+# - Drafts do not run: open PRs as drafts, run `make -f config/Makefile lint
+#   test` locally, then mark ready once (`ready_for_review` triggers the run).
+# - A newer push to the same ref cancels the run it supersedes.
+#
+# Runner: ubuntu-24.04 (1x minutes) instead of macOS (10x). The suite is
+# written for macOS; on Linux everything runs except the tests that drive a PTY
+# with BSD `script -q /dev/null <cmd>` (tui_helpers, dispatcher_action_menu,
+# log_ok, uninstall_safety, upgrade_safety): they skip with "PTY script syntax
+# unavailable". Those are covered by the local macOS run before the push, or
+# on demand with the "runner" input of a manual run (macos-15).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'odd/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner. macOS also runs the PTY tests that skip on Linux, at 10x the minutes.'
+        type: choice
+        options:
+          - ubuntu-24.04
+          - macos-15
+        default: ubuntu-24.04
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: shellcheck + bats
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    timeout-minutes: 15
+    steps:
+      # Recursive: tests read vendor/dotbot/lib/pyyaml, a submodule of a submodule.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      # shellcheck is preinstalled on ubuntu runners; zsh is read by the npm guard tests.
+      - name: Install bats and zsh (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends bats zsh shellcheck
+
+      - name: Install bats and shellcheck (macOS)
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: brew install bats-core shellcheck
+
+      - name: shellcheck
+        run: make -f config/Makefile lint
+
+      - name: bats
+        run: make -f config/Makefile test
