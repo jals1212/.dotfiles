@@ -207,12 +207,30 @@ _tui_open_keys() {
     fi
 }
 
+# Subshell PID, portably (dash has no BASHPID): inside the subshell,
+# `$(exec sh -c 'echo $PPID')` is a sh whose parent is that subshell. It has to
+# be written inline (a helper function would add a subshell level) and is
+# taken before the trap is armed.
+
+# _tui_die_by <INT|TERM> <pid> — from an INT/TERM trap in a subshell: put the
+# signal back to its default and re-raise it on the subshell (<pid>) so it dies
+# BY the signal. The caller's shell, which got the same signal from the
+# terminal, then acts on it (runs its own trap, or terminates) instead of
+# seeing a normal exit and carrying on. Exit 130 only if the signal is ignored.
+_tui_die_by() {
+    trap - INT TERM
+    kill -s "$1" "$2"
+    exit 130
+}
+
 # _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.
 # Draws "<frame-fn> <cursor> <accent> <color>" on stderr after each key and
 # prints the chosen 1-based index, or 0 for q, esc or end of input. Needs
 # _TUI_PICK_ACCENT set by the caller.
 # The body is a subshell: its INT/TERM trap, stty changes and helper never
 # touch the caller's shell, so there are no caller traps to save and replay.
+# On INT/TERM it restores the terminal, then dies by that signal (see
+# _tui_die_by) so the caller reacts as if it had been interrupted itself.
 _tui_pick() (
     _tp_frame_fn="$1"
     _tp_n="$2"
@@ -227,7 +245,9 @@ _tui_pick() (
         [ -t 2 ] && printf '\033[?25h' >&2
         return 0
     }
-    trap '_tp_restore; exit 130' INT TERM
+    _tp_pid="$(exec sh -c 'echo $PPID')"
+    trap '_tp_restore; _tui_die_by INT "${_tp_pid}"' INT
+    trap '_tp_restore; _tui_die_by TERM "${_tp_pid}"' TERM
     if [ -t 3 ]; then
         _tp_stty="$(stty -g <&3)"
         stty -icanon -echo min 1 time 0 <&3
@@ -274,7 +294,8 @@ render_action_menu() {
 # Returns 0 for y, 1 for n, the default for enter, and 130 for q, esc or end
 # of input. Other keys are ignored. Draws "<question> [y/N] <answer>" on stderr.
 # The body is a subshell, like _tui_pick: the INT/TERM trap and stty changes
-# stay out of the caller's shell. A Ctrl-C ends the subshell with 130.
+# stay out of the caller's shell. INT/TERM restore stty and the subshell dies
+# by the signal (see _tui_die_by); q, esc and end of input only return 130.
 tui_confirm() (
     _tcf_q="${1:?tui_confirm: question required}"
     _tcf_default="${2:?tui_confirm: default y|n required}"
@@ -290,7 +311,9 @@ tui_confirm() (
         printf '%s %s ' "${_tcf_q}" "${_tcf_hint}" >&2
     fi
     _tcf_stty=""
-    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; exit 130' INT TERM
+    _tcf_pid="$(exec sh -c 'echo $PPID')"
+    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; _tui_die_by INT "${_tcf_pid}"' INT
+    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; _tui_die_by TERM "${_tcf_pid}"' TERM
     if [ -t 3 ]; then
         _tcf_stty="$(stty -g <&3)"
         stty -icanon -echo min 1 time 0 <&3

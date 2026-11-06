@@ -485,3 +485,103 @@ EOS
     _has 'echo caller'
     _has 'INT'
 }
+
+# --- Ctrl-C at a confirm or picker aborts the caller (real PTY) --------------
+
+_require_bsd_script() {
+    command -v script >/dev/null 2>&1 || return 1
+    script -q /dev/null env true >/dev/null 2>&1
+}
+
+# _pty_run <shell> <key printf-format> <caller script> — run <caller script>
+# (libs sourced) with <shell> under a real PTY, send <key> after a delay and
+# collect the output in $output. An outer shell keeps catching INT (so only
+# the caller is judged), prints "STATUS=<caller status>" and saves `stty -a`
+# to ${SANDBOX}/after.
+_pty_run() {
+    _pr_shell="$1"; _pr_key="$2"
+    cat > "${SANDBOX}/caller.sh" <<EOS
+REPO_ROOT="${REPO_ROOT_REAL}"
+. "\${REPO_ROOT}/src/lib/paths.sh"
+. "\${REPO_ROOT}/src/lib/log.sh"
+. "\${REPO_ROOT}/src/lib/header.sh"
+. "\${REPO_ROOT}/src/lib/tui.sh"
+$3
+EOS
+    cat > "${SANDBOX}/outer.sh" <<EOS
+trap : INT
+"${_pr_shell}" "${SANDBOX}/caller.sh"
+echo "STATUS=\$?"
+sleep 1  # a signalled caller can die before its picker subshell restored stty
+stty -a > "${SANDBOX}/after"
+EOS
+    # bats keeps its own fd 3 open; close it so the caller opens /dev/tty.
+    run bash -c '
+        exec 3<&- 3>&-
+        { sleep 2; printf "$1"; sleep 2; } | script -q /dev/null "$2" "$3"
+    ' _ "${_pr_key}" "${_pr_shell}" "${SANDBOX}/outer.sh"
+}
+
+# _stty_cooked — the saved `stty -a` still has canonical mode and echo on.
+_stty_cooked() {
+    ! tr ' ;' '\n\n' < "${SANDBOX}/after" | grep -qx -e '-icanon' -e '-echo'
+}
+
+# _each_pty_shell <fn> — run <fn> <shell> for /bin/sh and, when installed, dash.
+_each_pty_shell() {
+    _require_bsd_script || skip "PTY script syntax unavailable"
+    "$1" /bin/sh
+    if [ -x /bin/dash ]; then
+        "$1" /bin/dash
+    fi
+}
+
+_ctrlc_confirm_aborts() {
+    _pty_run "$1" '\003' 'tui_confirm "x" n; echo "AFTER rc=$?"'
+    _lacks 'AFTER'
+    _has 'STATUS=130'
+    _stty_cooked
+}
+
+@test "Ctrl-C during tui_confirm aborts the caller and restores stty" {
+    _each_pty_shell _ctrlc_confirm_aborts
+}
+
+_ctrlc_confirm_trap() {
+    _pty_run "$1" '\003' "trap 'echo CALLER_INT; exit 7' INT
+tui_confirm 'x' n; echo \"AFTER rc=\$?\""
+    _has 'CALLER_INT'
+    _lacks 'AFTER'
+    _has 'STATUS=7'
+    _stty_cooked
+}
+
+@test "Ctrl-C during tui_confirm runs the caller's INT trap" {
+    _each_pty_shell _ctrlc_confirm_trap
+}
+
+_ctrlc_choose_aborts() {
+    _pty_run "$1" '\003' 'tui_choose "h" "" a b; echo "AFTER rc=$?"'
+    _lacks 'AFTER'
+    _has 'STATUS=130'
+    _stty_cooked
+}
+
+@test "Ctrl-C during tui_choose aborts the caller and restores stty" {
+    _each_pty_shell _ctrlc_choose_aborts
+}
+
+_cancel_keys_continue() {
+    _pty_run "$1" 'q' 'tui_confirm "x" n; echo "AFTER rc=$?"'
+    _has 'AFTER rc=130'
+    _has 'STATUS=0'
+    _pty_run "$1" '\033' 'tui_confirm "x" n; echo "AFTER rc=$?"'
+    _has 'AFTER rc=130'
+    _pty_run "$1" 'q' 'tui_choose "h" "" a b; echo "AFTER rc=$?"'
+    _has 'AFTER rc=1'
+    _stty_cooked
+}
+
+@test "q and esc at a confirm or picker still cancel and the caller continues" {
+    _each_pty_shell _cancel_keys_continue
+}
