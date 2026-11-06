@@ -65,7 +65,7 @@ Run `./dots` for the visual action menu: a one-line status (active theme, prompt
 | `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. |
 | `./dots theme <theme> <flavor>` | Switch theme (or `./dots theme` for interactive picker, `--current` to show active). |
 | `./dots doctor` | Non-mutating health check. |
-| `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks; prune `*.dotbot-backup.*` older than N days (default 30). |
+| `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks that point into this repo; prune dotbot backups of declared links older than N days (default 30). Never touches links or backups the repo did not create. |
 | `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. |
 | `./dots uninstall [--yes] [--dry-run]` | Remove declared Dotbot symlinks + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |
 

@@ -16,12 +16,15 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '  --dry-run     Print what would be removed; do not modify anything.\n' >&2
     printf '  --help, -h    Show this message.\n\n' >&2
     printf 'DESCRIPTION\n' >&2
-    printf '  Phase 1: dotbot --only clean removes broken symlinks under the\n' >&2
-    printf '           managed directories declared in install.conf.yaml clean:.\n' >&2
-    printf '  Phase 2: prune <path>.dotbot-backup.<timestamp> siblings older than\n' >&2
-    printf '           --age days (mtime check).\n\n' >&2
-    printf '  Does NOT touch manifest.json, theme symlinks (whose targets exist),\n' >&2
-    printf '  or the tmux fenced block.\n' >&2
+    printf '  Phase 1: remove broken symlinks in the managed directories (the\n' >&2
+    printf '           parents of the Dotbot link destinations, including $HOME)\n' >&2
+    printf '           whose target points inside this repository.\n' >&2
+    printf '  Phase 2: prune <path>.dotbot-backup.<timestamp> files older than\n' >&2
+    printf '           --age days (mtime check), only when <path> is a link\n' >&2
+    printf '           destination declared by this repository.\n\n' >&2
+    printf '  Only touches what this repo created: broken symlinks pointing\n' >&2
+    printf '  elsewhere and backups of undeclared paths are left alone. Does NOT\n' >&2
+    printf '  touch manifest.json or symlinks whose targets exist.\n' >&2
     exit 0
 fi
 
@@ -73,17 +76,28 @@ render_subcommand_banner "Clean"
 # ---------------------------------------------------------------------------
 log_step "Phase 1: dead-symlink sweep"
 
-# Enumerate broken symlinks under managed directories. This count is used
-# for the summary and (in --dry-run) for the would-remove listing.
+# Enumerate broken symlinks directly under managed directories, then keep only
+# those whose target points into this repo (anything else, e.g. a dangling link
+# in $HOME from another tool, was not created by us and is never touched). This
+# count is used for the summary and (in --dry-run) for the would-remove listing.
 _dead_tmpfile="$(mktemp)"
-_clean_cleanup() { rm -f "${_dead_tmpfile:-}" "${_tmpfile:-}"; }
+_dead_all="$(mktemp)"
+_dirs_tmpfile="$(mktemp)"
+_links_tmpfile="$(mktemp)"
+_clean_cleanup() { rm -f "${_dead_tmpfile:-}" "${_dead_all:-}" "${_dirs_tmpfile:-}" "${_links_tmpfile:-}" "${_tmpfile:-}"; }
 trap _clean_cleanup EXIT
-dotbot_managed_dirs | while IFS= read -r _dir; do
+
+# Resolve ownership inputs up front; abort (deleting nothing) if they fail.
+dotbot_managed_dirs > "${_dirs_tmpfile}" || exit 1
+dotbot_managed_links > "${_links_tmpfile}" || exit 1
+
+while IFS= read -r _dir; do
     [ -d "${_dir}" ] || continue
     find "${_dir}" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r _link; do
         [ -e "${_link}" ] || printf '%s\n' "${_link}"
     done
-done > "${_dead_tmpfile}"
+done < "${_dirs_tmpfile}" > "${_dead_all}"
+dotbot_filter_repo_owned_links < "${_dead_all}" > "${_dead_tmpfile}" || exit 1
 
 _dead_count=$(wc -l < "${_dead_tmpfile}" | tr -d ' ')
 
@@ -117,11 +131,20 @@ _stale_count=0
 _tmpfile="$(mktemp)"
 # _clean_cleanup (trap set in Phase 1) already covers ${_tmpfile}.
 
+# A backup is ours only when it is <declared link destination>.dotbot-backup.
+# <timestamp> (dotbot's naming; timestamp = digits and dashes).
 : > "${_tmpfile}"
-dotbot_managed_dirs | while IFS= read -r _dir; do
+while IFS= read -r _dir; do
     [ -d "${_dir}" ] || continue
     find "${_dir}" -maxdepth 1 -type f -name '*.dotbot-backup.*' -mtime "${_mtime_arg}" 2>/dev/null
-done > "${_tmpfile}"
+done < "${_dirs_tmpfile}" | while IFS= read -r _path; do
+    _suffix="${_path##*.dotbot-backup.}"
+    case "${_suffix}" in
+        ''|*[!0-9-]*) continue ;;
+    esac
+    _origin="${_path%.dotbot-backup.*}"
+    grep -Fxq -- "${_origin}" "${_links_tmpfile}" && printf '%s\n' "${_path}"
+done > "${_tmpfile}" || true
 
 if [ "${_dry_run}" = 1 ]; then
     while IFS= read -r _path; do

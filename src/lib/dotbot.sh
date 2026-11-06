@@ -320,6 +320,57 @@ PY
 }
 
 # ---------------------------------------------------------------------------
+# dotbot_filter_repo_owned_links
+#   Read symlink paths (one per line) on stdin; print only those whose link
+#   target points inside REPO_ROOT. Relative targets are resolved against the
+#   link's own directory; the physical (symlink-resolved) target is compared
+#   with the physical REPO_ROOT, on path-component boundaries (so /repo-other is not inside /repo). A symlink pointing
+#   anywhere else was not created by this repo and is never printed.
+#   Fails (prints nothing) when python3 is missing, so callers delete nothing.
+# ---------------------------------------------------------------------------
+dotbot_filter_repo_owned_links() {
+    _dfr_root="${REPO_ROOT:?REPO_ROOT required}"
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        log_error "python3 not found; cannot decide which symlinks this repo owns"
+        return 1
+    fi
+
+    # The script goes in via -c so stdin stays free for the link list.
+    _dfr_py="$(cat <<'PY'
+import os
+import sys
+
+root = sys.argv[1]
+roots = {os.path.realpath(root)}
+roots.discard(os.sep)
+
+
+def inside(path):
+    return any(path.startswith(r + os.sep) for r in roots)
+
+
+for line in sys.stdin:
+    link = line.rstrip("\n")
+    if not link or not os.path.islink(link):
+        continue
+    try:
+        target = os.readlink(link)
+    except OSError:
+        continue
+    parent = os.path.realpath(os.path.dirname(os.path.abspath(link)))
+    if not os.path.isabs(target):
+        target = os.path.join(parent, target)
+    # Physical resolution of the target (follows symlinks and .. components,
+    # tolerates the missing tail), compared with the physical repo root.
+    if inside(os.path.realpath(target)):
+        print(link)
+PY
+)"
+    python3 -c "${_dfr_py}" "${_dfr_root}"
+}
+
+# ---------------------------------------------------------------------------
 # dotbot_check_submodules
 #   Ensure dotbot and plugin submodules are initialized (auto-bootstraps the
 #   chicken-and-egg prereqs on a fresh machine via lib/bootstrap.sh), then
