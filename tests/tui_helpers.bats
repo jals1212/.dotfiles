@@ -290,3 +290,13 @@ _confirm() {
     run _confirm y 'y'
     [ "$(head -1 "${SANDBOX}/confirm.err")" = "Apply selection? [Y/n] y" ]
 }
+
+@test "confirm_apply does not apply on enter (default No)" {
+    . "${REPO_ROOT_REAL}/src/lib/select.sh"
+    printf '\n' > "${SANDBOX}/keys"
+
+    run confirm_apply catppuccin mocha 3<"${SANDBOX}/keys"
+
+    [ "${status}" -eq 1 ]
+    [[ "${output}" == *"Apply selection? [y/N]"* ]]
+}

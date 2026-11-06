@@ -192,5 +192,5 @@ confirm_apply() {
 
     tui_card "$(_header_color_code "${_ca_theme}")" "Selection summary" \
         "Theme:  ${_ca_theme}" "Flavor: ${_ca_flavor}"
-    tui_confirm "Apply selection?" y
+    tui_confirm "Apply selection?" n
 }
