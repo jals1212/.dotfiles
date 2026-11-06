@@ -194,8 +194,47 @@ _tui_read_key() {
 
 # _tui_open_keys — make sure fd 3 (where keys are read) is open; the caller
 # may have opened it (the ./dots menu loop, tests), otherwise use /dev/tty.
+# Without a controlling terminal `exec 3</dev/tty` aborts a POSIX sh, so probe
+# in a subshell first and fail closed: fd 3 on /dev/null reads as end of input,
+# which every caller treats as cancel.
 _tui_open_keys() {
-    { true <&3; } 2>/dev/null || exec 3</dev/tty
+    { true <&3; } 2>/dev/null && return 0
+    if ( : </dev/tty ) 2>/dev/null; then
+        exec 3</dev/tty
+    else
+        exec 3</dev/null
+    fi
+}
+
+# _tui_traps_save — remember the caller's traps in _TUI_OLD_TRAPS.
+# `$(trap)` is not enough: macOS /bin/sh (bash) reports the parent's traps in a
+# command substitution, but dash resets them there and prints nothing. So write
+# `trap` to a file from the current shell and read that back.
+_tui_traps_save() {
+    _TUI_OLD_TRAPS=""
+    _tts_file="$(mktemp "${TMPDIR:-/tmp}/dots-traps.XXXXXX" 2>/dev/null)" || _tts_file=""
+    if [ -n "${_tts_file}" ]; then
+        trap >"${_tts_file}" 2>/dev/null
+        _TUI_OLD_TRAPS="$(cat "${_tts_file}")"
+        rm -f "${_tts_file}"
+    else
+        _TUI_OLD_TRAPS="$(trap)"
+    fi
+}
+
+# _tui_traps_restore — drop our INT/TERM trap and put the caller's back.
+# Only INT and TERM are replayed (each saved line is "trap -- <body> <SIG>"),
+# so an EXIT trap is never re-armed inside a subshell.
+_tui_traps_restore() {
+    trap - INT TERM
+    [ -n "${_TUI_OLD_TRAPS:-}" ] || return 0
+    # shellcheck disable=SC2329  # invoked through the eval below
+    _tui_replay_trap() {
+        case "$3" in
+            INT|SIGINT|TERM|SIGTERM) trap -- "$2" "$3" ;;
+        esac
+    }
+    eval "$(printf '%s\n' "${_TUI_OLD_TRAPS}" | sed 's/^trap -- /_tui_replay_trap -- /')"
 }
 
 # _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.
@@ -211,16 +250,17 @@ _tui_pick() {
     _tui_color_on 2 && _tp_color=1
 
     _tp_stty=""
-    if [ -t 3 ]; then
-        _tp_stty="$(stty -g <&3)"
-        stty -icanon -echo min 1 time 0 <&3
-    fi
     _tp_restore() {
         [ -n "${_tp_stty}" ] && stty "${_tp_stty}" <&3
         [ -t 2 ] && printf '\033[?25h' >&2
         return 0
     }
+    _tui_traps_save
     trap '_tp_restore; exit 130' INT TERM
+    if [ -t 3 ]; then
+        _tp_stty="$(stty -g <&3)"
+        stty -icanon -echo min 1 time 0 <&3
+    fi
     [ -t 2 ] && printf '\033[?25l' >&2
 
     _tp_lines=0
@@ -241,7 +281,7 @@ _tui_pick() {
         esac
     done
     _tp_restore
-    trap - INT TERM
+    _tui_traps_restore
     printf '%s\n' "${_tp_pick}"
 }
 
@@ -278,11 +318,12 @@ tui_confirm() {
         printf '%s %s ' "${_tcf_q}" "${_tcf_hint}" >&2
     fi
     _tcf_stty=""
+    _tui_traps_save
+    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; exit 130' INT TERM
     if [ -t 3 ]; then
         _tcf_stty="$(stty -g <&3)"
         stty -icanon -echo min 1 time 0 <&3
     fi
-    trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; exit 130' INT TERM
     while :; do
         case "$(_tui_read_key)" in
             yes) _tcf_ans=y; break ;;
@@ -292,7 +333,7 @@ tui_confirm() {
         esac
     done
     [ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3
-    trap - INT TERM
+    _tui_traps_restore
     printf '%s\n' "${_tcf_ans}" >&2
     case "${_tcf_ans}" in
         y) return 0 ;;

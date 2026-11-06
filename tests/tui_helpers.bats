@@ -300,3 +300,133 @@ _confirm() {
     [ "${status}" -eq 1 ]
     [[ "${output}" == *"Apply selection? [y/N]"* ]]
 }
+
+# --- caller traps and no controlling terminal -------------------------------
+
+# _has / _lacks <text> — assert $output contains / lacks <text>. `[[ ]]` is not
+# used: on bash 3.2 a failing `[[ ]]` that is not the last command is ignored.
+_has() {
+    case "${output}" in *"$1"*) return 0 ;; esac
+    echo "output lacks '$1': ${output}" >&2
+    return 1
+}
+_lacks() {
+    case "${output}" in *"$1"*) echo "output has '$1': ${output}" >&2; return 1 ;; esac
+    return 0
+}
+
+# _sh_tui <script> — run <script> in a fresh `sh -c` with the libs sourced.
+# $1 inside the script is the repo root, $2 a file holding the keys.
+_sh_tui() {
+    sh -c '
+        REPO_ROOT="$1"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+        . "${REPO_ROOT}/src/lib/log.sh"
+        . "${REPO_ROOT}/src/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/tui.sh"
+        '"$1"'
+    ' _ "${REPO_ROOT_REAL}" "${SANDBOX}/keys"
+}
+
+@test "tui_confirm keeps the caller's INT trap" {
+    printf 'n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        trap 'echo caller' INT
+        tui_confirm 'x' y 3<\"\$2\" 2>/dev/null
+        echo rc=\$?
+        trap"
+
+    _has 'rc=1'
+    _has 'echo caller'
+    _has 'INT'
+}
+
+@test "tui_confirm leaves no INT or TERM trap when the caller had none" {
+    printf 'n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        tui_confirm 'x' y 3<\"\$2\" 2>/dev/null
+        echo rc=\$?
+        trap"
+
+    _has 'rc=1'
+    _lacks 'INT'
+    _lacks 'TERM'
+}
+
+@test "tui_choose keeps the caller's INT trap and leaks none" {
+    printf '\n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        trap 'echo caller' INT
+        picked=\$(tui_choose 'h' '' a b 3<\"\$2\" 2>/dev/null)
+        echo picked=\$picked
+        trap"
+
+    _has 'picked=a'
+    _has 'echo caller'
+
+    run _sh_tui "
+        picked=\$(tui_choose 'h' '' a b 3<\"\$2\" 2>/dev/null)
+        trap"
+
+    _lacks 'INT'
+    _lacks 'TERM'
+}
+
+@test "_tui_pick (not in a subshell) keeps the caller's INT trap or leaves none" {
+    printf '\n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        trap 'echo caller' INT
+        _TUI_CHOOSE_HEADER=h _TUI_CHOOSE_ITEMS='a
+b'
+        _tui_pick _tui_choose_frame 2 1 3<\"\$2\" 2>/dev/null >/dev/null
+        trap"
+
+    _has 'echo caller'
+
+    run _sh_tui "
+        _TUI_CHOOSE_HEADER=h _TUI_CHOOSE_ITEMS='a
+b'
+        _tui_pick _tui_choose_frame 2 1 3<\"\$2\" 2>/dev/null >/dev/null
+        trap"
+
+    _lacks 'INT'
+    _lacks 'TERM'
+}
+
+# _no_tty <script> — _sh_tui without a controlling terminal (own session).
+_no_tty() {
+    perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV' sh -c '
+        REPO_ROOT="$1"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+        . "${REPO_ROOT}/src/lib/log.sh"
+        . "${REPO_ROOT}/src/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/tui.sh"
+        '"$1"'
+    ' _ "${REPO_ROOT_REAL}" 2>&1 </dev/null
+}
+
+@test "tui_confirm cancels with 130 and does not abort when there is no tty" {
+    run _no_tty 'tui_confirm "x" n 3<&-; echo "after rc=$?"'
+
+    _lacks 'Device not configured'
+    _has 'after rc=130'
+}
+
+@test "tui_choose cancels with 1 and does not abort when there is no tty" {
+    run _no_tty 'tui_choose "h" "" a b 3<&-; echo "after rc=$?"'
+
+    _lacks 'Device not configured'
+    _has 'after rc=1'
+}
+
+@test "render_action_menu prints quit and does not abort when there is no tty" {
+    run _no_tty 'render_action_menu "" 3<&-; echo "after rc=$?"'
+
+    _lacks 'Device not configured'
+    _has 'quit'
+    _has 'after rc=0'
+}
