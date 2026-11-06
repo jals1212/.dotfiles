@@ -28,26 +28,26 @@ export REPO_ROOT
 
 # ---------------------------------------------------------------------------
 # _dots_help
-#   Print usage summary and exit 0.
+#   Print the usage summary on stdout.
 # ---------------------------------------------------------------------------
 _dots_help() {
-    printf 'dots - dotfiles manager\n\n' >&2
-    printf 'USAGE\n' >&2
-    printf '  ./dots <subcommand> [flags]\n\n' >&2
-    printf 'SUBCOMMANDS\n' >&2
-    printf '  update      Run ./install (base dotbot) then apply active theme.\n' >&2
-    printf '  theme       Switch the active theme/flavor.\n' >&2
-    printf '  prompt      Switch the active prompt engine (starship | p10k).\n' >&2
-    printf '  doctor      Non-mutating health checks.\n' >&2
-    printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n' >&2
-    printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n' >&2
-    printf '  uninstall   Remove declared dotbot-managed symlinks and manifest.\n' >&2
-    printf '  help        Show this message.\n\n' >&2
-    printf 'FLAGS (per subcommand)\n' >&2
-    printf '  --help / -h   Show subcommand usage.\n\n' >&2
-    printf 'FIRST RUN\n' >&2
-    printf '  ./dots            Auto-runs update when manifest.json is missing.\n' >&2
-    printf '  ./dots            Auto-bootstraps on first run (installs python3 + brew).\n' >&2
+    printf 'dots - dotfiles manager\n\n'
+    printf 'USAGE\n'
+    printf '  ./dots <subcommand> [flags]\n\n'
+    printf 'SUBCOMMANDS\n'
+    printf '  update      Run ./install (base dotbot) then apply active theme.\n'
+    printf '  theme       Switch the active theme/flavor.\n'
+    printf '  prompt      Switch the active prompt engine (starship | p10k).\n'
+    printf '  doctor      Non-mutating health checks.\n'
+    printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n'
+    printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n'
+    printf '  uninstall   Remove declared dotbot-managed symlinks and manifest.\n'
+    printf '  help        Show this message.\n\n'
+    printf 'FLAGS (per subcommand)\n'
+    printf '  --help / -h   Show subcommand usage.\n\n'
+    printf 'FIRST RUN\n'
+    printf '  ./dots            Auto-runs update when manifest.json is missing.\n'
+    printf '  ./dots            Auto-bootstraps on first run (installs python3 + brew).\n'
 }
 
 # ---------------------------------------------------------------------------
@@ -71,7 +71,7 @@ _dots_run() {
         quit) return 0 ;;
         *)
             log_error "Unknown command: ${_drun_cmd}"
-            _dots_help
+            _dots_help >&2
             return 2
             ;;
     esac
