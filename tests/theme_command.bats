@@ -50,3 +50,54 @@ teardown() {
     [ "${status}" -ne 0 ]
     [ ! -e "${SANDBOX}/repo/manifest.json" ]
 }
+
+@test "dots theme writes the slim manifest with every key" {
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa wave
+
+    [ "${status}" -eq 0 ]
+    manifest="${SANDBOX}/repo/manifest.json"
+    grep -Fq '"version": "' "${manifest}"
+    grep -Fq '"theme": "kanagawa"' "${manifest}"
+    grep -Fq '"flavor": "wave"' "${manifest}"
+    grep -Fq '"prompt": "starship"' "${manifest}"
+    grep -Eq '"applied_at": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z"' "${manifest}"
+    [ "$(grep -c '":' "${manifest}")" -eq 5 ]
+}
+
+@test "dots theme keeps the manifest prompt and replaces theme and flavor" {
+    printf '{\n  "version": "3.1.0",\n  "theme": "kanagawa",\n  "flavor": "wave",\n  "prompt": "p10k",\n  "applied_at": "2020-01-01T00:00:00Z"\n}\n' \
+        > "${SANDBOX}/repo/manifest.json"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin latte
+
+    [ "${status}" -eq 0 ]
+    manifest="${SANDBOX}/repo/manifest.json"
+    grep -Fq '"theme": "catppuccin"' "${manifest}"
+    grep -Fq '"flavor": "latte"' "${manifest}"
+    grep -Fq '"prompt": "p10k"' "${manifest}"
+    run ! grep -Fq '2020-01-01' "${manifest}"
+}
+
+@test "dots theme --current prints the pair recorded in the manifest" {
+    sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin frappe >/dev/null 2>&1
+
+    run --separate-stderr sh "${SANDBOX}/repo/src/commands/theme.sh" --current
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "catppuccin frappe" ]
+}
+
+@test "dots theme with an unknown theme or flavor leaves an existing manifest unchanged" {
+    manifest="${SANDBOX}/repo/manifest.json"
+    printf '{\n  "version": "3.1.0",\n  "theme": "kanagawa",\n  "flavor": "wave",\n  "prompt": "p10k",\n  "applied_at": "2020-01-01T00:00:00Z"\n}\n' \
+        > "${manifest}"
+    cp "${manifest}" "${SANDBOX}/manifest.before"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" nosuchtheme dragon
+    [ "${status}" -ne 0 ]
+    cmp "${manifest}" "${SANDBOX}/manifest.before"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa mocha
+    [ "${status}" -ne 0 ]
+    cmp "${manifest}" "${SANDBOX}/manifest.before"
+}
