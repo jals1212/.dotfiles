@@ -223,7 +223,7 @@ _tui_traps_save() {
 }
 
 # _tui_traps_restore — drop our INT/TERM trap and put the caller's back.
-# Only INT and TERM are replayed (each saved line is "trap -- <body> <SIG>"),
+# Only INT and TERM are replayed (each saved entry is "trap -- <body> <SIG>"),
 # so an EXIT trap is never re-armed inside a subshell.
 _tui_traps_restore() {
     trap - INT TERM
@@ -234,7 +234,24 @@ _tui_traps_restore() {
             INT|SIGINT|TERM|SIGTERM) trap -- "$2" "$3" ;;
         esac
     }
-    eval "$(printf '%s\n' "${_TUI_OLD_TRAPS}" | sed 's/^trap -- /_tui_replay_trap -- /')"
+    # Rewrite only the "trap -- " that starts a statement: a line inside a
+    # quoted multi-line trap body may also begin with "trap -- " and must stay
+    # verbatim. Track single quotes (and backslash escapes outside them).
+    eval "$(printf '%s\n' "${_TUI_OLD_TRAPS}" | awk '
+        {
+            line = $0
+            if (!inq && substr(line, 1, 8) == "trap -- ")
+                line = "_tui_replay_trap -- " substr(line, 9)
+            n = length($0); esc = 0
+            for (i = 1; i <= n; i++) {
+                c = substr($0, i, 1)
+                if (inq) { if (c == "\047") inq = 0 }
+                else if (esc) esc = 0
+                else if (c == "\\") esc = 1
+                else if (c == "\047") inq = 1
+            }
+            print line
+        }')"
 }
 
 # _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.

@@ -430,3 +430,17 @@ _no_tty() {
     _has 'quit'
     _has 'after rc=0'
 }
+
+@test "tui_confirm restores a multi-line caller trap verbatim" {
+    printf 'n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        trap 'echo A
+trap -- x INT
+echo B' INT
+        tui_confirm 'x' y 3<\"\$2\" 2>/dev/null
+        trap"
+
+    _has 'trap -- x INT'
+    _lacks '_tui_replay_trap'
+}
