@@ -25,12 +25,6 @@ if ! command -v _header_color_code >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Hardcoded defaults consumed when no manifest exists (fresh clone).
-# ---------------------------------------------------------------------------
-_SELECT_DEFAULT_THEME="kanagawa"
-_SELECT_DEFAULT_FLAVOR="dragon"
-
-# ---------------------------------------------------------------------------
 # _themes_from_index <repo_root>
 #   Emits the supported theme names (one per line) parsed from the shared
 #   theme index content/themes/index.yaml. Theme keys are indented two
@@ -64,62 +58,6 @@ _flavors_from_index() {
             exit
         }
     ' "${_ffi_index}" | sed '/^$/d' | sort
-}
-
-# ---------------------------------------------------------------------------
-# read_current_selection <repo_root>
-#   Returns the current "selection state" as a single space-separated line:
-#       <theme> <flavor>
-#   Source of truth (in order):
-#     1. ${repo_root}/manifest.json (slim schema) when present and valid.
-#     2. Hardcoded defaults from this file.
-# ---------------------------------------------------------------------------
-read_current_selection() {
-    _rcs_repo="${1:?read_current_selection: repo_root required}"
-    _rcs_manifest="$(path_manifest "${_rcs_repo}")"
-
-    if [ -f "${_rcs_manifest}" ] && jq empty "${_rcs_manifest}" 2>/dev/null; then
-        _rcs_theme="$(jq -r '.theme // empty' "${_rcs_manifest}")"
-        _rcs_flavor="$(jq -r '.flavor // empty' "${_rcs_manifest}")"
-        if [ -n "${_rcs_theme}" ] && [ -n "${_rcs_flavor}" ]; then
-            printf '%s %s\n' "${_rcs_theme}" "${_rcs_flavor}"
-            return 0
-        fi
-    fi
-
-    printf '%s %s\n' "${_SELECT_DEFAULT_THEME}" "${_SELECT_DEFAULT_FLAVOR}"
-}
-
-# ---------------------------------------------------------------------------
-# validate_theme <theme>
-#   Confirms <theme> is one of the supported themes.
-# ---------------------------------------------------------------------------
-validate_theme() {
-    _vt_theme="${1}"
-    case "${_vt_theme}" in
-        kanagawa|catppuccin) return 0 ;;
-        *)
-            log_error "Unknown theme: ${_vt_theme}. Supported: kanagawa, catppuccin"
-            exit 1
-            ;;
-    esac
-}
-
-# ---------------------------------------------------------------------------
-# validate_flavor <theme> <flavor>
-#   Confirms <flavor> is valid for the given theme.
-# ---------------------------------------------------------------------------
-validate_flavor() {
-    _vf_theme="${1}"
-    _vf_flavor="${2}"
-    case "${_vf_theme}:${_vf_flavor}" in
-        kanagawa:dragon|kanagawa:lotus|kanagawa:wave) return 0 ;;
-        catppuccin:frappe|catppuccin:latte|catppuccin:macchiato|catppuccin:mocha) return 0 ;;
-        *)
-            log_error "Invalid flavor ${_vf_flavor} for theme ${_vf_theme}."
-            exit 1
-            ;;
-    esac
 }
 
 # ---------------------------------------------------------------------------

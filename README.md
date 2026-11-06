@@ -30,13 +30,16 @@ Non-interactive:
 
 | Command | What it does |
 |---|---|
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. Any other argument is rejected (error on stderr, exit 2) before anything runs. |
 | `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the Starship (`palette`) and Herdr (`theme.name`) fenced lines; persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette); rebuilds the bat cache; reloads running tmux/Herdr servers; writes the slim manifest. |
 | `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning. |
-| `./dots clean [--age=N] [--dry-run]` | Removes dead symlinks under managed dirs (via dotbot `--only clean`) and prunes `*.dotbot-backup.*` files older than `N` days (default 30). |
-| `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. Optionally commits gitlink advances. |
+| `./dots clean [--age=N] [--dry-run]` | Removes broken symlinks that point into this repo and prunes dotbot backups (`<link>.dotbot-backup.<timestamp>`) of links this repo declares, older than `N` days (default 30). Links and backups it did not create are never touched. |
+| `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. With `--commit`, commits only the gitlinks it advanced; other staged changes stay staged. |
 | `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
+| `./dots help` (`-h`, `--help`) | Prints the usage on stdout (exit 0); an unknown command prints the error and usage on stderr (exit 2). |
 | `./dots` (no args) | TTY: action menu. Non-TTY + manifest absent: auto-runs `update`. Non-TTY + manifest present: errors. |
+
+Every subcommand opens with a one-line header, `jals1212 DOTS · <command> · <theme> · <prompt> · <git>`, instead of a logo; the menu already shows the same line, so subcommands run from it skip it.
 
 ## Themes
 
@@ -63,7 +66,7 @@ If `@themux_theme` does not refresh in an active tmux session after a switch, ru
 - **Tmux theme**: `content/home/.config/tmux/tmux.conf` sets themux's `@themux_theme` from `$DOTS_THEME` — machine-local state in `~/.config/zsh/local.zsh` whose `theme_flavor` values match themux theme names — falling back to a tracked default. The theme switcher updates the running tmux server's environment and re-sources the config; the repo file never changes.
 - **Starship fence**: `content/home/.config/starship.toml` is a base symlink holding every theme's `[palettes.<theme>_<flavor>]` table plus a `dots:theme` fence selecting the active `palette`. The theme switcher rewrites that line in place — no per-theme symlink (Starship has no external-theme include).
 - **Herdr fence**: `content/home/.config/herdr/config.toml` is a base symlink. The theme switcher maps the active dots theme to Herdr's built-in theme name, rewrites the fenced `theme.name`, and reloads a running Herdr server. Changing settings from Herdr's own UI rewrites the file and replaces the symlink with a regular file; `./dots doctor` flags it — copy the new settings into the repo before `./dots update` re-links it.
-- **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, applied_at}`. Local-only state.
+- **Manifest**: `manifest.json` (in `.gitignore`) records `{version, theme, flavor, prompt, applied_at}`. Local-only state.
 - **Brewfile + Mise**: `brew bundle --file=config/Brewfile` and `mise install` run as dotbot directives during `./install`. Update them via `./dots upgrade`.
 
 ## Adding a new theme
@@ -84,6 +87,34 @@ python = "3.12"
 ```
 
 Run `./dots update` to install. Run `./dots upgrade` to prune removed versions.
+
+## Development
+
+```sh
+brew install bats-core shellcheck
+make -f config/Makefile lint   # shellcheck (severity warning): dots, src/install, own *.sh; skips vendor/
+make -f config/Makefile test   # bats tests/ — fails when bats is not installed
+```
+
+Run both before every push; the suite is written for macOS and runs all of it there.
+
+CI (`.github/workflows/ci.yml`) runs the same two targets on a pull request to `main` and by hand (`workflow_dispatch`), never again after the merge. It skips draft pull requests (open them as drafts, mark ready once local runs are green), pull requests that only change `odd/`, `README.md`, `AGENTS.md` or `CLAUDE.md`, and cancels a run when a newer push supersedes it. It runs on Ubuntu to spend fewer Actions minutes, so the tests that drive a PTY with BSD `script` skip there; start a manual run with the `macos-15` runner to cover them.
+
+### Run the CI locally
+
+```sh
+pnpm install              # once: the dev tool (@jals1212/ci-local), nothing else
+pnpm exec ci-local --list # the plan, without running it
+pnpm exec ci-local        # shellcheck + bats in a Linux container (needs Docker)
+```
+
+`ci-local.config.sh` runs the steps of `.github/workflows/ci.yml` (the same two `make` targets) in a Linux runner (`docker/ci-local/Dockerfile`: Node of `.nvmrc`, bats, zsh, shellcheck) with this checkout mounted, so `vendor/` is what your submodules hold: run `git submodule update --init --recursive` first (the run checks it). Everything it creates is named `dotfiles-ci-*` (`CI_PROJECT`; the repo directory is `.dotfiles`, but Docker names cannot start with a dot) and nothing publishes a port. The first run builds the image.
+
+- **Proves:** shellcheck and the bats suite pass on Linux (Debian, bats 1.8) against your working tree, uncommitted changes included, like the GitHub job. The tests that drive a PTY with BSD `script` skip there, as on GitHub's Ubuntu runner: macOS (`make -f config/Makefile test` on your machine) covers them.
+- **Does not prove:** it makes no GitHub check green, and it is not Ubuntu 24.04 or the `macos-15` runner.
+- **Stands in for GitHub** only when the GitHub run failed before any test ran, for infrastructure reasons: then a full run (no `--only`/`--skip`) on the pull request's head commit, clean checkout, recorded in a PR comment. Any lint or test failure on GitHub still blocks the merge.
+- **Parity:** `tests/ci_local_parity.bats` (skipped without `pnpm install`) fails when the plan's commands, or the project name `dotfiles-ci`, drift from the workflow. GitHub's run does not install Node, so the check is local: run it after editing either file.
+- Upgrade the tool with `pnpm add -D @jals1212/ci-local@latest` (it is in `minimumReleaseAgeExclude` of `pnpm-workspace.yaml` by name), then run the parity test and a full run.
 
 ## Documentation
 

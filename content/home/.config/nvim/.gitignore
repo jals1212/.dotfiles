@@ -6,3 +6,6 @@ debug
 foo.*
 *.log
 data
+
+# Active dots theme (symlink written by `./dots theme`)
+lua/dots-theme.lua

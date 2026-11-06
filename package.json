@@ -1,0 +1,11 @@
+{
+  "name": "dotfiles",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tooling only: runs the CI workflow locally with ci-local. The dotfiles themselves have no Node dependencies.",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "devDependencies": {
+    "@jals1212/ci-local": "0.10.1"
+  }
+}

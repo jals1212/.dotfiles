@@ -59,11 +59,17 @@ teardown() {
     run sh "${MINI_REPO}/src/commands/uninstall.sh" --dry-run
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"Uninstall (dry-run)"* ]]
+    [[ "${output}" == *"Uninstall (dry-run)"* ]] || return 1
     [ -L "${HOME}/.config/zsh/.zshrc" ]
     [ -L "${HOME}/.config/nvim/lua" ]
     [ -L "${HOME}/.local/state/mise/tracked-configs/example" ]
     [ -f "${MINI_REPO}/manifest.json" ]
+}
+
+# BSD/macOS `script -q /dev/null cmd` syntax; util-linux script differs.
+_require_bsd_script() {
+    command -v script >/dev/null 2>&1 || return 1
+    script -q /dev/null env true >/dev/null 2>&1
 }
 
 # _tty_uninstall <keys> — run uninstall on a PTY with <keys> on fd 3.
@@ -73,29 +79,29 @@ _tty_uninstall() {
 }
 
 @test "uninstall on a TTY keeps everything when the answer is n" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     _tty_uninstall 'n'
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"uninstall aborted"* ]]
+    [[ "${output}" == *"uninstall aborted"* ]] || return 1
     [ -L "${HOME}/.config/zsh/.zshrc" ]
     [ -L "${HOME}/.config/nvim/lua" ]
     [ -f "${MINI_REPO}/manifest.json" ]
 }
 
 @test "uninstall on a TTY keeps everything on esc, enter or end of input" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     for keys in '\033' '\n' ''; do
         _tty_uninstall "${keys}"
         [ "${status}" -eq 0 ]
-        [[ "${output}" == *"uninstall aborted"* ]]
+        [[ "${output}" == *"uninstall aborted"* ]] || return 1
         [ -L "${HOME}/.config/zsh/.zshrc" ]
         [ -f "${MINI_REPO}/manifest.json" ]
     done
 }
 
 @test "uninstall on a TTY removes the declared symlinks when the answer is y" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     _tty_uninstall 'y'
 
     [ "${status}" -eq 0 ]

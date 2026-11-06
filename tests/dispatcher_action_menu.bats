@@ -54,8 +54,8 @@ _require_bsd_script() {
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"jals1212 DOTS"*"· kanagawa/dragon"* ]]
-    [[ "${output}" == *"update"*"upgrade"*"clean"*"doctor"*"theme"*"prompt"*"uninstall"*"help"*"quit"* ]]
+    [[ "${output}" == *"jals1212 DOTS"*"· kanagawa/dragon"* ]] || return 1
+    [[ "${output}" == *"update"*"upgrade"*"clean"*"doctor"*"theme"*"prompt"*"uninstall"*"help"*"quit"* ]] || return 1
     [[ "${output}" == *"q quit"* ]]
 }
 
@@ -74,7 +74,7 @@ _require_bsd_script() {
     # The sandbox copy intentionally excludes .git/vendor, so the auto-update
     # path is expected to reach update and then fail during submodule preflight.
     [ "${status}" -eq 1 ]
-    [[ "${output}" == *"Update"* ]]
+    [[ "${output}" == *"Update"* ]] || return 1
     [[ "${output}" == *"Base dotbot apply failed"* ]]
 }
 
@@ -102,7 +102,7 @@ _require_bsd_script() {
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" != *"Update complete"* ]]
+    [[ "${output}" != *"Update complete"* ]] || return 1
     [[ "${output}" != *"Sync complete"* ]]
 }
 

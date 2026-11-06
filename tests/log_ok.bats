@@ -30,6 +30,6 @@ setup() {
     run script -q /dev/null sh -c ". '${REPO_ROOT}/src/lib/log.sh'; log_ok 'Backup written'"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"38;5;76m[OK]"* ]]
+    [[ "${output}" == *"38;5;76m[OK]"* ]] || return 1
     [[ "${output}" == *"Backup written"* ]]
 }

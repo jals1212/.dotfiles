@@ -8,7 +8,7 @@
 dots() {
     ~/.dotfiles/dots "$@"
     local ret=$?
-    local marker="${XDG_STATE_HOME:-$HOME/.local/state}/dots/reload-needed"
+    local marker="$XDG_STATE_HOME/dots/reload-needed"
     if (( ret == 0 )) && [[ -f "$marker" && -o interactive && -t 0 && -t 1 ]]; then
         command rm -f -- "$marker"
         local _reply
@@ -108,14 +108,6 @@ npm() {
             ;;
     esac
     command npm "$@"
-}
-
-# Start tmux for interactive TTY shells not already inside one.
-# Opt out per-shell with DOTS_NO_TMUX=1.
-tmux-autostart() {
-    if [[ $- == *i* ]] && [[ -z "${TMUX}" ]] && [[ -t 1 ]] && [[ -z "${DOTS_NO_TMUX}" ]]; then
-        tmux
-    fi
 }
 
 # Remote agents (Tailscale + Moshi)

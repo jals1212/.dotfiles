@@ -12,7 +12,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf 'USAGE\n' >&2
     printf '  ./dots upgrade [--commit] [--dry-run] [--cleanup] [--prune] [--yes]\n\n' >&2
     printf 'FLAGS\n' >&2
-    printf '  --commit      Stage and commit gitlink advances on success.\n' >&2
+    printf '  --commit      Commit only the gitlinks it advanced; other staged files stay staged.\n' >&2
     printf '  --dry-run     Report submodule changes only; with --cleanup, report cleanup candidates.\n' >&2
     printf '  --cleanup     Opt into Homebrew cleanup phase (report with --dry-run, apply with --yes).\n' >&2
     printf '  --prune       Allow mise prune to remove unused tool installs.\n' >&2
@@ -26,7 +26,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '     vendor/plugins/dotbot-mise/ to upstream default-branch HEAD.\n' >&2
     printf '  2. Skip Homebrew cleanup unless --cleanup is explicit.\n' >&2
     printf '  3. Skip mise prune unless --prune is explicit.\n' >&2
-    printf '  4. Print summary; optionally commit gitlinks.\n' >&2
+    printf '  4. Print summary; optionally commit the advanced gitlinks only.\n' >&2
     exit 0
 fi
 
@@ -188,9 +188,13 @@ else
 fi
 
 if [ "${_do_commit}" = 1 ] && [ -n "${_bumped}" ] && [ "${_dry_run}" = 0 ]; then
-    git -C "${REPO_ROOT}" add .gitmodules vendor/dotbot vendor/plugins/dotbot-brew vendor/plugins/dotbot-mise
+    # Commit only the gitlinks advanced in Phase 1 (--only ignores whatever
+    # else is staged); _bumped is a space-separated list of repo paths.
+    # shellcheck disable=SC2086
+    git -C "${REPO_ROOT}" add -- ${_bumped}
     _msg="$(printf 'chore(deps): upgrade %s\n\n%b' "${_bumped% }" "${_summary}")"
-    git -C "${REPO_ROOT}" commit -m "${_msg}"
+    # shellcheck disable=SC2086
+    git -C "${REPO_ROOT}" commit --only -m "${_msg}" -- ${_bumped}
     log_ok "commit created"
 elif [ "${_do_commit}" = 1 ] && [ -z "${_bumped}" ]; then
     log_info "--commit: no submodule advanced; no commit created"

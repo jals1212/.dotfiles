@@ -36,7 +36,7 @@ zinit cdreplay -q
 # pi-space completion, after compinit. Its script is static (candidates come from
 # pi-space itself at Tab time), so it is cached and regenerated when pi-space changes.
 _dots_pi_space_completion() {
-    local bin=${commands[pi-space]:A} cache=${XDG_CACHE_HOME:-$HOME/.cache}/zsh/pi-space-completion.zsh
+    local bin=${commands[pi-space]:A} cache=${XDG_CACHE_HOME}/zsh/pi-space-completion.zsh
     [[ -n $bin ]] || return 0
     if [[ ! -s $cache || $bin -nt $cache ]]; then
         mkdir -p ${cache:h} && pi-space completion zsh >| $cache || return 0

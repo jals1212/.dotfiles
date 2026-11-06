@@ -1,8 +1,7 @@
 #!/bin/sh
-# lib/header.sh — JALS DOTS header + theme color map
-# POSIX sh. Source this file; call render_header [theme] [subtitle].
-# Single wordmark block, combined like the dashboard header in
-# home/.config/nvim/lua/plugins/snacks.lua.
+# lib/header.sh — theme color map
+# POSIX sh. Source this file; call _header_color_code [theme].
+# The one-line subcommand header lives in lib/tui.sh (render_command_banner).
 
 # ---------------------------------------------------------------------------
 # Theme → ANSI 256-color foreground code map
@@ -24,60 +23,4 @@ _header_color_code() {
         *)
             printf '141' ;;   # fallback: soft purple
     esac
-}
-
-# ---------------------------------------------------------------------------
-# render_header [theme] [subtitle]
-#   theme    — optional theme name/flavor (default: kanagawa)
-#   subtitle — optional subtitle line   (default: Dotfiles Manager)
-# Writes to stdout. Color applied only when stdout is a tty and tput
-# reports >= 256 colors; otherwise plain UTF-8.
-# ---------------------------------------------------------------------------
-render_header() {
-    _rh_theme="${1:-kanagawa}"
-    _rh_subtitle="${2:-}"
-
-    # Determine whether to use color
-    _rh_use_color=0
-    if [ -t 1 ]; then
-        _rh_colors="$(tput colors 2>/dev/null || printf '8')"
-        if [ "${_rh_colors}" -ge 256 ] 2>/dev/null; then
-            _rh_use_color=1
-        fi
-    fi
-
-    _rh_code="$(_header_color_code "${_rh_theme}")"
-
-    # JALS DOTS header — one block: the JALS figlet wordmark (indented 1 col to
-    # center its 32 cols over the 34-col DOTS banner) stacked on the DOTS block
-    # banner. Personal brand. Font: ANSI Shadow (figlet). Kept byte-aligned with
-    # the wordmark header in snacks.lua.
-    _rh_header=$(cat <<'HEADER'
-      ██╗ █████╗ ██╗     ███████╗
-      ██║██╔══██╗██║     ██╔════╝
-      ██║███████║██║     ███████╗
- ██   ██║██╔══██║██║     ╚════██║
- ╚█████╔╝██║  ██║███████╗███████║
-  ╚════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
-██████╗  ██████╗ ████████╗███████╗
-██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝
-██║  ██║██║   ██║   ██║   ███████╗
-██║  ██║██║   ██║   ██║   ╚════██║
-██████╔╝╚██████╔╝   ██║   ███████║
-╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
-HEADER
-)
-
-    if [ "${_rh_use_color}" -eq 1 ]; then
-        # ANSI 256-color: ESC[38;5;<n>m ... ESC[0m
-        printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_header}"
-        if [ -n "${_rh_subtitle}" ]; then
-            printf '\033[38;5;%dm%s\033[0m\n' "${_rh_code}" "${_rh_subtitle}"
-        fi
-    else
-        printf '%s\n' "${_rh_header}"
-        if [ -n "${_rh_subtitle}" ]; then
-            printf '%s\n' "${_rh_subtitle}"
-        fi
-    fi
 }

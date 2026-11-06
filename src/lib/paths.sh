@@ -72,8 +72,17 @@ path_content_herdr_config() {
     path_repo_file "content/home/.config/herdr/config.toml"
 }
 
-path_content_zsh_prompt() {
-    path_repo_file "content/home/.config/zsh/prompt.zsh"
+# Neovim palette for <theme>/<flavor> and the repo-side link that selects it.
+# The link lives inside the repo's nvim lua dir (itself linked into $HOME), is
+# gitignored, and is rewritten by `./dots theme`.
+path_nvim_palette() {
+    _pnp_theme="${1:?path_nvim_palette: theme required}"
+    _pnp_flavor="${2:?path_nvim_palette: flavor required}"
+    path_repo_file "content/assets/palettes/nvim/${_pnp_theme}-${_pnp_flavor}.lua"
+}
+
+path_content_nvim_theme_link() {
+    path_repo_file "content/home/.config/nvim/lua/dots-theme.lua"
 }
 
 path_dotbot_bin() {
@@ -115,7 +124,6 @@ path_dots_state_dir() { printf '%s/dots' "${XDG_STATE_HOME:-${HOME}/.local/state
 path_home_zsh_tools() { path_home_file ".config/zsh/tools.zsh"; }
 path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }
 path_home_zsh_plugins() { path_home_file ".config/zsh/plugins.zsh"; }
-path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }
 path_home_nvim_lua_dir() { path_home_file ".config/nvim/lua"; }

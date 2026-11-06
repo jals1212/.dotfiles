@@ -12,3 +12,6 @@ tmp/
 
 # Local AI runtime state
 .atl/
+
+# Dev tooling (pnpm install)
+node_modules/

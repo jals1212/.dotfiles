@@ -8,7 +8,7 @@ UPDATE_SH="${REPO_ROOT}/src/commands/update.sh"
 @test "update interactive gate defaults Change theme prompt to No" {
     content="$(cat "${UPDATE_SH}")"
 
-    [[ "${content}" == *'tui_confirm "Change theme?" n'* ]]
+    [[ "${content}" == *'tui_confirm "Change theme?" n'* ]] || return 1
     [[ "${content}" == *'[ -z "${_arg_theme}" ] && [ -z "${_arg_flavor}" ]'* ]]
 }
 
@@ -16,7 +16,7 @@ UPDATE_SH="${REPO_ROOT}/src/commands/update.sh"
     start="$(grep -n 'tui_confirm "Change theme?" n' "${UPDATE_SH}" | cut -d: -f1)"
     block="$(sed -n "${start},$((start + 10))p" "${UPDATE_SH}")"
 
-    [[ "${block}" == *'select_theme'* ]]
-    [[ "${block}" == *'select_flavor'* ]]
+    [[ "${block}" == *'select_theme'* ]] || return 1
+    [[ "${block}" == *'select_flavor'* ]] || return 1
     [[ "${block}" == *'confirm_apply'* ]]
 }

@@ -22,6 +22,7 @@ _update_usage() {
     printf '                    invoking dotbot. Aborts on non-fast-forward or\n' >&2
     printf '                    missing upstream; does not touch the remote otherwise.\n' >&2
     printf '  --help / -h       Show this message.\n\n' >&2
+    printf 'Any other argument is an error (exit 2); nothing runs.\n\n' >&2
     printf 'NOTE\n' >&2
     printf '  --tools is not accepted. Managed packages are declared in Brewfile\n' >&2
     printf '  and home/.config/mise/config.toml.\n' >&2
@@ -55,9 +56,6 @@ export REPO_ROOT
 # shellcheck source=src/lib/detect.sh
 . "$(path_src_lib detect.sh)"
 
-tui_start_timer
-render_subcommand_banner "$(tui_subtitle_for update)"
-
 # ---------------------------------------------------------------------------
 # Parse flags
 # ---------------------------------------------------------------------------
@@ -80,12 +78,15 @@ for _arg in "$@"; do
             _update_usage
             exit 0
             ;;
-        --*)
-            log_error "Unknown flag: ${_arg}"
-            exit 1
+        *)
+            log_error "Unknown argument: ${_arg} (see ./dots update --help)"
+            exit 2
             ;;
     esac
 done
+
+tui_start_timer
+render_subcommand_banner "$(tui_subtitle_for update)"
 
 if [ "${YES:-0}" = "1" ]; then
     _yes=1
