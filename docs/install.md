@@ -53,6 +53,8 @@ Supported flags on `./dots update`:
 --pull                     # git pull --ff-only before invoking dotbot
 ```
 
+Any other argument (a bare word, an unknown flag, a single-dash flag) is an error: it is named on stderr, the exit status is 2 and nothing runs.
+
 The `--tools` flag is **removed**. Managed packages are declared in `config/Brewfile` (brew formulae/casks/taps) and `content/home/.config/mise/config.toml` (runtime versions). Edit those files and re-run `./dots update`.
 
 ## Everyday commands
@@ -62,12 +64,13 @@ Run `./dots` for the visual action menu: a one-line status (active theme, prompt
 | Command | Use when you want to... |
 | --- | --- |
 | `./dots` | Open the visual action menu. |
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. Unknown arguments are rejected (stderr, exit 2). |
 | `./dots theme <theme> <flavor>` | Switch theme (or `./dots theme` for interactive picker, `--current` to show active). |
 | `./dots doctor` | Non-mutating health check. |
 | `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks that point into this repo; prune dotbot backups of declared links older than N days (default 30). Never touches links or backups the repo did not create. |
-| `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. |
+| `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. `--commit` commits only the gitlinks it advanced; other staged files stay staged. |
 | `./dots uninstall [--yes] [--dry-run]` | Remove declared Dotbot symlinks + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |
+| `./dots help` | Usage on stdout (exit 0). An unknown command prints the error and usage on stderr (exit 2). |
 
 In scripts or CI, use an explicit subcommand. The no-args menu requires a TTY.
 
@@ -156,5 +159,5 @@ Periodically:
 ```sh
 ./dots clean                 # prune stale dotbot-backup files
 ./dots upgrade --dry-run     # see what bumps + cleanups would happen
-./dots upgrade --commit      # apply + commit
+./dots upgrade --commit      # apply + commit only the advanced gitlinks
 ```
