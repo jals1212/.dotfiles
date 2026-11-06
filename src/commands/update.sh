@@ -91,16 +91,6 @@ if [ "${YES:-0}" = "1" ]; then
     _yes=1
 fi
 
-# First-run + missing gum → force --yes (the wizard depends on gum, which
-# brew bundle will install during dotbot_base_apply). Subsequent runs are
-# fully interactive.
-if [ ! -f "$(path_manifest)" ] && ! command -v gum >/dev/null 2>&1; then
-    if [ "${_yes}" -eq 0 ]; then
-        log_warn "First-run: gum not installed yet; applying defaults non-interactively. Run ./dots theme later to switch."
-        _yes=1
-    fi
-fi
-
 # ---------------------------------------------------------------------------
 # --pull: fast-forward pull before any dotbot work
 # ---------------------------------------------------------------------------

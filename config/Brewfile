@@ -67,7 +67,6 @@ brew "hidapi"
 brew "mole" if OS.mac?
 
 # ── Interactive / TUI helpers ─────────────────────────
-brew "gum"
 
 # ── Test runner ──────────────────────────────────────
 brew "bats-core"

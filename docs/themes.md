@@ -11,7 +11,7 @@ Non-interactive:
 ./dots theme catppuccin mocha
 ```
 
-Interactive (gum picker):
+Interactive picker (own key reader: ↑↓/jk move, enter select, q/esc cancel):
 
 ```sh
 ./dots theme

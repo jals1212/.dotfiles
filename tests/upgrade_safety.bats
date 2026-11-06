@@ -33,16 +33,7 @@ SH
 printf 'mise %s\n' "$*" >> "${CALLS}"
 exit 0
 SH
-    cat > "${MOCKBIN}/gum" <<'SH'
-#!/bin/sh
-printf 'gum %s\n' "$*" >> "${CALLS}"
-if [ "$1" = "style" ]; then
-    printf '%s\n' "$*"
-    exit 0
-fi
-exit 1
-SH
-    chmod +x "${MOCKBIN}/brew" "${MOCKBIN}/mise" "${MOCKBIN}/gum"
+    chmod +x "${MOCKBIN}/brew" "${MOCKBIN}/mise"
 }
 
 teardown() {

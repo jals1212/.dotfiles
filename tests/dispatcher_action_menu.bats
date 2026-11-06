@@ -27,38 +27,6 @@ setup() {
 JSON
     MOCKBIN="${SANDBOX}/bin"
     mkdir -p "${MOCKBIN}"
-    # Mock gum:
-    #   - appends `$*` to GUM_ARGS_FILE (one line per call)
-    #   - if GUM_CHOICES is set (comma-separated), returns the Nth on call N
-    #   - otherwise returns GUM_CHOICE (default "quit")
-    #   - special choice "__empty" -> exit 130 (cancel)
-    cat > "${MOCKBIN}/gum" <<'SH'
-#!/bin/sh
-# Collapse embedded newlines (multi-line header arg) so each call = 1 file line.
-_flat=$(printf '%s' "$*" | tr '\n' ' ')
-printf '%s\n' "${_flat}" >> "${GUM_ARGS_FILE}"
-if [ ! -s "${GUM_COUNT_FILE}" ]; then printf '0' > "${GUM_COUNT_FILE}"; fi
-_n=$(cat "${GUM_COUNT_FILE}")
-_n=$((_n + 1))
-printf '%s' "${_n}" > "${GUM_COUNT_FILE}"
-
-if [ -n "${GUM_CHOICES:-}" ]; then
-    _choice=$(printf '%s' "${GUM_CHOICES}" | awk -F',' -v n="${_n}" '{print $n}')
-    [ -z "${_choice}" ] && _choice="quit"
-else
-    _choice="${GUM_CHOICE:-quit}"
-fi
-
-if [ "${_choice}" = "__empty" ]; then
-    exit 130
-fi
-printf '%s\n' "${_choice}"
-SH
-    chmod +x "${MOCKBIN}/gum"
-    export GUM_ARGS_FILE="${SANDBOX}/gum.args"
-    export GUM_COUNT_FILE="${SANDBOX}/gum.count"
-    : > "${GUM_ARGS_FILE}"
-    : > "${GUM_COUNT_FILE}"
 }
 
 teardown() {
@@ -81,8 +49,6 @@ _require_bsd_script() {
 
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
-        GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
         DOTS_MENU_INPUT="$(_keys 'q')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
@@ -118,8 +84,6 @@ _require_bsd_script() {
     # Keys: move to help (8th item), enter (loops back), then q (exits).
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
-        GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
         DOTS_MENU_INPUT="$(_keys 'jjjjjjj\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
@@ -133,8 +97,6 @@ _require_bsd_script() {
 
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
-        GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
         DOTS_MENU_INPUT="$(_keys 'jjjjjjjj\n')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
@@ -150,8 +112,6 @@ _require_bsd_script() {
     # Pick help (enter), then enter again on the pre-selected help, then q.
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
-        GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
         DOTS_MENU_INPUT="$(_keys 'jjjjjjj\n\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"

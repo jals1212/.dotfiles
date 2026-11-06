@@ -17,7 +17,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '  PASS/FAIL/WARN/SKIP line for each. Exits 0 when all checks pass, 1 otherwise.\n\n'
     printf 'CHECK CATEGORIES\n'
     printf '  Commands present   : python3, brew, zsh, tmux, herdr, orb, docker,\n'
-    printf '                       docker buildx, docker compose, nvim, git, jq, gum\n'
+    printf '                       docker buildx, docker compose, nvim, git, jq\n'
     printf '  Submodules         : dotbot, plugins/dotbot-brew, plugins/dotbot-mise\n'
     printf '  Required symlinks  : home .zshenv, ZDOTDIR .zshenv/.zshrc/.zprofile,\n'
     printf '                       zsh fragments, nvim,\n'
