@@ -196,7 +196,8 @@ _tui_read_key() {
 # may have opened it (the ./dots menu loop, tests), otherwise use /dev/tty.
 # Without a controlling terminal `exec 3</dev/tty` aborts a POSIX sh, so probe
 # in a subshell first and fail closed: fd 3 on /dev/null reads as end of input,
-# which every caller treats as cancel.
+# which every caller treats as cancel. Called from the subshell bodies of
+# tui_confirm and _tui_pick, so an fd 3 opened here closes with them.
 _tui_open_keys() {
     { true <&3; } 2>/dev/null && return 0
     if ( : </dev/tty ) 2>/dev/null; then
@@ -206,59 +207,13 @@ _tui_open_keys() {
     fi
 }
 
-# _tui_traps_save — remember the caller's traps in _TUI_OLD_TRAPS.
-# `$(trap)` is not enough: macOS /bin/sh (bash) reports the parent's traps in a
-# command substitution, but dash resets them there and prints nothing. So write
-# `trap` to a file from the current shell and read that back.
-_tui_traps_save() {
-    _TUI_OLD_TRAPS=""
-    _tts_file="$(mktemp "${TMPDIR:-/tmp}/dots-traps.XXXXXX" 2>/dev/null)" || _tts_file=""
-    if [ -n "${_tts_file}" ]; then
-        trap >"${_tts_file}" 2>/dev/null
-        _TUI_OLD_TRAPS="$(cat "${_tts_file}")"
-        rm -f "${_tts_file}"
-    else
-        _TUI_OLD_TRAPS="$(trap)"
-    fi
-}
-
-# _tui_traps_restore — drop our INT/TERM trap and put the caller's back.
-# Only INT and TERM are replayed (each saved entry is "trap -- <body> <SIG>"),
-# so an EXIT trap is never re-armed inside a subshell.
-_tui_traps_restore() {
-    trap - INT TERM
-    [ -n "${_TUI_OLD_TRAPS:-}" ] || return 0
-    # shellcheck disable=SC2329  # invoked through the eval below
-    _tui_replay_trap() {
-        case "$3" in
-            INT|SIGINT|TERM|SIGTERM) trap -- "$2" "$3" ;;
-        esac
-    }
-    # Rewrite only the "trap -- " that starts a statement: a line inside a
-    # quoted multi-line trap body may also begin with "trap -- " and must stay
-    # verbatim. Track single quotes (and backslash escapes outside them).
-    eval "$(printf '%s\n' "${_TUI_OLD_TRAPS}" | awk '
-        {
-            line = $0
-            if (!inq && substr(line, 1, 8) == "trap -- ")
-                line = "_tui_replay_trap -- " substr(line, 9)
-            n = length($0); esc = 0
-            for (i = 1; i <= n; i++) {
-                c = substr($0, i, 1)
-                if (inq) { if (c == "\047") inq = 0 }
-                else if (esc) esc = 0
-                else if (c == "\\") esc = 1
-                else if (c == "\047") inq = 1
-            }
-            print line
-        }')"
-}
-
 # _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.
 # Draws "<frame-fn> <cursor> <accent> <color>" on stderr after each key and
 # prints the chosen 1-based index, or 0 for q, esc or end of input. Needs
 # _TUI_PICK_ACCENT set by the caller.
-_tui_pick() {
+# The body is a subshell: its INT/TERM trap, stty changes and helper never
+# touch the caller's shell, so there are no caller traps to save and replay.
+_tui_pick() (
     _tp_frame_fn="$1"
     _tp_n="$2"
     _tp_cur="$3"
@@ -272,7 +227,6 @@ _tui_pick() {
         [ -t 2 ] && printf '\033[?25h' >&2
         return 0
     }
-    _tui_traps_save
     trap '_tp_restore; exit 130' INT TERM
     if [ -t 3 ]; then
         _tp_stty="$(stty -g <&3)"
@@ -298,9 +252,8 @@ _tui_pick() {
         esac
     done
     _tp_restore
-    _tui_traps_restore
     printf '%s\n' "${_tp_pick}"
-}
+)
 
 # render_action_menu [last] — the ./dots action picker. Draws on stderr, reads
 # keys from fd 3 and prints the chosen value on stdout: "quit" for q, esc or
@@ -320,13 +273,15 @@ render_action_menu() {
 # tui_confirm <question> <default y|n> — one-key yes/no on fd 3.
 # Returns 0 for y, 1 for n, the default for enter, and 130 for q, esc or end
 # of input. Other keys are ignored. Draws "<question> [y/N] <answer>" on stderr.
-tui_confirm() {
+# The body is a subshell, like _tui_pick: the INT/TERM trap and stty changes
+# stay out of the caller's shell. A Ctrl-C ends the subshell with 130.
+tui_confirm() (
     _tcf_q="${1:?tui_confirm: question required}"
     _tcf_default="${2:?tui_confirm: default y|n required}"
     case "${_tcf_default}" in
         y) _tcf_hint='[Y/n]' ;;
         n) _tcf_hint='[y/N]' ;;
-        *) log_error "tui_confirm: default must be y or n"; return 2 ;;
+        *) log_error "tui_confirm: default must be y or n"; exit 2 ;;
     esac
     _tui_open_keys
     if _tui_color_on 2; then
@@ -335,7 +290,6 @@ tui_confirm() {
         printf '%s %s ' "${_tcf_q}" "${_tcf_hint}" >&2
     fi
     _tcf_stty=""
-    _tui_traps_save
     trap '[ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3; exit 130' INT TERM
     if [ -t 3 ]; then
         _tcf_stty="$(stty -g <&3)"
@@ -350,14 +304,13 @@ tui_confirm() {
         esac
     done
     [ -n "${_tcf_stty}" ] && stty "${_tcf_stty}" <&3
-    _tui_traps_restore
     printf '%s\n' "${_tcf_ans}" >&2
     case "${_tcf_ans}" in
-        y) return 0 ;;
-        n) return 1 ;;
-        *) return 130 ;;
+        y) exit 0 ;;
+        n) exit 1 ;;
+        *) exit 130 ;;
     esac
-}
+)
 
 # _tui_choose_frame <cursor> <accent> <color> — frame for tui_choose, from
 # _TUI_CHOOSE_HEADER and the newline-separated _TUI_CHOOSE_ITEMS.

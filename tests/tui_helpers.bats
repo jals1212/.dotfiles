@@ -444,3 +444,44 @@ echo B' INT
     _has 'trap -- x INT'
     _lacks '_tui_replay_trap'
 }
+
+# --- subshell bodies: nothing to save, nothing to leak ----------------------
+
+@test "tui_confirm and tui_choose create no temp file" {
+    cat > "${MOCKBIN}/mktemp" <<EOS
+#!/bin/sh
+echo "\$*" >> "${SANDBOX}/mktemp.log"
+exec /usr/bin/mktemp "\$@"
+EOS
+    chmod +x "${MOCKBIN}/mktemp"
+    : > "${SANDBOX}/mktemp.log"
+
+    run _confirm n 'n'
+    [ "${status}" -eq 1 ]
+
+    run _choose "" 'q' a b
+    [ "${status}" -eq 1 ]
+
+    [ ! -s "${SANDBOX}/mktemp.log" ]
+}
+
+@test "dash: a caller INT trap survives tui_confirm even when mktemp fails" {
+    command -v dash >/dev/null 2>&1 || skip "dash not installed"
+    printf 'n' > "${SANDBOX}/keys"
+
+    run dash -c '
+        REPO_ROOT="$1"
+        . "${REPO_ROOT}/src/lib/paths.sh"
+        . "${REPO_ROOT}/src/lib/log.sh"
+        . "${REPO_ROOT}/src/lib/header.sh"
+        . "${REPO_ROOT}/src/lib/tui.sh"
+        mktemp() { return 1; }
+        trap "echo caller" INT
+        tui_confirm "x" y 3<"$2" 2>/dev/null
+        echo rc=$?
+        trap' _ "${REPO_ROOT_REAL}" "${SANDBOX}/keys"
+
+    _has 'rc=1'
+    _has 'echo caller'
+    _has 'INT'
+}
