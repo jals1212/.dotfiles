@@ -43,11 +43,8 @@ _tui_active_theme() {
 
 tui_subtitle_for() {
     case "${1:-}" in
-        init) printf 'Init' ;;
         update) printf 'Update' ;;
-        backup) printf 'Backup' ;;
         doctor) printf 'Doctor' ;;
-        restore) printf 'Restore' ;;
         uninstall) printf 'Uninstall' ;;
         *) printf '%s' "${1:-Dotfiles Manager}" ;;
     esac

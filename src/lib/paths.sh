@@ -72,10 +72,6 @@ path_content_herdr_config() {
     path_repo_file "content/home/.config/herdr/config.toml"
 }
 
-path_content_zsh_prompt() {
-    path_repo_file "content/home/.config/zsh/prompt.zsh"
-}
-
 path_dotbot_bin() {
     path_repo_file "vendor/dotbot/bin/dotbot"
 }
@@ -115,7 +111,6 @@ path_dots_state_dir() { printf '%s/dots' "${XDG_STATE_HOME:-${HOME}/.local/state
 path_home_zsh_tools() { path_home_file ".config/zsh/tools.zsh"; }
 path_home_zsh_prompt() { path_home_file ".config/zsh/prompt.zsh"; }
 path_home_zsh_plugins() { path_home_file ".config/zsh/plugins.zsh"; }
-path_home_tmux_conf() { path_home_file ".tmux.conf"; }
 
 path_home_nvim_init() { path_home_file ".config/nvim/init.lua"; }
 path_home_nvim_lua_dir() { path_home_file ".config/nvim/lua"; }

@@ -25,7 +25,7 @@ cd ~/.dotfiles
 
 1. Detects missing `python3` / `git` / Linux build deps and installs them via `apt-get`, `dnf`, or `pacman` (Linux) or triggers `xcode-select --install` (macOS).
 2. Runs `git submodule update --init --recursive` to materialize `dotbot/`, `plugins/dotbot-brew/`, `plugins/dotbot-mise/`.
-3. Sees that `manifest.json` is absent → auto-runs `update --yes` with hardcoded defaults (kanagawa/dragon).
+3. Sees that `manifest.json` is absent → the dispatcher auto-runs `update` (no flags) with the default kanagawa/dragon theme. On a TTY `update` still shows its `Change theme?` prompt (default No); without a TTY it applies the defaults without asking.
 4. Invokes `./install` (the dotbot wrapper), which runs dotbot against `config/install.conf.yaml`:
    - `shell:` installs Homebrew if missing.
    - `brewfile:` runs `brew bundle --file=config/Brewfile`.

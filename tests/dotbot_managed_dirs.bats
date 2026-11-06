@@ -101,6 +101,7 @@ teardown() {
     for file in \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/.zshrc" \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/plugins.zsh" \
+        "${REPO_ROOT_REAL}/content/home/.config/zsh/functions.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/tools.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/zsh/zinit.zsh" \
         "${REPO_ROOT_REAL}/content/home/.config/fzf/config.zsh" \

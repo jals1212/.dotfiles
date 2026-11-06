@@ -1,8 +1,7 @@
 #!/bin/sh
 # lib/header.sh — JALS DOTS header + theme color map
 # POSIX sh. Source this file; call render_header [theme] [subtitle].
-# Single wordmark block, combined like the dashboard header in
-# home/.config/nvim/lua/plugins/snacks.lua.
+# Single wordmark block: the JALS wordmark stacked on the DOTS banner.
 
 # ---------------------------------------------------------------------------
 # Theme → ANSI 256-color foreground code map
@@ -50,8 +49,7 @@ render_header() {
 
     # JALS DOTS header — one block: the JALS figlet wordmark (indented 1 col to
     # center its 32 cols over the 34-col DOTS banner) stacked on the DOTS block
-    # banner. Personal brand. Font: ANSI Shadow (figlet). Kept byte-aligned with
-    # the wordmark header in snacks.lua.
+    # banner. Personal brand. Font: ANSI Shadow (figlet).
     _rh_header=$(cat <<'HEADER'
       ██╗ █████╗ ██╗     ███████╗
       ██║██╔══██╗██║     ██╔════╝

@@ -15,8 +15,8 @@ _theme_usage() {
     printf '  ./dots theme <theme> <flavor>\n\n'
     printf 'DESCRIPTION\n'
     printf '  Apply a theme/flavor pair by running the per-theme dotbot config,\n'
-    printf '  rewriting the tmux fenced block, rebuilding the bat cache, optionally\n'
-    printf '  reloading a running tmux server, and writing the slim manifest.\n\n'
+    printf '  rewriting the Starship and Herdr fenced lines, rebuilding the bat cache, optionally\n'
+    printf '  reloading running tmux/Herdr servers, and writing the slim manifest.\n\n'
     printf 'SUPPORTED THEMES AND FLAVORS\n'
     printf '  kanagawa   : dragon, lotus, wave\n'
     printf '  catppuccin : frappe, latte, macchiato, mocha\n\n'
@@ -72,17 +72,10 @@ if [ "${1:-}" = "--current" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Banner: render only when not launched from the menu
+# Banner (render_subcommand_banner is a no-op under DOTS_MENU_DISPATCH)
 # ---------------------------------------------------------------------------
 tui_start_timer
-
-if [ -z "${DOTS_FROM_MENU:-}" ]; then
-    if command -v render_header >/dev/null 2>&1; then
-        render_subcommand_banner "Theme Switcher"
-    else
-        log_step "Theme switcher"
-    fi
-fi
+render_subcommand_banner "Theme Switcher"
 
 # ---------------------------------------------------------------------------
 # Argument parsing

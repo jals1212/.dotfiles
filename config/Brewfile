@@ -1,5 +1,5 @@
 # Dotfiles — Brewfile
-# Managed by `dots` TUI installer
+# Installed by `./dots update` (dotbot-brew runs `brew bundle` on this file)
 
 # ── Taps ─────────────────────────────────────────────
 tap "gentleman-programming/tap", trusted: true

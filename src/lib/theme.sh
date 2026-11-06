@@ -433,8 +433,7 @@ theme_apply() {
     if tmux info >/dev/null 2>&1; then
         tmux set-environment -g DOTS_THEME "${_ta_theme}_${_ta_flavor}" 2>/dev/null \
             || log_warn "tmux set-environment failed; active sessions may keep the old theme"
-        tmux source-file "$(path_home_tmux_conf)" 2>/dev/null \
-            || tmux source-file "$(path_home_tmux_config)" 2>/dev/null \
+        tmux source-file "$(path_home_tmux_config)" 2>/dev/null \
             || log_warn "tmux source-file failed; active sessions may need a manual reload"
     fi
 
@@ -449,6 +448,4 @@ theme_apply() {
         log_error "Failed to write manifest"
         return 1
     }
-
-    log_ok "Theme set: ${_ta_theme}/${_ta_flavor}"
 }

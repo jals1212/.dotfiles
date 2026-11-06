@@ -73,17 +73,10 @@ if [ "${1:-}" = "--current" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Banner: render only when not launched from the menu
+# Banner (render_subcommand_banner is a no-op under DOTS_MENU_DISPATCH)
 # ---------------------------------------------------------------------------
 tui_start_timer
-
-if [ -z "${DOTS_FROM_MENU:-}" ]; then
-    if command -v render_header >/dev/null 2>&1; then
-        render_subcommand_banner "Prompt Switcher"
-    else
-        log_step "Prompt switcher"
-    fi
-fi
+render_subcommand_banner "Prompt Switcher"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
