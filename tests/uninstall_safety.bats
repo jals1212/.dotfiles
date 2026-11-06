@@ -66,6 +66,12 @@ teardown() {
     [ -f "${MINI_REPO}/manifest.json" ]
 }
 
+# BSD/macOS `script -q /dev/null cmd` syntax; util-linux script differs.
+_require_bsd_script() {
+    command -v script >/dev/null 2>&1 || return 1
+    script -q /dev/null env true >/dev/null 2>&1
+}
+
 # _tty_uninstall <keys> — run uninstall on a PTY with <keys> on fd 3.
 _tty_uninstall() {
     printf "$1" > "${SANDBOX}/keys"
@@ -73,7 +79,7 @@ _tty_uninstall() {
 }
 
 @test "uninstall on a TTY keeps everything when the answer is n" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     _tty_uninstall 'n'
 
     [ "${status}" -eq 0 ]
@@ -84,7 +90,7 @@ _tty_uninstall() {
 }
 
 @test "uninstall on a TTY keeps everything on esc, enter or end of input" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     for keys in '\033' '\n' ''; do
         _tty_uninstall "${keys}"
         [ "${status}" -eq 0 ]
@@ -95,7 +101,7 @@ _tty_uninstall() {
 }
 
 @test "uninstall on a TTY removes the declared symlinks when the answer is y" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     _tty_uninstall 'y'
 
     [ "${status}" -eq 0 ]

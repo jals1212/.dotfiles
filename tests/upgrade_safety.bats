@@ -76,6 +76,12 @@ teardown() {
     grep -q 'mise prune --yes' "${CALLS}"
 }
 
+# BSD/macOS `script -q /dev/null cmd` syntax; util-linux script differs.
+_require_bsd_script() {
+    command -v script >/dev/null 2>&1 || return 1
+    script -q /dev/null env true >/dev/null 2>&1
+}
+
 # _tty_upgrade <keys> <args...> — run ./dots upgrade on a PTY, keys on fd 3.
 _tty_upgrade() {
     printf "$1" > "${SANDBOX}/keys"
@@ -84,7 +90,7 @@ _tty_upgrade() {
 }
 
 @test "upgrade cleanup on a TTY stays non-destructive when the answer is n, esc or enter" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     for keys in 'n' '\033' '\n'; do
         _tty_upgrade "${keys}" --cleanup --prune
         [ "${status}" -eq 0 ]
@@ -94,7 +100,7 @@ _tty_upgrade() {
 }
 
 @test "upgrade cleanup on a TTY applies after y" {
-    command -v script >/dev/null 2>&1 || skip "script unavailable"
+    _require_bsd_script || skip "PTY script syntax unavailable"
     _tty_upgrade 'yy' --cleanup --prune
 
     [ "${status}" -eq 0 ]
