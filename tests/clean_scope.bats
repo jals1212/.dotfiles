@@ -126,3 +126,36 @@ _old() { touch -t 202001010000 "$1"; }
     [ -f "${HOME}/.zshenv.dotbot-backup.20240101-120000" ]
     [ -f "${HOME}/foo.dotbot-backup.20240101" ]
 }
+
+@test "clean keeps non-dotbot backups, dir/symlink backups, link chains and ../ escapes" {
+    ln -s "${MINI_REPO}/../x" "${HOME}/dotdot-escape"
+    ln -s /nonexistent/x "${HOME}/foreign-target"
+    ln -s "${HOME}/foreign-target" "${HOME}/foreign-chain"
+    : > "${HOME}/.zshenv.dotbot-backup.old"; _old "${HOME}/.zshenv.dotbot-backup.old"
+    mkdir "${HOME}/.zshenv.dotbot-backup.20200101"; _old "${HOME}/.zshenv.dotbot-backup.20200101"
+    ln -s /etc/hosts "${HOME}/.zshenv.dotbot-backup.20200102"
+    : > "${HOME}/.zshrc.dotbot-backup.20200101"; _old "${HOME}/.zshrc.dotbot-backup.20200101"
+
+    _clean
+
+    [ "${status}" -eq 0 ]
+    [ -L "${HOME}/dotdot-escape" ]
+    [ -L "${HOME}/foreign-chain" ]
+    [ -e "${HOME}/.zshenv.dotbot-backup.old" ]
+    [ -d "${HOME}/.zshenv.dotbot-backup.20200101" ]
+    [ -L "${HOME}/.zshenv.dotbot-backup.20200102" ]
+    [ -e "${HOME}/.zshrc.dotbot-backup.20200101" ]
+}
+
+@test "clean removes a relative and a chained dangling link into the repo" {
+    ln -s "${MINI_REPO}/gone" "${HOME}/abs-dangling"
+    ln -s "${HOME}/abs-dangling" "${HOME}/chain-dangling"
+    ln -s "../repo/gone2" "${HOME}/rel-dangling"
+
+    _clean
+
+    [ "${status}" -eq 0 ]
+    [ ! -L "${HOME}/abs-dangling" ]
+    [ ! -L "${HOME}/chain-dangling" ]
+    [ ! -L "${HOME}/rel-dangling" ]
+}
