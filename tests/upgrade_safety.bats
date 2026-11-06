@@ -107,3 +107,64 @@ _tty_upgrade() {
     grep -q 'brew bundle cleanup --force' "${CALLS}"
     grep -q 'mise prune --yes' "${CALLS}"
 }
+
+# --- upgrade --commit commits only what it advanced -------------------------
+
+# _git_sandbox — a git repo in ${SANDBOX}/super with the three vendored
+# submodules backed by local upstream repos, a copy of src/ and dots, and an
+# unrelated staged file.
+_git_sandbox() {
+    export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    SUPER="${SANDBOX}/super"
+    mkdir -p "${SUPER}"
+    git -C "${SUPER}" init -q -b main
+    cp -R "${REPO_ROOT}/src" "${SUPER}/src"
+    cp "${REPO_ROOT}/dots" "${SUPER}/dots"
+    for sub in vendor/dotbot vendor/plugins/dotbot-brew vendor/plugins/dotbot-mise; do
+        up="${SANDBOX}/upstream/$(basename "${sub}")"
+        mkdir -p "${up}"
+        git -C "${up}" init -q -b main
+        echo one > "${up}/f"
+        git -C "${up}" add f
+        git -C "${up}" commit -q -m one
+        mkdir -p "$(dirname "${SUPER}/${sub}")"
+        git -C "${SUPER}" submodule add -q "${up}" "${sub}" 2>/dev/null
+    done
+    git -C "${SUPER}" add -A
+    git -C "${SUPER}" commit -q -m base
+    # Upstream advances: only dotbot-brew gets a new commit.
+    up="${SANDBOX}/upstream/dotbot-brew"
+    echo two > "${up}/f"
+    git -C "${up}" commit -q -am two
+    # Unrelated staged change.
+    echo staged > "${SUPER}/unrelated.txt"
+    git -C "${SUPER}" add unrelated.txt
+}
+
+@test "upgrade --commit commits only the advanced gitlinks and leaves other staged files staged" {
+    _git_sandbox
+
+    run sh "${SUPER}/dots" upgrade --commit
+    echo "${output}"
+
+    [ "${status}" -eq 0 ]
+    [ "$(git -C "${SUPER}" rev-list --count HEAD)" -eq 2 ]
+    [ "$(git -C "${SUPER}" show --name-only --pretty=format: HEAD)" = "vendor/plugins/dotbot-brew" ]
+    [ "$(git -C "${SUPER}" diff --cached --name-only)" = "unrelated.txt" ]
+}
+
+@test "upgrade --commit without an advanced submodule creates no commit" {
+    _git_sandbox
+    up="${SANDBOX}/upstream/dotbot-brew"
+    git -C "${SUPER}" submodule update --remote -q vendor/plugins/dotbot-brew
+    git -C "${SUPER}" commit -q -m advance vendor/plugins/dotbot-brew
+    before="$(git -C "${SUPER}" rev-parse HEAD)"
+
+    run sh "${SUPER}/dots" upgrade --commit
+
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"no submodule advanced; no commit created"* ]]
+    [ "$(git -C "${SUPER}" rev-parse HEAD)" = "${before}" ]
+    [ "$(git -C "${SUPER}" diff --cached --name-only)" = "unrelated.txt" ]
+}
