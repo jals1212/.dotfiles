@@ -100,6 +100,22 @@ Run both before every push; the suite is written for macOS and runs all of it th
 
 CI (`.github/workflows/ci.yml`) runs the same two targets on a pull request to `main` and by hand (`workflow_dispatch`), never again after the merge. It skips draft pull requests (open them as drafts, mark ready once local runs are green), pull requests that only change `odd/`, `README.md`, `AGENTS.md` or `CLAUDE.md`, and cancels a run when a newer push supersedes it. It runs on Ubuntu to spend fewer Actions minutes, so the tests that drive a PTY with BSD `script` skip there; start a manual run with the `macos-15` runner to cover them.
 
+### Run the CI locally
+
+```sh
+pnpm install              # once: the dev tool (@jals1212/ci-local), nothing else
+pnpm exec ci-local --list # the plan, without running it
+pnpm exec ci-local        # shellcheck + bats in a Linux container (needs Docker)
+```
+
+`ci-local.config.sh` runs the steps of `.github/workflows/ci.yml` (the same two `make` targets) in a Linux runner (`docker/ci-local/Dockerfile`: Node of `.nvmrc`, bats, zsh, shellcheck) with this checkout mounted, so `vendor/` is what your submodules hold: run `git submodule update --init --recursive` first (the run checks it). Everything it creates is named `dotfiles-ci-*` (`CI_PROJECT`; the repo directory is `.dotfiles`, but Docker names cannot start with a dot) and nothing publishes a port. The first run builds the image.
+
+- **Proves:** shellcheck and the bats suite pass on Linux (Debian, bats 1.8) against your working tree, uncommitted changes included, like the GitHub job. The tests that drive a PTY with BSD `script` skip there, as on GitHub's Ubuntu runner: macOS (`make -f config/Makefile test` on your machine) covers them.
+- **Does not prove:** it makes no GitHub check green, and it is not Ubuntu 24.04 or the `macos-15` runner.
+- **Stands in for GitHub** only when the GitHub run failed before any test ran, for infrastructure reasons: then a full run (no `--only`/`--skip`) on the pull request's head commit, clean checkout, recorded in a PR comment. Any lint or test failure on GitHub still blocks the merge.
+- **Parity:** `tests/ci_local_parity.bats` (skipped without `pnpm install`) fails when the plan's commands, or the project name `dotfiles-ci`, drift from the workflow. GitHub's run does not install Node, so the check is local: run it after editing either file.
+- Upgrade the tool with `pnpm add -D @jals1212/ci-local@latest` (it is in `minimumReleaseAgeExclude` of `pnpm-workspace.yaml` by name), then run the parity test and a full run.
+
 ## Documentation
 
 - [Install guide](docs/install.md) — install, update, theme, doctor, clean, upgrade, uninstall.

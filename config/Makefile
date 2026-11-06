@@ -3,7 +3,8 @@
 # Run from the repo root: make -f config/Makefile lint test
 # CI (.github/workflows/ci.yml) runs these same two targets.
 
-# Own shell only: vendor/ is third-party submodules, top-level dot-directories are tool
+# Own shell only: vendor/ is third-party submodules, node_modules/ is the dev
+# tooling's (pnpm install), top-level dot-directories are tool
 # state, and the palette fragments are sourced snippets with no shebang (so
 # shellcheck cannot tell their dialect). src/install and dots have no .sh
 # extension and are listed explicitly.
@@ -13,7 +14,7 @@ lint:
 		exit 1; \
 	fi
 	@shellcheck --severity=warning dots src/install
-	@find . \( -path ./vendor -o -path ./content/assets/palettes -o -path './.?*' \) -prune -o \
+	@find . \( -path ./vendor -o -path ./node_modules -o -path ./content/assets/palettes -o -path './.?*' \) -prune -o \
 		-type f -name '*.sh' -exec shellcheck --severity=warning {} +
 
 test:

@@ -1,0 +1,16 @@
+# pnpm's settings for this repository. Not a monorepo: pnpm reads its project
+# settings from this file. The only dependency is the dev tool that runs the CI
+# workflow locally (`pnpm exec ci-local`); see ci-local.config.sh.
+
+# Exact versions when adding dependencies.
+saveExact: true
+
+# Only versions published more than a week ago (10,080 minutes) are resolved.
+# The exception is the owner's own package, by name and without a version: it
+# is taken at its latest release.
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - '@jals1212/ci-local'
+
+trustPolicy: no-downgrade
+strictDepBuilds: true
