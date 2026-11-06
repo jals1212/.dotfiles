@@ -66,8 +66,6 @@ brew "gphoto2"
 brew "hidapi"
 brew "mole" if OS.mac?
 
-# ── Interactive / TUI helpers ─────────────────────────
-
 # ── Test runner ──────────────────────────────────────
 brew "bats-core"
 
