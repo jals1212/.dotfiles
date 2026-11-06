@@ -98,6 +98,10 @@ if [ "$#" -eq 0 ]; then
     fi
     if [ -t 0 ] && [ -t 1 ]; then
         export DOTS_MENU_DISPATCH=1
+        # Menu keys come from fd 3: the terminal, or DOTS_MENU_INPUT (a file
+        # of keystrokes, for tests). One descriptor for the whole loop, so
+        # each menu render continues where the previous one stopped reading.
+        exec 3<"${DOTS_MENU_INPUT:-/dev/tty}"
         _last=""
         while :; do
             clear 2>/dev/null || true

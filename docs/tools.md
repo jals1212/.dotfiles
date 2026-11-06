@@ -118,7 +118,7 @@ Graphical ping with throughput chart. Aliased to `ping`. `gping host1 host2` to 
 
 ### gum — [docs](https://github.com/charmbracelet/gum)
 
-TUI primitives used by `./dots`: `gum choose` for the action menu and update wizard pickers, `gum confirm` for update approval, `gum style` for picker headers/summary/success boxes, and `gum format` for future formatted terminal blocks. Standalone usage: `gum choose a b c`, `gum style --border rounded 'done'`, `gum input --prompt 'name: '`.
+TUI primitives used by `./dots`: `gum choose` for the update wizard pickers (the action menu is its own key reader in `src/lib/tui.sh`: ↑↓/jk move, enter runs, q or esc quits), `gum confirm` for update approval, `gum style` for picker headers/summary/success boxes, and `gum format` for future formatted terminal blocks. Standalone usage: `gum choose a b c`, `gum style --border rounded 'done'`, `gum input --prompt 'name: '`.
 
 ## Themes
 

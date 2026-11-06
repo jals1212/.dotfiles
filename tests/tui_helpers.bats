@@ -129,56 +129,76 @@ JSON
     [ "${output}" = "jals1212 DOTS · kanagawa · 2 changed" ]
 }
 
-# --- action menu --------------------------------------------------------
+# --- action menu (own key reader; keys come from fd 3) -------------------
 
-_mock_gum_args() {
-    cat > "${MOCKBIN}/gum" <<'SH'
-#!/bin/sh
-for a in "$@"; do printf '%s\n' "$a"; done > "${GUM_ARGS_FILE}"
-printf 'update\n'
-SH
-    chmod +x "${MOCKBIN}/gum"
-    export GUM_ARGS_FILE="${SANDBOX}/gum.args"
+# _menu <last> <keys> — run render_action_menu reading <keys> (printf format)
+# from fd 3; stdout is the chosen value, stderr the drawn menu.
+_menu() {
+    printf "$2" > "${SANDBOX}/keys"
+    render_action_menu "$1" 3<"${SANDBOX}/keys" 2>"${SANDBOX}/menu.err"
 }
 
-@test "render_action_menu lists grouped actions with descriptions" {
-    _mock_gum_args
-
-    run render_action_menu ""
+@test "q quits the menu" {
+    run _menu "" 'q'
 
     [ "${status}" -eq 0 ]
+    [ "${output}" = "quit" ]
+}
+
+@test "esc quits the menu" {
+    run _menu "" '\033'
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "quit" ]
+}
+
+@test "end of input quits the menu" {
+    run _menu "" ''
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "quit" ]
+}
+
+@test "enter runs the item under the cursor" {
+    run _menu "" '\n'
+
     [ "${output}" = "update" ]
-    grep -qx -- "--label-delimiter=|" "${GUM_ARGS_FILE}"
-    [ "$(grep -c '|' "${GUM_ARGS_FILE}")" -eq 10 ]
-    grep '|' "${GUM_ARGS_FILE}" | grep -v -- '--' | sed 's/.*|//' | tr '\n' ' ' > "${SANDBOX}/values"
-    [ "$(cat "${SANDBOX}/values")" = "update upgrade clean doctor theme prompt uninstall help quit " ]
-    grep -qx "update     Apply dotfiles and the active theme|update" "${GUM_ARGS_FILE}"
-    grep -qx "uninstall  ⚠ Remove managed symlinks and manifest|uninstall" "${GUM_ARGS_FILE}"
 }
 
-@test "render_action_menu pre-selects the last action by its label" {
-    _mock_gum_args
+@test "j and down arrow move down, k and up arrow move up" {
+    run _menu "" 'jj\n'
+    [ "${output}" = "clean" ]
 
-    run render_action_menu "doctor"
+    run _menu "" '\033[B\033[B\033[A\n'
+    [ "${output}" = "upgrade" ]
 
-    [ "${status}" -eq 0 ]
-    grep -qx -- "--selected=doctor     Health checks that change nothing" "${GUM_ARGS_FILE}"
+    run _menu "" 'jjk\n'
+    [ "${output}" = "upgrade" ]
 }
 
-@test "render_action_menu uses the theme accent for cursor and header" {
-    _mock_gum_args
+@test "cursor stops at the first and last items" {
+    run _menu "" 'kk\n'
+    [ "${output}" = "update" ]
 
-    run render_action_menu ""
-
-    grep -qx -- "--cursor.foreground=141" "${GUM_ARGS_FILE}"
-    grep -qx -- "--selected.foreground=141" "${GUM_ARGS_FILE}"
-    grep -qx -- "--header.foreground=141" "${GUM_ARGS_FILE}"
+    run _menu "" 'jjjjjjjjjjjj\n'
+    [ "${output}" = "quit" ]
 }
 
-@test "menu labels contain no commas (gum splits --selected on commas)" {
-    _mock_gum_args
+@test "last action is pre-selected" {
+    run _menu "doctor" '\n'
 
-    run render_action_menu ""
+    [ "${output}" = "doctor" ]
+}
 
-    [ "$(grep '|' "${GUM_ARGS_FILE}" | grep -v -- '--' | grep -c ',')" -eq 0 ]
+@test "menu draws group headers, actions with descriptions and key hints" {
+    run _menu "" 'q'
+
+    grep -qx "Maintain" "${SANDBOX}/menu.err"
+    grep -qx "Appearance" "${SANDBOX}/menu.err"
+    grep -qx "Danger" "${SANDBOX}/menu.err"
+    grep -qx "> update     Apply dotfiles and the active theme" "${SANDBOX}/menu.err"
+    grep -qx "  doctor     Health checks that change nothing" "${SANDBOX}/menu.err"
+    grep -qx "  uninstall  ⚠ Remove managed symlinks and manifest" "${SANDBOX}/menu.err"
+    grep -qx "↑↓/jk move · enter run · q quit" "${SANDBOX}/menu.err"
+    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor theme prompt uninstall help quit " ]
 }

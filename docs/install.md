@@ -57,7 +57,7 @@ The `--tools` flag is **removed**. Managed packages are declared in `config/Brew
 
 ## Everyday commands
 
-Run `./dots` for the visual action menu: a one-line status (active theme, prompt engine and local git state of the repo) above the actions, each with a short description. On first run (when `manifest.json` is absent), `./dots` auto-starts `update`.
+Run `./dots` for the visual action menu: a one-line status (active theme, prompt engine and local git state of the repo) above the actions, grouped and each with a short description. Move with ↑↓ or j/k, run with enter, quit with q or esc. On first run (when `manifest.json` is absent), `./dots` auto-starts `update`.
 
 | Command | Use when you want to... |
 | --- | --- |

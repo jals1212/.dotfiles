@@ -1,7 +1,7 @@
 #!/bin/sh
 # lib/tui.sh — shared TUI presentation helpers
 # POSIX sh. Source this file; do not execute directly.
-# Requires: lib/log.sh, lib/header.sh, jq, gum.
+# Requires: lib/log.sh, lib/header.sh, jq, gum (log_success only).
 
 # shellcheck source=src/lib/log.sh
 # shellcheck source=src/lib/header.sh
@@ -99,28 +99,132 @@ ${_ls_line}"
 }
 
 # ---------------------------------------------------------------------------
-# Main menu rows, in display order: maintain, appearance, danger, meta.
-# Each row is "<value>|<description>"; the label shown is the value padded to
-# a column followed by the description. No commas: gum splits --selected on
-# commas, so a comma in a label breaks pre-selection.
+# Main menu rows "<group>|<value>|<description>", in display order. A row whose
+# group differs from the previous row's starts a group header.
 # ---------------------------------------------------------------------------
-_TUI_MENU_ROWS='update|Apply dotfiles and the active theme
-upgrade|Bump vendored deps plus brew and mise
-clean|Remove dead symlinks and stale backups
-doctor|Health checks that change nothing
-theme|Switch theme or flavor
-prompt|Switch prompt engine: starship or p10k
-uninstall|⚠ Remove managed symlinks and manifest
-help|Show usage
-quit|Exit'
+_TUI_MENU_ROWS='Maintain|update|Apply dotfiles and the active theme
+Maintain|upgrade|Bump vendored deps plus brew and mise
+Maintain|clean|Remove dead symlinks and stale backups
+Maintain|doctor|Health checks that change nothing
+Appearance|theme|Switch theme or flavor
+Appearance|prompt|Switch prompt engine: starship or p10k
+Danger|uninstall|⚠ Remove managed symlinks and manifest
+General|help|Show usage
+General|quit|Exit'
 
-# _tui_menu_label <value> — the label shown for a menu value (empty if unknown).
-_tui_menu_label() {
-    printf '%s\n' "${_TUI_MENU_ROWS}" | while IFS='|' read -r _tml_value _tml_desc; do
-        if [ "${_tml_value}" = "${1:-}" ]; then
-            printf '%-10s %s\n' "${_tml_value}" "${_tml_desc}"
+_tui_menu_count() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | wc -l | tr -d ' '
+}
+
+# _tui_menu_value <n> — value of the 1-based row <n>.
+_tui_menu_value() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | sed -n "${1}p" | cut -d'|' -f2
+}
+
+# _tui_menu_index <value> — 1-based row of <value>; empty when unknown.
+_tui_menu_index() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | awk -F'|' -v v="${1:-}" '$2 == v { print NR; exit }'
+}
+
+# _tui_menu_frame <cursor> <accent> <color 0|1> — the menu as text lines.
+_tui_menu_frame() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | awk -F'|' -v cur="$1" -v acc="$2" -v color="$3" '
+        function paint(code, text) { return color ? "\033[" code "m" text "\033[0m" : text }
+        {
+            if ($1 != prev) {
+                if (NR > 1) print ""
+                print paint("2", $1)
+                prev = $1
+            }
+            name = sprintf("%-10s", $2)
+            if (NR == cur)
+                print paint("1;38;5;" acc, "> " name) " " $3
+            else
+                print "  " name " " paint("2", $3)
+        }
+        END { print ""; print paint("2", "↑↓/jk move · enter run · q quit") }
+    '
+}
+
+# _tui_read_key — read one key from fd 3: up, down, enter, quit or other.
+# End of input and a lone esc count as quit.
+_tui_read_key() {
+    _trk_c="$(dd bs=1 count=1 2>/dev/null <&3; printf x)"
+    _trk_c="${_trk_c%x}"
+    case "${_trk_c}" in
+        '') printf 'quit' ;;
+        # Literal newline: "$(printf '\n')" would be empty (stripped).
+        '
+'|"$(printf '\r')") printf 'enter' ;;
+        q|Q) printf 'quit' ;;
+        k) printf 'up' ;;
+        j) printf 'down' ;;
+        "$(printf '\033')")
+            # Arrow keys arrive as esc [ A|B (or esc O A|B). On a tty, wait at
+            # most 0.1s for the rest so a lone esc still quits.
+            [ -t 3 ] && stty min 0 time 1 <&3
+            _trk_s="$(dd bs=1 count=2 2>/dev/null <&3)"
+            [ -t 3 ] && stty min 1 time 0 <&3
+            case "${_trk_s}" in
+                '[A'|OA) printf 'up' ;;
+                '[B'|OB) printf 'down' ;;
+                '') printf 'quit' ;;
+                *) printf 'other' ;;
+            esac
+            ;;
+        *) printf 'other' ;;
+    esac
+}
+
+# render_action_menu [last] — interactive action picker. Draws on stderr,
+# reads keys from fd 3 (opened on /dev/tty when the caller did not open it)
+# and prints the chosen value on stdout: "quit" for q, esc or end of input.
+# [last] (a value) starts under the cursor.
+render_action_menu() {
+    { true <&3; } 2>/dev/null || exec 3</dev/tty
+    _ram_cur="$(_tui_menu_index "${1:-}")"
+    [ -n "${_ram_cur}" ] || _ram_cur=1
+    _ram_n="$(_tui_menu_count)"
+    _ram_accent="$(_header_color_code "$(_tui_active_theme)")"
+    _ram_color=0
+    if [ -t 2 ]; then
+        _ram_colors="$(tput colors 2>/dev/null || printf '8')"
+        [ "${_ram_colors}" -ge 256 ] 2>/dev/null && _ram_color=1
+    fi
+
+    _ram_stty=""
+    if [ -t 3 ]; then
+        _ram_stty="$(stty -g <&3)"
+        stty -icanon -echo min 1 time 0 <&3
+    fi
+    _ram_restore() {
+        [ -n "${_ram_stty}" ] && stty "${_ram_stty}" <&3
+        [ -t 2 ] && printf '\033[?25h' >&2
+        return 0
+    }
+    trap '_ram_restore; exit 130' INT TERM
+    [ -t 2 ] && printf '\033[?25l' >&2
+
+    _ram_lines=0
+    while :; do
+        _ram_frame="$(_tui_menu_frame "${_ram_cur}" "${_ram_accent}" "${_ram_color}")"
+        if [ -t 2 ]; then
+            [ "${_ram_lines}" -gt 0 ] && printf '\033[%dA' "${_ram_lines}" >&2
+            printf '%s\n' "${_ram_frame}" | awk '{ printf "\033[2K%s\n", $0 }' >&2
+        else
+            printf '%s\n' "${_ram_frame}" >&2
         fi
+        _ram_lines="$(printf '%s\n' "${_ram_frame}" | wc -l | tr -d ' ')"
+        case "$(_tui_read_key)" in
+            up) [ "${_ram_cur}" -gt 1 ] && _ram_cur=$((_ram_cur - 1)) ;;
+            down) [ "${_ram_cur}" -lt "${_ram_n}" ] && _ram_cur=$((_ram_cur + 1)) ;;
+            enter) _ram_pick="$(_tui_menu_value "${_ram_cur}")"; break ;;
+            quit) _ram_pick="quit"; break ;;
+        esac
     done
+    _ram_restore
+    trap - INT TERM
+    printf '%s\n' "${_ram_pick}"
 }
 
 # _tui_git_summary — "✓ clean", "N changed", "N unpushed" or both; empty when
@@ -167,26 +271,4 @@ render_menu_status() {
     else
         printf 'jals1212 DOTS · %s\n' "${_rms_rest}"
     fi
-}
-
-# render_action_menu [last] — gum picker over _TUI_MENU_ROWS; prints the chosen
-# value. [last] (a value) is pre-selected; gum matches --selected by label.
-render_action_menu() {
-    _ram_accent="$(_header_color_code "$(_tui_active_theme)")"
-    _ram_label="$(_tui_menu_label "${1:-}")"
-    set -- --label-delimiter="|" --header="" \
-        --cursor.foreground="${_ram_accent}" \
-        --selected.foreground="${_ram_accent}" \
-        --header.foreground="${_ram_accent}"
-    [ -n "${_ram_label}" ] && set -- "$@" --selected="${_ram_label}"
-    _ram_items="$(printf '%s\n' "${_TUI_MENU_ROWS}" | while IFS='|' read -r _ram_v _ram_d; do
-        printf '%-10s %s|%s\n' "${_ram_v}" "${_ram_d}" "${_ram_v}"
-    done)"
-    _ram_old_ifs="${IFS}"
-    IFS='
-'
-    # shellcheck disable=SC2086
-    set -- "$@" ${_ram_items}
-    IFS="${_ram_old_ifs}"
-    gum choose "$@"
 }

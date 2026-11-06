@@ -65,25 +65,32 @@ teardown() {
     rm -rf "${SANDBOX}"
 }
 
+# _keys <printf-format> — write menu keys to a file and print its path.
+_keys() {
+    printf "$1" > "${SANDBOX}/keys"
+    printf '%s' "${SANDBOX}/keys"
+}
+
 _require_bsd_script() {
     command -v script >/dev/null 2>&1 || return 1
     script -q /dev/null env true >/dev/null 2>&1
 }
 
-@test "interactive no-args calls gum choose with documented options" {
+@test "interactive no-args draws the action menu and q quits" {
     _require_bsd_script || skip "PTY script syntax unavailable"
 
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
         GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
         GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
-        GUM_CHOICE=quit \
+        DOTS_MENU_INPUT="$(_keys 'q')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"jals1212 DOTS"*"· kanagawa/dragon"* ]]
-    grep -q "|update .*|upgrade .*|clean .*|doctor .*|theme .*|prompt .*|uninstall .*|help .*|quit" "${GUM_ARGS_FILE}"
+    [[ "${output}" == *"update"*"upgrade"*"clean"*"doctor"*"theme"*"prompt"*"uninstall"*"help"*"quit"* ]]
+    [[ "${output}" == *"q quit"* ]]
 }
 
 @test "initialized non-TTY no-args errors and exits 2" {
@@ -108,19 +115,17 @@ _require_bsd_script() {
 @test "help menu choice prints usage and loops back, then quits" {
     _require_bsd_script || skip "PTY script syntax unavailable"
 
-    # Sequence: first call returns "help" (loops back), second returns "quit" (exits).
+    # Keys: move to help (8th item), enter (loops back), then q (exits).
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
         GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
         GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
-        GUM_CHOICES="help,quit" \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjj\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"dots - dotfiles manager"* ]]
-    # gum was called twice (help + quit)
-    [ "$(wc -l < "${GUM_ARGS_FILE}" | tr -d ' ')" -ge 2 ]
 }
 
 @test "quit menu choice exits 0 and runs no subcommand" {
@@ -130,7 +135,7 @@ _require_bsd_script() {
         PATH="${MOCKBIN}:${PATH}" \
         GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
         GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
-        GUM_CHOICE=quit \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjjj\n')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
@@ -142,17 +147,15 @@ _require_bsd_script() {
 @test "second menu render pre-selects last action" {
     _require_bsd_script || skip "PTY script syntax unavailable"
 
-    # First call: pick "doctor" (will fail since manifest is dummy; loop continues).
-    # Second call: quit. Second gum invocation should include --selected=doctor.
+    # Pick help (enter), then enter again on the pre-selected help, then q.
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
         GUM_ARGS_FILE="${GUM_ARGS_FILE}" \
         GUM_COUNT_FILE="${GUM_COUNT_FILE}" \
-        GUM_CHOICES="doctor,quit" \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjj\n\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
-    # Second gum call (line 2 of args file) must carry --selected=doctor
-    sed -n '2p' "${GUM_ARGS_FILE}" | grep -q -- "--selected=doctor     Health checks"
+    [ "$(printf '%s' "${output}" | grep -c 'dots - dotfiles manager')" -eq 2 ]
 }
