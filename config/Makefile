@@ -12,8 +12,9 @@ lint:
 		echo "shellcheck not installed: install it to run lint (macOS: brew install shellcheck, Debian/Ubuntu: apt-get install shellcheck)" >&2; \
 		exit 1; \
 	fi
+	@shellcheck --severity=warning dots src/install
 	@find . \( -path ./vendor -o -path ./content/assets/palettes -o -path './.?*' \) -prune -o \
-		-type f -name '*.sh' -exec shellcheck --severity=warning dots src/install {} +
+		-type f -name '*.sh' -exec shellcheck --severity=warning {} +
 
 test:
 	@if ! command -v bats >/dev/null 2>&1; then \
