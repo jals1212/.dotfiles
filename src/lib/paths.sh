@@ -72,6 +72,19 @@ path_content_herdr_config() {
     path_repo_file "content/home/.config/herdr/config.toml"
 }
 
+# Neovim palette for <theme>/<flavor> and the repo-side link that selects it.
+# The link lives inside the repo's nvim lua dir (itself linked into $HOME), is
+# gitignored, and is rewritten by `./dots theme`.
+path_nvim_palette() {
+    _pnp_theme="${1:?path_nvim_palette: theme required}"
+    _pnp_flavor="${2:?path_nvim_palette: flavor required}"
+    path_repo_file "content/assets/palettes/nvim/${_pnp_theme}-${_pnp_flavor}.lua"
+}
+
+path_content_nvim_theme_link() {
+    path_repo_file "content/home/.config/nvim/lua/dots-theme.lua"
+}
+
 path_dotbot_bin() {
     path_repo_file "vendor/dotbot/bin/dotbot"
 }

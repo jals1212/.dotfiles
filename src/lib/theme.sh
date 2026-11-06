@@ -199,6 +199,28 @@ _th_apply_herdr_theme() {
         '^auto_switch[[:space:]]*='
 }
 
+# _th_apply_nvim_link <theme> <flavor>
+#   Point content/home/.config/nvim/lua/dots-theme.lua at the flavor's Neovim
+#   palette. Refuses to replace anything that is not a symlink, and leaves the
+#   existing link untouched when the palette is missing.
+_th_apply_nvim_link() {
+    _anl_theme="${1:?_th_apply_nvim_link: theme required}"
+    _anl_flavor="${2:?_th_apply_nvim_link: flavor required}"
+    _anl_palette="$(path_nvim_palette "${_anl_theme}" "${_anl_flavor}")"
+    _anl_link="$(path_content_nvim_theme_link)"
+
+    if [ ! -f "${_anl_palette}" ]; then
+        log_error "Neovim palette not found: ${_anl_palette}"
+        return 1
+    fi
+    if [ -e "${_anl_link}" ] && [ ! -L "${_anl_link}" ]; then
+        log_error "${_anl_link} is not a symlink; refusing to replace it"
+        return 1
+    fi
+    [ -d "$(dirname "${_anl_link}")" ] || mkdir -p "$(dirname "${_anl_link}")"
+    ln -sfn "${_anl_palette}" "${_anl_link}"
+}
+
 # _th_write_manifest <theme> <flavor> [prompt]
 #   Atomically write the slim manifest to REPO_ROOT/manifest.json.
 #   When [prompt] is omitted, the current manifest value is preserved, falling
@@ -378,7 +400,7 @@ theme_current() {
 
 # ---------------------------------------------------------------------------
 # theme_apply <theme> <flavor>
-#   Full theme apply: validate → dotbot → starship fence → local state →
+#   Full theme apply: validate → dotbot → nvim link → starship fence → local state →
 #   bat cache → tmux reload → manifest.
 #   Returns 0 on success, non-zero on any failure.
 # ---------------------------------------------------------------------------
@@ -391,6 +413,12 @@ theme_apply() {
 
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
+
+    # --- Step 2b: Neovim palette link ---
+    # nvim reads lua/dots-theme.lua (a repo-side, gitignored symlink) to pick
+    # its colorscheme; no dotbot entry is needed because ~/.config/nvim/lua is
+    # itself a link to that directory.
+    _th_apply_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
 
     # --- Step 3: starship fence (active palette selected in place) ---
     # Starship has no external-theme include, so the active palette is chosen by

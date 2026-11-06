@@ -104,3 +104,80 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
         fi
     done
 }
+
+# _nvim_sandbox <active-theme-flavor-link> — repo with two nvim palettes, a
+# manifest naming kanagawa/wave, and the theme link pointing at <link>.
+_nvim_sandbox() {
+    mkdir -p "${REPO}/content/assets/palettes/nvim" "${REPO}/content/home/.config/nvim/lua"
+    : > "${REPO}/content/assets/palettes/nvim/kanagawa-wave.lua"
+    : > "${REPO}/content/assets/palettes/nvim/catppuccin-mocha.lua"
+    printf '{\n  "theme": "kanagawa",\n  "flavor": "wave"\n}\n' > "${REPO}/manifest.json"
+    printf '%s\n' 'DOCTOR_CHECKS="check_nvim_theme_link"' 'export DOCTOR_CHECKS' >> "${REPO}/src/lib/doctor.sh"
+    if [ -n "${1:-}" ]; then
+        ln -s "${REPO}/content/assets/palettes/nvim/$1.lua" "${REPO}/content/home/.config/nvim/lua/dots-theme.lua"
+    fi
+}
+
+@test "doctor passes when the nvim theme link points at the active palette" {
+    _nvim_sandbox kanagawa-wave
+
+    run sh "${REPO}/dots" doctor
+    echo "${output}"
+
+    [ "${status}" -eq 0 ]
+    _has "[PASS] nvim theme link (kanagawa/wave)"
+    _has "1/1 checks passed"
+}
+
+@test "doctor fails when the nvim theme link points at another flavor" {
+    _nvim_sandbox catppuccin-mocha
+
+    run sh "${REPO}/dots" doctor
+    echo "${output}"
+
+    [ "${status}" -eq 1 ]
+    _has "[FAIL] nvim theme link: points at catppuccin-mocha.lua but the active theme is kanagawa/wave"
+    _lacks "checks passed"
+}
+
+@test "doctor fails when the nvim theme link is missing" {
+    _nvim_sandbox
+
+    run sh "${REPO}/dots" doctor
+    echo "${output}"
+
+    [ "${status}" -eq 1 ]
+    _has "[FAIL] nvim theme link: missing (run ./dots theme kanagawa wave)"
+}
+
+@test "doctor fails when the nvim theme link is a regular file" {
+    _nvim_sandbox
+    : > "${REPO}/content/home/.config/nvim/lua/dots-theme.lua"
+
+    run sh "${REPO}/dots" doctor
+    echo "${output}"
+
+    [ "${status}" -eq 1 ]
+    _has "[FAIL] nvim theme link: not a symlink"
+}
+
+@test "doctor skips the nvim theme link without a manifest" {
+    _nvim_sandbox
+    rm "${REPO}/manifest.json"
+
+    run sh "${REPO}/dots" doctor
+    echo "${output}"
+
+    [ "${status}" -eq 0 ]
+    _has "[SKIP] nvim theme link: no active theme in manifest.json"
+}
+
+@test "the real registry includes check_nvim_theme_link and doctor --help mentions it" {
+    export REPO_ROOT="${REPO_ROOT_REAL}"
+    . "${REPO_ROOT_REAL}/src/lib/log.sh"
+    . "${REPO_ROOT_REAL}/src/lib/doctor.sh"
+    case " ${DOCTOR_CHECKS} " in *" check_nvim_theme_link "*) ;; *) echo "not registered"; return 1 ;; esac
+
+    run sh "${REPO_ROOT_REAL}/dots" doctor --help
+    _has "Nvim theme         : dots-theme.lua link points at the active theme/flavor palette"
+}

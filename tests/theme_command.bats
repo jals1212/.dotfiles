@@ -12,6 +12,9 @@ setup() {
     mkdir -p "${HOME}/.config/zsh" "${SANDBOX}/bin" "${SANDBOX}/repo"
     cp -R "${REPO_ROOT_REAL}/src" "${REPO_ROOT_REAL}/content" "${SANDBOX}/repo/"
     cp "${REPO_ROOT_REAL}/dots" "${SANDBOX}/repo/dots"
+    # The developer's real (gitignored) theme link must not leak into the
+    # sandbox: it is absolute, so writing through it would hit the real repo.
+    rm -f "${SANDBOX}/repo/content/home/.config/nvim/lua/dots-theme.lua"
 
     # Replace the real dotbot run with a no-op, in the sandbox copy only.
     printf '%s\n' \
@@ -39,7 +42,7 @@ teardown() {
 
     [ "${status}" -eq 0 ]
     [ "$(printf '%s\n' "${all}" | grep -c 'Theme set')" -eq 1 ]
-    [[ "${all}" == *"catppuccin/mocha"* ]]
+    [[ "${all}" == *"catppuccin/mocha"* ]] || return 1
     grep -Fq '"theme": "catppuccin"' "${SANDBOX}/repo/manifest.json"
     grep -Fq '"flavor": "mocha"' "${SANDBOX}/repo/manifest.json"
 }
@@ -100,4 +103,60 @@ teardown() {
     run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa mocha
     [ "${status}" -ne 0 ]
     cmp "${manifest}" "${SANDBOX}/manifest.before"
+}
+
+# _nvim_link — the repo-side Neovim theme link the switcher maintains.
+_nvim_link() { printf '%s' "${SANDBOX}/repo/content/home/.config/nvim/lua/dots-theme.lua"; }
+_nvim_palette() { printf '%s' "${SANDBOX}/repo/content/assets/palettes/nvim/$1.lua"; }
+
+@test "dots theme points the nvim theme link at the new flavor's palette" {
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin mocha
+    [ "${status}" -eq 0 ]
+    [ -L "$(_nvim_link)" ]
+    [ "$(readlink -f "$(_nvim_link)")" = "$(readlink -f "$(_nvim_palette catppuccin-mocha)")" ]
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa dragon
+    [ "${status}" -eq 0 ]
+    [ -L "$(_nvim_link)" ]
+    [ "$(readlink -f "$(_nvim_link)")" = "$(readlink -f "$(_nvim_palette kanagawa-dragon)")" ]
+    grep -Fq 'colorscheme = "kanagawa-dragon"' "$(_nvim_link)"
+}
+
+@test "dots theme never replaces a real file at the nvim theme link" {
+    printf -- '-- mine\n' > "$(_nvim_link)"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa lotus
+
+    [ "${status}" -ne 0 ]
+    [ ! -L "$(_nvim_link)" ]
+    [ "$(cat "$(_nvim_link)")" = "-- mine" ]
+    [ ! -e "${SANDBOX}/repo/manifest.json" ]
+}
+
+@test "dots theme fails without writing a manifest when the nvim palette is missing" {
+    rm "$(_nvim_palette catppuccin-latte)"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin latte
+
+    [ "${status}" -ne 0 ]
+    [ ! -e "$(_nvim_link)" ]
+    [ ! -e "${SANDBOX}/repo/manifest.json" ]
+}
+
+@test "every theme flavor has an nvim palette naming its colorscheme and plugin" {
+    n=0
+    for cfg in "${REPO_ROOT_REAL}"/content/themes/*-*.yaml; do
+        name="$(basename "${cfg}" .yaml)"
+        palette="${REPO_ROOT_REAL}/content/assets/palettes/nvim/${name}.lua"
+        [ -f "${palette}" ]
+        grep -Fq "colorscheme = \"${name}\"" "${palette}"
+        grep -Eq 'plugin = "[^"]+/[^"]+"' "${palette}"
+        n=$((n + 1))
+    done
+    [ "${n}" -eq 7 ]
+}
+
+@test "the nvim theme link is untracked machine state" {
+    run git -C "${REPO_ROOT_REAL}" check-ignore -q content/home/.config/nvim/lua/dots-theme.lua
+    [ "${status}" -eq 0 ]
 }

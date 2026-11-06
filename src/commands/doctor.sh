@@ -24,7 +24,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     printf '                       tmux, ghostty, mise, starship, bat, fzf, eza\n'
     printf '  Theme symlinks     : bat, fzf/theme.sh, eza/theme.sh, lazygit, bottom,\n'
     printf '                       ghostty/themes/dots\n'
-    printf '  Nvim theme         : manifest-driven Lua helper is readable\n'
+    printf '  Nvim theme         : dots-theme.lua link points at the active theme/flavor palette\n'
     printf '  Theme agreement    : all theme symlinks resolve to the same\n'
     printf '                       <theme>/<flavor>\n'
     printf '  Content markers    : tmux prefix C-a, ghostty theme = dots,\n'

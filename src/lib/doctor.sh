@@ -180,6 +180,45 @@ check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "$(path_
 check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "$(path_home_ghostty_theme)"; }
 
 # ---------------------------------------------------------------------------
+# Neovim theme link (repo-side symlink written by `./dots theme`)
+# ---------------------------------------------------------------------------
+check_nvim_theme_link() {
+    _cntl_label="nvim theme link"
+    _cntl_manifest="$(path_manifest)"
+    _cntl_theme=""
+    _cntl_flavor=""
+    if [ -f "${_cntl_manifest}" ]; then
+        _cntl_theme="$(sed -n 's/.*"theme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${_cntl_manifest}" | head -1)"
+        _cntl_flavor="$(sed -n 's/.*"flavor"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${_cntl_manifest}" | head -1)"
+    fi
+    if [ -z "${_cntl_theme}" ] || [ -z "${_cntl_flavor}" ]; then
+        _doc_skip "${_cntl_label}" "no active theme in manifest.json"
+        return 0
+    fi
+    _cntl_link="$(path_content_nvim_theme_link)"
+    _cntl_expected="$(path_nvim_palette "${_cntl_theme}" "${_cntl_flavor}")"
+    if [ ! -e "${_cntl_link}" ] && [ ! -L "${_cntl_link}" ]; then
+        _doc_fail "${_cntl_label}" "missing (run ./dots theme ${_cntl_theme} ${_cntl_flavor})"
+        return 1
+    fi
+    if [ ! -L "${_cntl_link}" ]; then
+        _doc_fail "${_cntl_label}" "not a symlink: ${_cntl_link}"
+        return 1
+    fi
+    _cntl_actual="$(readlink -f "${_cntl_link}" 2>/dev/null || true)"
+    if [ -z "${_cntl_actual}" ] || [ ! -f "${_cntl_actual}" ]; then
+        _doc_fail "${_cntl_label}" "dangling symlink (run ./dots theme ${_cntl_theme} ${_cntl_flavor})"
+        return 1
+    fi
+    if [ "${_cntl_actual}" != "$(readlink -f "${_cntl_expected}" 2>/dev/null || printf '%s' "${_cntl_expected}")" ]; then
+        _doc_fail "${_cntl_label}" "points at $(basename "${_cntl_actual}") but the active theme is ${_cntl_theme}/${_cntl_flavor}"
+        return 1
+    fi
+    _doc_pass "${_cntl_label} (${_cntl_theme}/${_cntl_flavor})"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
 # Theme symlinks agreement
 # ---------------------------------------------------------------------------
 check_theme_symlinks_agree() {
@@ -394,5 +433,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_orbstack check_docker check_docker_buildx check_docker_compose check_nvim check_git check_jq check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_orbstack check_docker check_docker_buildx check_docker_compose check_nvim check_git check_jq check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_nvim_theme_link check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS
