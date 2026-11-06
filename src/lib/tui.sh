@@ -98,15 +98,95 @@ ${_ls_line}"
         "${_ls_text}"
 }
 
-render_action_menu() {
-    _ram_selected="${1:-}"
-    _ram_sel_arg=""
-    if [ -n "${_ram_selected}" ]; then
-        _ram_sel_arg="--selected=${_ram_selected}"
+# ---------------------------------------------------------------------------
+# Main menu rows, in display order: maintain, appearance, danger, meta.
+# Each row is "<value>|<description>"; the label shown is the value padded to
+# a column followed by the description. No commas: gum splits --selected on
+# commas, so a comma in a label breaks pre-selection.
+# ---------------------------------------------------------------------------
+_TUI_MENU_ROWS='update|Apply dotfiles and the active theme
+upgrade|Bump vendored deps plus brew and mise
+clean|Remove dead symlinks and stale backups
+doctor|Health checks that change nothing
+theme|Switch theme or flavor
+prompt|Switch prompt engine: starship or p10k
+uninstall|⚠ Remove managed symlinks and manifest
+help|Show usage
+quit|Exit'
+
+# _tui_menu_label <value> — the label shown for a menu value (empty if unknown).
+_tui_menu_label() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | while IFS='|' read -r _tml_value _tml_desc; do
+        if [ "${_tml_value}" = "${1:-}" ]; then
+            printf '%-10s %s\n' "${_tml_value}" "${_tml_desc}"
+        fi
+    done
+}
+
+# _tui_git_summary — "✓ clean", "N changed", "N unpushed" or both; empty when
+# REPO_ROOT is not a git work tree. Local only: never fetches.
+_tui_git_summary() {
+    _tgs_root="${REPO_ROOT:-.}"
+    git -C "${_tgs_root}" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+    _tgs_changed="$(git -C "${_tgs_root}" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+    _tgs_ahead="$(git -C "${_tgs_root}" rev-list --count '@{u}..HEAD' 2>/dev/null || printf '0')"
+    if [ "${_tgs_changed}" -eq 0 ] && [ "${_tgs_ahead}" -eq 0 ]; then
+        printf '✓ clean'
+        return 0
     fi
+    _tgs_out=""
+    [ "${_tgs_changed}" -gt 0 ] && _tgs_out="${_tgs_changed} changed"
+    if [ "${_tgs_ahead}" -gt 0 ]; then
+        [ -n "${_tgs_out}" ] && _tgs_out="${_tgs_out}, "
+        _tgs_out="${_tgs_out}${_tgs_ahead} unpushed"
+    fi
+    printf '%s' "${_tgs_out}"
+}
+
+# render_menu_status — one-line menu header:
+#   JALS DOTS · <theme[/flavor]> · <prompt> · <git summary>
+# Prompt and git parts are omitted when unknown. Brand in the theme accent and
+# the rest dimmed when stdout is a 256-color tty; plain text otherwise.
+render_menu_status() {
+    _rms_theme="$(_tui_active_theme)"
+    _rms_prompt=""
+    _rms_manifest="$(_tui_manifest_path)"
+    if [ -f "${_rms_manifest}" ] && command -v jq >/dev/null 2>&1; then
+        _rms_prompt="$(jq -r '.prompt // empty' "${_rms_manifest}" 2>/dev/null || printf '')"
+    fi
+    _rms_rest="${_rms_theme}"
+    [ -n "${_rms_prompt}" ] && _rms_rest="${_rms_rest} · ${_rms_prompt}"
+    _rms_git="$(_tui_git_summary)"
+    [ -n "${_rms_git}" ] && _rms_rest="${_rms_rest} · ${_rms_git}"
+
+    _rms_colors=0
+    [ -t 1 ] && _rms_colors="$(tput colors 2>/dev/null || printf '8')"
+    if [ "${_rms_colors}" -ge 256 ] 2>/dev/null; then
+        printf '\033[1;38;5;%sm%s\033[0m \033[2m· %s\033[0m\n' \
+            "$(_header_color_code "${_rms_theme}")" "JALS DOTS" "${_rms_rest}"
+    else
+        printf 'JALS DOTS · %s\n' "${_rms_rest}"
+    fi
+}
+
+# render_action_menu [last] — gum picker over _TUI_MENU_ROWS; prints the chosen
+# value. [last] (a value) is pre-selected; gum matches --selected by label.
+render_action_menu() {
+    _ram_accent="$(_header_color_code "$(_tui_active_theme)")"
+    _ram_label="$(_tui_menu_label "${1:-}")"
+    set -- --label-delimiter="|" --header="" \
+        --cursor.foreground="${_ram_accent}" \
+        --selected.foreground="${_ram_accent}" \
+        --header.foreground="${_ram_accent}"
+    [ -n "${_ram_label}" ] && set -- "$@" --selected="${_ram_label}"
+    _ram_items="$(printf '%s\n' "${_TUI_MENU_ROWS}" | while IFS='|' read -r _ram_v _ram_d; do
+        printf '%-10s %s|%s\n' "${_ram_v}" "${_ram_d}" "${_ram_v}"
+    done)"
+    _ram_old_ifs="${IFS}"
+    IFS='
+'
     # shellcheck disable=SC2086
-    gum choose \
-        --header "Choose an action" \
-        ${_ram_sel_arg} \
-        update theme prompt doctor clean upgrade uninstall help quit
+    set -- "$@" ${_ram_items}
+    IFS="${_ram_old_ifs}"
+    gum choose "$@"
 }

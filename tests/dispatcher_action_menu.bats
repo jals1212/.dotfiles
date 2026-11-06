@@ -82,8 +82,8 @@ _require_bsd_script() {
         "${REPO_COPY}/dots"
 
     [ "${status}" -eq 0 ]
-    grep -q -- "--header Choose an action" "${GUM_ARGS_FILE}"
-    grep -q "update theme prompt doctor clean upgrade uninstall help quit" "${GUM_ARGS_FILE}"
+    [[ "${output}" == *"JALS DOTS"*"· kanagawa/dragon"* ]]
+    grep -q "|update .*|upgrade .*|clean .*|doctor .*|theme .*|prompt .*|uninstall .*|help .*|quit" "${GUM_ARGS_FILE}"
 }
 
 @test "initialized non-TTY no-args errors and exits 2" {
@@ -154,5 +154,5 @@ _require_bsd_script() {
 
     [ "${status}" -eq 0 ]
     # Second gum call (line 2 of args file) must carry --selected=doctor
-    sed -n '2p' "${GUM_ARGS_FILE}" | grep -q -- "--selected=doctor"
+    sed -n '2p' "${GUM_ARGS_FILE}" | grep -q -- "--selected=doctor     Health checks"
 }

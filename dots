@@ -101,7 +101,8 @@ if [ "$#" -eq 0 ]; then
         _last=""
         while :; do
             clear 2>/dev/null || true
-            render_command_banner ""
+            render_menu_status
+            printf '\n'
             cmd="$(render_action_menu "${_last}" || true)"
             [ -z "${cmd}" ] && exit 0
             [ "${cmd}" = "quit" ] && exit 0
