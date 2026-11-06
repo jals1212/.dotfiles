@@ -10,8 +10,8 @@ REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
         run --separate-stderr sh "${REPO_ROOT}/dots" "${arg}"
 
         [ "${status}" -eq 0 ]
-        [[ "${output}" == "dots - dotfiles manager"* ]]
-        [[ "${output}" == *"SUBCOMMANDS"* ]]
+        [[ "${output}" == "dots - dotfiles manager"* ]] || return 1
+        [[ "${output}" == *"SUBCOMMANDS"* ]] || return 1
         [ -z "${stderr}" ]
     done
 }
@@ -21,6 +21,6 @@ REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 
     [ "${status}" -eq 2 ]
     [ -z "${output}" ]
-    [[ "${stderr}" == *"Unknown command: bogus"* ]]
+    [[ "${stderr}" == *"Unknown command: bogus"* ]] || return 1
     [[ "${stderr}" == *"dots - dotfiles manager"* ]]
 }

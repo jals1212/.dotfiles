@@ -34,7 +34,7 @@ teardown() {
     run --separate-stderr sh "${REPO}/dots" update bogus
 
     [ "${status}" -eq 2 ]
-    [[ "${stderr}" == *"bogus"* ]]
+    [[ "${stderr}" == *"bogus"* ]] || return 1
     [ ! -s "${CALLS}" ]
     [ ! -e "${REPO}/manifest.json" ]
 }
@@ -44,7 +44,7 @@ teardown() {
         run --separate-stderr sh "${REPO}/dots" update --yes "${arg}"
 
         [ "${status}" -eq 2 ]
-        [[ "${stderr}" == *"${arg}"* ]]
+        [[ "${stderr}" == *"${arg}"* ]] || return 1
         [ ! -s "${CALLS}" ]
         [ ! -e "${REPO}/manifest.json" ]
     done

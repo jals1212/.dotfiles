@@ -8,8 +8,8 @@ REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
     for script in update theme doctor clean upgrade uninstall; do
         file="${REPO_ROOT}/src/commands/${script}.sh"
         content="$(cat "${file}")"
-        [[ "${content}" == *"lib/tui.sh"* ]]
-        [[ "${content}" == *"render_subcommand_banner"* ]]
+        [[ "${content}" == *"lib/tui.sh"* ]] || return 1
+        [[ "${content}" == *"render_subcommand_banner"* ]] || return 1
     done
 }
 

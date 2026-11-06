@@ -22,19 +22,19 @@ teardown() {
     run dotbot_managed_dirs
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"${HOME}"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh"* ]]
-    [[ "${output}" != *"oh-my-posh"* ]]
-    [[ "${output}" != *"${HOME}/.config/zsh/plugins"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim"* ]]
-    [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]]
-    [[ "${output}" == *"${HOME}/.config/herdr"* ]]
-    [[ "${output}" == *"${HOME}/.config/fzf"* ]]
-    [[ "${output}" != *"${HOME}/.config/fzf/themes"* ]]
-    [[ "${output}" == *"${HOME}/.config/eza"* ]]
-    [[ "${output}" != *"${HOME}/.config/eza/themes"* ]]
-    [[ "${output}" == *"${HOME}/.config/bat"* ]]
-    [[ "${output}" == *"${HOME}/.config/bat/themes"* ]]
+    [[ "${output}" == *"${HOME}"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh"* ]] || return 1
+    [[ "${output}" != *"oh-my-posh"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.config/zsh/plugins"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/ghostty/themes"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/herdr"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/fzf"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.config/fzf/themes"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/eza"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.config/eza/themes"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/bat"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/bat/themes"* ]] || return 1
     [[ "${output}" != *"content/assets"* ]]
 }
 
@@ -128,36 +128,36 @@ teardown() {
     run dotbot_managed_links
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"${HOME}/.zshenv"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/.zshenv"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/.zprofile"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/.zshrc"* ]]
-    [[ "${output}" != *"${HOME}/.zshrc"* ]]
-    [[ "${output}" != *"${HOME}/.zprofile"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/zinit.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/aliases.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/abbr.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/functions.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/keymaps.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/tools.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/prompt.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/p10k.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/zsh/plugins.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/mise/config.toml"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/.gitignore"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/.neoconf.json"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/init.lua"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/lazy-lock.json"* ]]
-    [[ "${output}" == *"${HOME}/.config/nvim/lua"* ]]
-    [[ "${output}" == *"${HOME}/.config/fzf/config.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/fzf/theme.sh"* ]]
-    [[ "${output}" != *"${HOME}/.config/fzf/themes/dots.sh"* ]]
-    [[ "${output}" == *"${HOME}/.config/eza/config.zsh"* ]]
-    [[ "${output}" == *"${HOME}/.config/eza/theme.sh"* ]]
-    [[ "${output}" != *"${HOME}/.config/eza/themes/dots.sh"* ]]
-    [[ "${output}" == *"${HOME}/.config/bat/config"* ]]
-    [[ "${output}" == *"${HOME}/.config/herdr/config.toml"* ]]
-    [[ "${output}" != *"${HOME}/.local/state/mise/tracked-configs"* ]]
+    [[ "${output}" == *"${HOME}/.zshenv"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/.zshenv"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/.zprofile"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/.zshrc"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.zshrc"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.zprofile"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/zinit.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/aliases.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/abbr.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/functions.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/keymaps.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/tools.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/prompt.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/p10k.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/zsh/plugins.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/mise/config.toml"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim/.gitignore"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim/.neoconf.json"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim/init.lua"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim/lazy-lock.json"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/nvim/lua"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/fzf/config.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/fzf/theme.sh"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.config/fzf/themes/dots.sh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/eza/config.zsh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/eza/theme.sh"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.config/eza/themes/dots.sh"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/bat/config"* ]] || return 1
+    [[ "${output}" == *"${HOME}/.config/herdr/config.toml"* ]] || return 1
+    [[ "${output}" != *"${HOME}/.local/state/mise/tracked-configs"* ]] || return 1
     [[ "${output}" != *"${HOME}/.config/nvim/lua/dots-theme.lua"* ]]
 }
 

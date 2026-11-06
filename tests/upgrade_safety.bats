@@ -44,7 +44,7 @@ teardown() {
     run sh "${REPO_COPY}/dots" upgrade
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"skipping brew cleanup"* ]]
+    [[ "${output}" == *"skipping brew cleanup"* ]] || return 1
     run ! grep -q 'brew bundle cleanup' "${CALLS}"
     run ! grep -q 'mise prune' "${CALLS}"
 }
@@ -63,7 +63,7 @@ teardown() {
     run sh "${REPO_COPY}/dots" upgrade --cleanup
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"is destructive; rerun with --yes"* ]]
+    [[ "${output}" == *"is destructive; rerun with --yes"* ]] || return 1
     run ! grep -q -- '--force' "${CALLS}"
     run ! grep -q 'mise prune' "${CALLS}"
 }
@@ -164,7 +164,7 @@ _git_sandbox() {
     run sh "${SUPER}/dots" upgrade --commit
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"no submodule advanced; no commit created"* ]]
+    [[ "${output}" == *"no submodule advanced; no commit created"* ]] || return 1
     [ "$(git -C "${SUPER}" rev-parse HEAD)" = "${before}" ]
     [ "$(git -C "${SUPER}" diff --cached --name-only)" = "unrelated.txt" ]
 }

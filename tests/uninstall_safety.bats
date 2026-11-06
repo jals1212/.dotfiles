@@ -59,7 +59,7 @@ teardown() {
     run sh "${MINI_REPO}/src/commands/uninstall.sh" --dry-run
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"Uninstall (dry-run)"* ]]
+    [[ "${output}" == *"Uninstall (dry-run)"* ]] || return 1
     [ -L "${HOME}/.config/zsh/.zshrc" ]
     [ -L "${HOME}/.config/nvim/lua" ]
     [ -L "${HOME}/.local/state/mise/tracked-configs/example" ]
@@ -83,7 +83,7 @@ _tty_uninstall() {
     _tty_uninstall 'n'
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == *"uninstall aborted"* ]]
+    [[ "${output}" == *"uninstall aborted"* ]] || return 1
     [ -L "${HOME}/.config/zsh/.zshrc" ]
     [ -L "${HOME}/.config/nvim/lua" ]
     [ -f "${MINI_REPO}/manifest.json" ]
@@ -94,7 +94,7 @@ _tty_uninstall() {
     for keys in '\033' '\n' ''; do
         _tty_uninstall "${keys}"
         [ "${status}" -eq 0 ]
-        [[ "${output}" == *"uninstall aborted"* ]]
+        [[ "${output}" == *"uninstall aborted"* ]] || return 1
         [ -L "${HOME}/.config/zsh/.zshrc" ]
         [ -f "${MINI_REPO}/manifest.json" ]
     done

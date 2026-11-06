@@ -48,7 +48,7 @@ JSON
     run env -u DOTS_MENU_DISPATCH sh -c '. "$1/src/lib/paths.sh"; . "$1/src/lib/log.sh"; . "$1/src/lib/tui.sh"; render_subcommand_banner Clean' _ "${REPO_ROOT_REAL}"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == "jals1212 DOTS · Clean"* ]]
+    [[ "${output}" == "jals1212 DOTS · Clean"* ]] || return 1
     [ "$(printf '%s\n' "${output}" | wc -l | tr -d ' ')" -eq 1 ]
 }
 
