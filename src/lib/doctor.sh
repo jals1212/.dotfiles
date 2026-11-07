@@ -10,6 +10,13 @@ if ! command -v path_manifest >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v detect_os >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/detect.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/detect.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -22,6 +29,17 @@ _doc_fail() { _log_line 196 '[FAIL]' "${1}: ${2}"; }
 _doc_warn() { _log_line 214 '[WARN]' "${1}: ${2}"; }
 # _doc_skip <label> <reason>
 _doc_skip() { _log_line 250 '[SKIP]' "${1}: ${2}"; }
+
+# _doc_macos_only <label>
+#   Returns 0 after reporting [SKIP] when the host is not macOS (the caller then
+#   returns 0 without running its check); returns 1 on macOS, so the check runs.
+#   The checks that use it cover macOS-only tools (see the macOS-only casks in
+#   config/Brewfile). The OS comes from detect_os, which reads `uname -s`.
+_doc_macos_only() {
+    [ "$(detect_os)" = macos ] && return 1
+    _doc_skip "${1}" "macOS only"
+    return 0
+}
 
 _doc_managed_dirs() {
     if ! command -v dotbot_managed_dirs >/dev/null 2>&1; then
@@ -110,10 +128,11 @@ check_brew()    { check_command "Homebrew" brew; }
 check_zsh()     { check_command "zsh" zsh; }
 check_tmux()    { check_command "tmux" tmux; }
 check_herdr()   { check_command "herdr" herdr; }
-check_orbstack() { check_command "OrbStack CLI" orb; }
-check_docker()  { check_command "Docker CLI" docker; }
-check_docker_buildx() { check_docker_plugin "Docker Buildx" buildx; }
-check_docker_compose() { check_docker_plugin "Docker Compose" compose; }
+# OrbStack provides Docker here (macOS cask), so these four are macOS-only.
+check_orbstack() { _doc_macos_only "OrbStack CLI" || check_command "OrbStack CLI" orb; }
+check_docker()  { _doc_macos_only "Docker CLI" || check_command "Docker CLI" docker; }
+check_docker_buildx() { _doc_macos_only "Docker Buildx" || check_docker_plugin "Docker Buildx" buildx; }
+check_docker_compose() { _doc_macos_only "Docker Compose" || check_docker_plugin "Docker Compose" compose; }
 check_nvim()    { check_command "neovim" nvim; }
 check_git()     { check_command "git" git; }
 check_jq()      { check_command "jq" jq; }
@@ -161,7 +180,7 @@ check_zsh_plugins_link(){ check_symlink_into_repo "zsh plugins"      "$(path_hom
 check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
 check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
 check_tmux_theme_link() { check_symlink_into_repo "tmux theme"       "$(path_home_tmux_theme)"; }
-check_ghostty_link()  { check_symlink_into_repo "ghostty config"    "$(path_home_ghostty_config)"; }
+check_ghostty_link()  { _doc_macos_only "ghostty config" || check_symlink_into_repo "ghostty config" "$(path_home_ghostty_config)"; }
 check_herdr_link()    { check_symlink_into_repo "herdr config"      "$(path_home_herdr_config)"; }
 check_mise_link()     { check_symlink_into_repo "mise config"       "$(path_home_mise_config)"; }
 check_starship_link() { check_symlink_into_repo "starship config"   "$(path_home_starship_config)"; }
@@ -177,7 +196,7 @@ check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "$(path_
 check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "$(path_home_eza_theme)"; }
 check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "$(path_home_lazygit_theme)"; }
 check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "$(path_home_bottom_theme)"; }
-check_ghostty_theme_link() { check_symlink_into_repo "ghostty theme"    "$(path_home_ghostty_theme)"; }
+check_ghostty_theme_link() { _doc_macos_only "ghostty theme" || check_symlink_into_repo "ghostty theme" "$(path_home_ghostty_theme)"; }
 
 # ---------------------------------------------------------------------------
 # Neovim theme link (repo-side symlink written by `./dots theme`)
@@ -260,7 +279,7 @@ check_tmux_prefix() {
     check_contains "tmux prefix C-a" "$(path_home_tmux_config)" 'set -g prefix C-a'
 }
 check_ghostty_theme_marker() {
-    check_contains "ghostty theme = dots" "$(path_home_ghostty_config)" 'theme = dots'
+    _doc_macos_only "ghostty theme = dots" || check_contains "ghostty theme = dots" "$(path_home_ghostty_config)" 'theme = dots'
 }
 check_bat_config_theme() {
     check_contains 'bat config theme' "$(path_home_bat_config)" '--theme=dots'
