@@ -38,7 +38,16 @@ These load automatically in new shells after `./dots update` has been applied. R
 
 ## tmux plugins
 
-Open tmux with `tx` or `tmux`, then install or refresh plugins with `Ctrl-a I`.
+Open tmux with `tx` or `tmux`: the first start clones TPM and every plugin below, each at a pinned commit.
+
+### Pinned versions
+
+Like the zsh plugins (`zsh/plugins.zsh`), every tmux plugin, TPM included, is pinned to an exact commit. TPM can only follow a branch (`owner/repo#branch`), so the pin lives in `content/home/.config/tmux/tmux.conf`: a `# pin <sha>` line directly above each `set -g @plugin` line. `scripts/pin-plugins.sh` (run by `tmux.conf` before TPM loads anything) clones a missing plugin and checks out the pin when a checkout sits on another commit; a checkout already on its pin is left alone.
+
+- **Bump one:** replace its sha with a newer upstream commit (review the diff first), then reload with `tmux source ~/.config/tmux/tmux.conf` or restart tmux.
+- **Add one:** add a `# pin <sha>` line and the `set -g @plugin 'owner/repo'` line below it. `tests/dependency_pins.bats` fails when an `@plugin` has no pin.
+- **`Ctrl-a U` (TPM update)** moves a plugin off its pin until the next reload re-pins it; do not rely on it. `Ctrl-a I` installs only what `pin-plugins.sh` has not.
+- **Offline or failed pin:** the script prints one `pin-plugins:` line per plugin it could not clone or check out and tmux still starts with whatever is on disk.
 
 - [tmux-sensible](https://github.com/tmux-plugins/tmux-sensible) — safer defaults.
 - [tmux-yank](https://github.com/tmux-plugins/tmux-yank) — copy mode selections go to the system clipboard.

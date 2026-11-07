@@ -2,10 +2,17 @@
 # Installed by `./dots update` (dotbot-brew runs `brew bundle` on this file)
 
 # ── Taps ─────────────────────────────────────────────
-tap "gentleman-programming/tap", trusted: true
-tap "rjyo/moshi", trusted: true
-tap "nikitabobko/tap", trusted: true if OS.mac?
-tap "open-pencil/tap", trusted: true if OS.mac?
+# Homebrew refuses to load formulae/casks from a non-official tap until they are
+# trusted (`brew trust`); `trusted:` does that on `brew bundle`. Each tap trusts
+# only the items installed below, not the whole tap.
+# trusted: engram, gentle-ai and gga formulae below come from this third-party tap
+tap "gentleman-programming/tap", trusted: { formulae: ["engram", "gentle-ai", "gga"] }
+# trusted: the moshi-hook formula below comes from this third-party tap
+tap "rjyo/moshi", trusted: { formulae: ["moshi-hook"] }
+# trusted: the aerospace cask below comes from this third-party tap
+tap "nikitabobko/tap", trusted: { casks: ["aerospace"] } if OS.mac?
+# trusted: the open-pencil cask below comes from this third-party tap
+tap "open-pencil/tap", trusted: { casks: ["open-pencil"] } if OS.mac?
 
 # ── Core CLI ─────────────────────────────────────────
 brew "bat"

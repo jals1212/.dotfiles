@@ -14,12 +14,16 @@
 
 # ── Pre-flight ─────────────────────────────────────────────────────────────────
 # Install Homebrew when missing.  Interactive (no NONINTERACTIVE=1) per §1.7.
+# The installer is fetched by commit, not HEAD, so a run executes the script
+# reviewed here.  To bump: take the new commit of Homebrew/install (git ls-remote
+# https://github.com/Homebrew/install HEAD), read the diff since the pinned one,
+# and replace the sha in the URL below.
 # The shell directive is a no-op when brew is already on PATH.
 - shell:
   - description: Install Homebrew if missing
     command: |
       if ! command -v brew >/dev/null 2>&1; then
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/7986efac25016e41eed7e471666140c06f9d97cf/install.sh)"
       fi
     quiet: true
     stderr: true
@@ -101,6 +105,7 @@
     ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
     ~/.config/tmux/theme.conf: content/home/.config/tmux/theme.conf
     ~/.config/tmux/scripts/session-picker.sh: content/home/.config/tmux/scripts/session-picker.sh
+    ~/.config/tmux/scripts/pin-plugins.sh: content/home/.config/tmux/scripts/pin-plugins.sh
 
     # Herdr
     ~/.config/herdr/config.toml: content/home/.config/herdr/config.toml

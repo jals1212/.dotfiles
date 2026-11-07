@@ -132,7 +132,7 @@ exec zsh
 ./dots doctor
 ```
 
-Then open tmux and press `Ctrl-a I` to install tmux plugins.
+Then open tmux: the first start installs the tmux plugins at their pinned commits (see [Plugins](docs/plugins.md#pinned-versions)).
 
 ## License
 

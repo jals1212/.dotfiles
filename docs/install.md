@@ -27,7 +27,7 @@ cd ~/.dotfiles
 2. Runs `git submodule update --init --recursive` to materialize `dotbot/`, `plugins/dotbot-brew/`, `plugins/dotbot-mise/`.
 3. Sees that `manifest.json` is absent → the dispatcher auto-runs `update` (no flags) with the default kanagawa/dragon theme. On a TTY `update` still shows its `Change theme?` prompt (default No); without a TTY it applies the defaults without asking.
 4. Invokes `./install` (the dotbot wrapper), which runs dotbot against `config/install.conf.yaml`:
-   - `shell:` installs Homebrew if missing.
+   - `shell:` installs Homebrew if missing, from `Homebrew/install` at a pinned commit (bump procedure in the comment above it in `config/install.conf.yaml`). It stays interactive (no `NONINTERACTIVE=1`).
    - `brewfile:` runs `brew bundle --file=config/Brewfile`.
    - `create:` ensures every `~/.config/<app>/` parent exists.
    - `link:` creates every symlink from `$HOME` into the repo.
@@ -56,6 +56,8 @@ Supported flags on `./dots update`:
 Any other argument (a bare word, an unknown flag, a single-dash flag) is an error: it is named on stderr, the exit status is 2 and nothing runs.
 
 The `--tools` flag is **removed**. Managed packages are declared in `config/Brewfile` (brew formulae/casks/taps) and `content/home/.config/mise/config.toml` (runtime versions). Edit those files and re-run `./dots update`.
+
+A tap outside Homebrew's official ones needs trust before Homebrew loads its formulae or casks. The Brewfile trusts each such tap only for the items it installs (`tap "x/y", trusted: { formulae: [...] }` or `casks: [...]`), with a `# trusted:` comment above saying why. When you add an item from one of those taps, add its name to that list; `tests/dependency_pins.bats` checks that every listed name is installed and every trusted tap has its comment.
 
 ## Everyday commands
 
@@ -149,7 +151,7 @@ exec zsh
 
 Then:
 
-1. Open tmux and install plugins with `Ctrl-a I`.
+1. Open tmux: the first start clones TPM and the plugins at their pinned commits (see [plugins.md](plugins.md#pinned-versions)).
 2. Open Neovim; plugins install on first launch.
 
 ## Maintenance
