@@ -1,12 +1,69 @@
 # Dotfiles — Functions
 
+# Init cache
+# _dots_init_cache <tool> <extra-key> <generator...> — keep the generated init
+# script of a tool (zoxide, mise, starship) in $XDG_CACHE_HOME/zsh/init-<tool>.zsh
+# so a new shell sources a file instead of forking the tool (~5-15ms each).
+# On success REPLY holds the cache path and the status is 0: the CALLER sources
+# it, so the script runs in the caller's scope exactly as `eval "$(...)"` did.
+# Status 1 means "no usable cache" (tool missing, cache off, generator failed,
+# cache dir unwritable) and the caller falls back to the live eval.
+#
+# The cache is valid while its first line matches the tool's command path, its
+# resolved path, inode, size and mtime (a stat, no fork) plus <extra-key>, and its last
+# line is the end marker (a truncated write fails that check). Anything else —
+# stale, foreign or cut short — is regenerated from <generator...>, written to a
+# temp file and renamed into place so a concurrent shell never reads half a file.
+# DOTS_INIT_CACHE=0 turns the cache off.
+_dots_init_cache() {
+    emulate -L zsh
+    [[ ${DOTS_INIT_CACHE:-1} == 0 ]] && return 1
+    local tool=$1 extra=$2 bin=${commands[$1]}
+    shift 2
+    [[ -n $bin ]] || return 1
+    zmodload -F zsh/stat b:zstat 2>/dev/null || return 1
+    local real=${bin:A}
+    local -a st lines
+    zstat -A st -- $real 2>/dev/null || return 1  # st[2] inode, st[8] size, st[10] mtime
+    [[ -n $XDG_CACHE_HOME ]] || return 1  # exported by .zshenv
+    local cache=$XDG_CACHE_HOME/zsh/init-$tool.zsh
+    local key="# dots-init-cache: $bin $real $st[2] $st[8] $st[10] $extra"
+    local end="# dots-init-cache: end"
+    if [[ -r $cache ]]; then
+        lines=("${(@f)$(<$cache)}")
+        [[ $lines[1] == "$key" && $lines[-1] == "$end" ]] && { REPLY=$cache; return 0 }
+    fi
+    local out tmp=$cache.$$
+    out=$("$@") && [[ -n $out ]] || return 1
+    command mkdir -p -- ${cache:h} 2>/dev/null &&
+        { print -r -- "$key"$'\n'"$out"$'\n'"$end" >| $tmp } 2>/dev/null &&
+        command mv -f -- $tmp $cache 2>/dev/null || { command rm -f -- $tmp 2>/dev/null; return 1 }
+    REPLY=$cache
+}
+
 # Dotfiles
 
 # Wrapper over the dots script: a child process cannot exec its parent shell,
 # so reload-after-change lives here. When the script drops a reload marker
 # (prompt/theme changes that only apply to new shells), offer an exec zsh.
+#
+# Which repo: $DOTS_REPO when set (export it to pin a checkout), else the repo
+# this file is linked from. dotbot links ~/.config/zsh/functions.zsh into
+# <repo>/content/home/.config/zsh/, so resolving the symlink (:A) and climbing
+# five levels lands on the repo wherever it was cloned. ~/.dotfiles remains the
+# last resort when this file was copied rather than linked.
+if [[ -z ${DOTS_REPO:-} ]]; then
+    typeset -g DOTS_REPO=${${${(%):-%x}:A}:h:h:h:h:h}
+    [[ -x $DOTS_REPO/dots ]] || DOTS_REPO=$HOME/.dotfiles
+    export DOTS_REPO
+fi
+
 dots() {
-    ~/.dotfiles/dots "$@"
+    if [[ ! -x ${DOTS_REPO:-}/dots ]]; then
+        print -u2 "dots: repo not found (looked in ${DOTS_REPO:-<unset>}); set DOTS_REPO to your checkout"
+        return 1
+    fi
+    "$DOTS_REPO/dots" "$@"
     local ret=$?
     local marker="$XDG_STATE_HOME/dots/reload-needed"
     if (( ret == 0 )) && [[ -f "$marker" && -o interactive && -t 0 && -t 1 ]]; then
@@ -21,7 +78,7 @@ dots() {
 # Filesystem
 
 # cd to Finder's current directory (macOS only — relies on osascript/Finder)
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ $OSTYPE == darwin* ]]; then
   cdf() {
     local curr_path
     curr_path=$(osascript -e 'tell application "Finder" to if (count of Finder windows) > 0 then get POSIX path of (target of front Finder window as text)')
@@ -112,48 +169,52 @@ npm() {
 
 # Remote agents (Tailscale + Moshi)
 
+# macOS only: moshi-hook is a macOS-only brew formula and the daemon is a
+# launchd agent, so on Linux the function is not defined (same convention as cdf).
 # Wrapper over `moshi-hook host setup`: Easy Pair appends a fresh SSH key to
 # authorized_keys with no restrictions, so every pairing silently reopens the
 # "any tailnet node can log in" hole. The daemon also reads its pairing only at
 # startup, so a pairing done while it runs leaves it in socket-only mode with no
 # remote approvals and no visible error. Both fixes must follow every pairing.
-moshi-pair() {
-    local harden="$HOME/.config/remote-agents/harden-authorized-keys.sh"
+if [[ $OSTYPE == darwin* ]]; then
+    moshi-pair() {
+        local harden="$HOME/.config/remote-agents/harden-authorized-keys.sh"
 
-    if [[ ! -x "$harden" ]]; then
-        print -u2 "moshi-pair: missing or non-executable $harden"
-        print -u2 "moshi-pair: refusing to pair without the hardening step"
-        return 1
-    fi
+        if [[ ! -x "$harden" ]]; then
+            print -u2 "moshi-pair: missing or non-executable $harden"
+            print -u2 "moshi-pair: refusing to pair without the hardening step"
+            return 1
+        fi
 
-    command moshi-hook host setup "$@" || return $?
+        command moshi-hook host setup "$@" || return $?
 
-    print
-    print "--- re-applying SSH key restrictions ---"
-    "$harden" || {
-        print -u2 "moshi-pair: hardening FAILED - your key may be unrestricted"
-        print -u2 "moshi-pair: inspect ~/.ssh/authorized_keys before relying on this host"
-        return 1
+        print
+        print "--- re-applying SSH key restrictions ---"
+        "$harden" || {
+            print -u2 "moshi-pair: hardening FAILED - your key may be unrestricted"
+            print -u2 "moshi-pair: inspect ~/.ssh/authorized_keys before relying on this host"
+            return 1
+        }
+
+        print
+        print "--- restarting moshi-hook daemon ---"
+        launchctl kickstart -k "gui/$(id -u)/sh.brew.moshi-hook" || {
+            print -u2 "moshi-pair: daemon restart failed - notifications may not arrive"
+            return 1
+        }
+
+        # The daemon reports pairing from the keychain even when the running process
+        # has no HostID, so verify against its runtime log instead of `status`.
+        sleep 2
+        local log="$HOME/Library/Application Support/Moshi/hook.log"
+        if grep -q 'ws bridge connected' <(tail -n 20 "$log" 2>/dev/null); then
+            print "moshi-pair: OK - key restricted and daemon bridge connected"
+        else
+            print -u2 "moshi-pair: WARNING - no 'ws bridge connected' in the recent log"
+            print -u2 "moshi-pair: check with: tail -f '$log'"
+        fi
     }
-
-    print
-    print "--- restarting moshi-hook daemon ---"
-    launchctl kickstart -k "gui/$(id -u)/sh.brew.moshi-hook" || {
-        print -u2 "moshi-pair: daemon restart failed - notifications may not arrive"
-        return 1
-    }
-
-    # The daemon reports pairing from the keychain even when the running process
-    # has no HostID, so verify against its runtime log instead of `status`.
-    sleep 2
-    local log="$HOME/Library/Application Support/Moshi/hook.log"
-    if grep -q 'ws bridge connected' <(tail -n 20 "$log" 2>/dev/null); then
-        print "moshi-pair: OK - key restricted and daemon bridge connected"
-    else
-        print -u2 "moshi-pair: WARNING - no 'ws bridge connected' in the recent log"
-        print -u2 "moshi-pair: check with: tail -f '$log'"
-    fi
-}
+fi
 
 # Widgets
 

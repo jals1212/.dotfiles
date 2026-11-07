@@ -45,8 +45,11 @@ _dots_pi_space_completion() {
 }
 _dots_pi_space_completion
 
-# CLI tool integrations (zoxide, mise)
-zinit snippet "$ZDOTDIR/tools.zsh"
+# CLI tool integrations (zoxide, mise). Sourced, not a `zinit snippet`: zinit
+# copies a snippet into its data dir and keeps serving that copy, so an edit to
+# tools.zsh (or its init cache logic) would not reach new shells until a manual
+# `zinit update`; the copy step also costs ~20ms per shell.
+[[ -f "$ZDOTDIR/tools.zsh" ]] && source "$ZDOTDIR/tools.zsh"
 
 # fzf-tab must load after compinit, but before widget-wrapping plugins.
 zinit ice ver"e394092c17277c84cb3d234917c4ac1073102ba6"

@@ -32,7 +32,7 @@ Non-interactive:
 |---|---|
 | `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. Any other argument is rejected (error on stderr, exit 2) before anything runs. |
 | `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the Starship (`palette`) and Herdr (`theme.name`) fenced lines; persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette); rebuilds the bat cache; reloads running tmux/Herdr servers; writes the slim manifest. |
-| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning. |
+| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning. On Linux the macOS-only checks (OrbStack, Docker, ghostty) are skipped, not failed ([Linux status](docs/install.md#linux-status)). |
 | `./dots clean [--age=N] [--dry-run]` | Removes broken symlinks that point into this repo and prunes dotbot backups (`<link>.dotbot-backup.<timestamp>`) of links this repo declares, older than `N` days (default 30). Links and backups it did not create are never touched. |
 | `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. With `--commit`, commits only the gitlinks it advanced; other staged changes stay staged. |
 | `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
@@ -132,7 +132,7 @@ exec zsh
 ./dots doctor
 ```
 
-Then open tmux and press `Ctrl-a I` to install tmux plugins.
+Then open tmux: the first start installs the tmux plugins at their pinned commits (see [Plugins](docs/plugins.md#pinned-versions)).
 
 ## License
 

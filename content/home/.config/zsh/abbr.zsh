@@ -5,7 +5,7 @@
 # Modern replacements — expanded visibly so pasted commands keep their flags
 # editable before running (fd/rg flags differ from find/grep).
 abbr -S --quieter --force cd=z
-abbr -S --quieter --force find=fd
+abbr -S --quieter --force find="${DOTS_FD:-fd}"
 abbr -S --quieter --force grep=rg
 
 # Git

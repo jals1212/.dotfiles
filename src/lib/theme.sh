@@ -199,26 +199,55 @@ _th_apply_herdr_theme() {
         '^auto_switch[[:space:]]*='
 }
 
+# _th_check_nvim_link <theme> <flavor>
+#   Everything that can make the nvim link step fail, checked (and the link's
+#   directory prepared) before theme_apply changes anything: the flavor's
+#   palette exists, nothing but a symlink sits at the link path, and the link's
+#   directory exists and is writable.
+_th_check_nvim_link() {
+    _cnl_theme="${1:?_th_check_nvim_link: theme required}"
+    _cnl_flavor="${2:?_th_check_nvim_link: flavor required}"
+    _cnl_palette="$(path_nvim_palette "${_cnl_theme}" "${_cnl_flavor}")"
+    _cnl_link="$(path_content_nvim_theme_link)"
+
+    if [ ! -f "${_cnl_palette}" ]; then
+        log_error "Neovim palette not found: ${_cnl_palette}"
+        return 1
+    fi
+    if [ -e "${_cnl_link}" ] && [ ! -L "${_cnl_link}" ]; then
+        log_error "${_cnl_link} is not a symlink; refusing to replace it"
+        return 1
+    fi
+    _cnl_dir="$(dirname "${_cnl_link}")"
+    [ -d "${_cnl_dir}" ] || mkdir -p "${_cnl_dir}" 2>/dev/null
+    if [ ! -d "${_cnl_dir}" ] || [ ! -w "${_cnl_dir}" ]; then
+        log_error "${_cnl_dir} is not a writable directory; cannot link the Neovim palette"
+        return 1
+    fi
+}
+
 # _th_apply_nvim_link <theme> <flavor>
 #   Point content/home/.config/nvim/lua/dots-theme.lua at the flavor's Neovim
-#   palette. Refuses to replace anything that is not a symlink, and leaves the
-#   existing link untouched when the palette is missing.
+#   palette. Runs the same checks as _th_check_nvim_link first, so it refuses to
+#   replace anything that is not a symlink and leaves the existing link
+#   untouched when the palette is missing.
 _th_apply_nvim_link() {
     _anl_theme="${1:?_th_apply_nvim_link: theme required}"
     _anl_flavor="${2:?_th_apply_nvim_link: flavor required}"
-    _anl_palette="$(path_nvim_palette "${_anl_theme}" "${_anl_flavor}")"
-    _anl_link="$(path_content_nvim_theme_link)"
+    _th_check_nvim_link "${_anl_theme}" "${_anl_flavor}" || return 1
+    ln -sfn "$(path_nvim_palette "${_anl_theme}" "${_anl_flavor}")" "$(path_content_nvim_theme_link)"
+}
 
-    if [ ! -f "${_anl_palette}" ]; then
-        log_error "Neovim palette not found: ${_anl_palette}"
-        return 1
+# _th_bat_cmd
+#   Print the command that runs bat: `bat`, or `batcat` when only that exists
+#   (Debian/Ubuntu); print nothing when neither does. Same rule as DOTS_BAT in
+#   content/home/.config/zsh/.zshenv.
+_th_bat_cmd() {
+    if command -v bat >/dev/null 2>&1; then
+        printf 'bat'
+    elif command -v batcat >/dev/null 2>&1; then
+        printf 'batcat'
     fi
-    if [ -e "${_anl_link}" ] && [ ! -L "${_anl_link}" ]; then
-        log_error "${_anl_link} is not a symlink; refusing to replace it"
-        return 1
-    fi
-    [ -d "$(dirname "${_anl_link}")" ] || mkdir -p "$(dirname "${_anl_link}")"
-    ln -sfn "${_anl_palette}" "${_anl_link}"
 }
 
 # _th_write_manifest <theme> <flavor> [prompt]
@@ -400,8 +429,8 @@ theme_current() {
 
 # ---------------------------------------------------------------------------
 # theme_apply <theme> <flavor>
-#   Full theme apply: validate → dotbot → nvim link → starship fence → local state →
-#   bat cache → tmux reload → manifest.
+#   Full theme apply: validate → nvim link preflight → dotbot → nvim link →
+#   starship fence → local state → bat cache → tmux reload → manifest.
 #   Returns 0 on success, non-zero on any failure.
 # ---------------------------------------------------------------------------
 theme_apply() {
@@ -410,6 +439,11 @@ theme_apply() {
 
     # --- Step 1: Validate ---
     theme_validate "${_ta_theme}" "${_ta_flavor}" || return 1
+
+    # --- Step 1b: Neovim link preflight ---
+    # The nvim link step runs after dotbot; checking its failure modes here
+    # means they surface while nothing has changed yet.
+    _th_check_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
 
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
@@ -448,8 +482,9 @@ theme_apply() {
     fi
 
     # --- Step 4: Bat cache rebuild ---
-    if command -v bat >/dev/null 2>&1; then
-        bat cache --build >/dev/null
+    _ta_bat="$(_th_bat_cmd)"
+    if [ -n "${_ta_bat}" ]; then
+        "${_ta_bat}" cache --build >/dev/null
     else
         log_warn "bat not installed; skipping bat cache rebuild"
     fi

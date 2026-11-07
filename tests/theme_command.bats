@@ -27,11 +27,13 @@ setup() {
     printf '#!/bin/sh\nexit 1\n' > "${SANDBOX}/bin/tmux"
     printf '#!/bin/sh\nexit 1\n' > "${SANDBOX}/bin/herdr"
     chmod +x "${SANDBOX}/bin/bat" "${SANDBOX}/bin/tmux" "${SANDBOX}/bin/herdr"
+    ORIG_PATH="${PATH}"
     export PATH="${SANDBOX}/bin:${PATH}"
     export NO_COLOR=1
 }
 
 teardown() {
+    PATH="${ORIG_PATH}"
     rm -rf "${SANDBOX}"
 }
 
@@ -159,4 +161,139 @@ _nvim_palette() { printf '%s' "${SANDBOX}/repo/content/assets/palettes/nvim/$1.l
 @test "the nvim theme link is untracked machine state" {
     run git -C "${REPO_ROOT_REAL}" check-ignore -q content/home/.config/nvim/lua/dots-theme.lua
     [ "${status}" -eq 0 ]
+}
+
+# --- nvim link is prepared before dotbot changes anything -------------------
+
+# _dotbot_marker — a dotbot stub that records it ran (and can be told to fail).
+_dotbot_marker() {
+    printf '%s\n' \
+        "dotbot_theme_apply() { echo ran > '${SANDBOX}/dotbot-ran'; return ${1:-0}; }" \
+        >> "${SANDBOX}/repo/src/lib/dotbot.sh"
+}
+
+@test "dots theme refuses a real file at the nvim link before dotbot runs" {
+    _dotbot_marker 0
+    printf -- '-- mine\n' > "$(_nvim_link)"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa lotus
+
+    [ "${status}" -ne 0 ]
+    [ ! -e "${SANDBOX}/dotbot-ran" ]
+    [ "$(cat "$(_nvim_link)")" = "-- mine" ]
+    [ ! -e "${SANDBOX}/repo/manifest.json" ]
+}
+
+@test "dots theme finds a missing nvim palette before dotbot runs" {
+    _dotbot_marker 0
+    rm "$(_nvim_palette catppuccin-latte)"
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin latte
+
+    [ "${status}" -ne 0 ]
+    [ ! -e "${SANDBOX}/dotbot-ran" ]
+    [ ! -e "$(_nvim_link)" ]
+    [ ! -e "${SANDBOX}/repo/manifest.json" ]
+}
+
+@test "dots theme leaves the nvim link alone when dotbot fails" {
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin mocha
+    [ "${status}" -eq 0 ]
+    _dotbot_marker 1
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" kanagawa dragon
+
+    [ "${status}" -ne 0 ]
+    [ -e "${SANDBOX}/dotbot-ran" ]
+    [ "$(readlink -f "$(_nvim_link)")" = "$(readlink -f "$(_nvim_palette catppuccin-mocha)")" ]
+    grep -Fq '"flavor": "mocha"' "${SANDBOX}/repo/manifest.json"
+}
+
+# --- bat cache rebuild: batcat when only that exists --------------------------
+
+# _bat_shims <name>... — recording shims for the named commands. PATH is the
+# sandbox bin plus symlinks to the system tools with every bat/batcat left out:
+# a plain /usr/bin:/bin would let a host bat (/usr/bin/bat on non-Debian Linux)
+# answer for the "neither exists" and "only batcat" cases.
+_bat_shims() {
+    rm -f "${SANDBOX}/bin/bat" "${SANDBOX}/bin/batcat"
+    local name
+    for name in "$@"; do
+        printf '#!/bin/sh\necho "%s $*" >> "%s/bat-calls"\n' "${name}" "${SANDBOX}" > "${SANDBOX}/bin/${name}"
+        chmod +x "${SANDBOX}/bin/${name}"
+    done
+    # Built once per file (BATS_FILE_TMPDIR), shared by the tests.
+    local sys="${BATS_FILE_TMPDIR}/sys"
+    if [ ! -d "${sys}/usr-bin" ]; then
+        mkdir -p "${sys}/usr-bin" "${sys}/bin"
+        GLOBIGNORE='/usr/bin/bat:/usr/bin/batcat'
+        ln -s /usr/bin/* "${sys}/usr-bin/" 2>/dev/null || true
+        GLOBIGNORE='/bin/bat:/bin/batcat'
+        ln -s /bin/* "${sys}/bin/" 2>/dev/null || true
+        unset GLOBIGNORE
+    fi
+    export PATH="${SANDBOX}/bin:${sys}/usr-bin:${sys}/bin"
+}
+
+@test "the bat shim PATH exposes no bat or batcat but the shims asked for" {
+    _bat_shims
+    [ -z "$(command -v bat)" ]
+    [ -z "$(command -v batcat)" ]
+    [ "$(command -v sh)" != "" ]
+
+    _bat_shims batcat
+    [ "$(command -v batcat)" = "${SANDBOX}/bin/batcat" ]
+    [ -z "$(command -v bat)" ]
+}
+
+@test "dots theme rebuilds the bat cache with batcat when only batcat exists" {
+    _bat_shims batcat
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin mocha
+
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/bat-calls")" = "batcat cache --build" ]
+    [[ "${output}" != *"bat not installed"* ]] || return 1
+}
+
+@test "dots theme keeps using bat when both bat and batcat exist" {
+    _bat_shims bat batcat
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin mocha
+
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/bat-calls")" = "bat cache --build" ]
+}
+
+@test "dots theme skips the bat cache with a warning when neither exists" {
+    _bat_shims
+
+    run sh "${SANDBOX}/repo/src/commands/theme.sh" catppuccin mocha
+
+    [ "${status}" -eq 0 ]
+    [ ! -e "${SANDBOX}/bat-calls" ]
+    [[ "${output}" == *"bat not installed; skipping bat cache rebuild"* ]] || return 1
+}
+
+@test "the dotbot bat cache step builds with batcat only when bat is missing" {
+    local cmd
+    cmd="$(sed -n 's/^    command: \(.*bat.*cache --build.*\)$/\1/p' "${REPO_ROOT_REAL}/config/install.conf.yaml")"
+    [ -n "${cmd}" ]
+
+    _bat_shims batcat
+    run env PATH="${PATH}" sh -c "${cmd}"
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/bat-calls")" = "batcat cache --build" ]
+
+    rm -f "${SANDBOX}/bat-calls"
+    _bat_shims bat batcat
+    run env PATH="${PATH}" sh -c "${cmd}"
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/bat-calls")" = "bat cache --build" ]
+
+    rm -f "${SANDBOX}/bat-calls"
+    _bat_shims
+    run env PATH="${PATH}" sh -c "${cmd}"
+    [ "${status}" -eq 0 ]
+    [ ! -e "${SANDBOX}/bat-calls" ]
 }

@@ -80,3 +80,23 @@ _ignored() {
     grep -Fq 'make -f config/Makefile test' "${WORKFLOW}"
     grep -Fq 'submodules: recursive' "${WORKFLOW}"
 }
+
+@test "workflow permissions are exactly contents: read" {
+    # The top-level `permissions:` block, as indented `key: value` lines.
+    block="$(awk '
+        /^permissions:/ { in_p = 1; next }
+        in_p && /^[^ #]/ { in_p = 0 }
+        in_p && /^[ ]+[^ #]/ { sub(/^[ ]+/, ""); print }
+    ' "${WORKFLOW}")"
+    [ "$(grep -c '^permissions:' "${WORKFLOW}")" -eq 1 ]
+    [ "${block}" = "contents: read" ]
+    # No job-level permissions that could widen it.
+    [ "$(grep -Ec '^[[:space:]]+permissions:' "${WORKFLOW}")" -eq 0 ]
+}
+
+@test "workflow references no secrets" {
+    if grep -inE 'secrets' "${WORKFLOW}"; then
+        return 1
+    fi
+}
+

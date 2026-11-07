@@ -188,8 +188,10 @@ else
 fi
 
 if [ "${_do_commit}" = 1 ] && [ -n "${_bumped}" ] && [ "${_dry_run}" = 0 ]; then
-    # Commit only the gitlinks advanced in Phase 1 (--only ignores whatever
-    # else is staged); _bumped is a space-separated list of repo paths.
+    # Commit only the gitlinks advanced in Phase 1: `add` stages them, `commit
+    # --only` then leaves whatever else is staged out of the commit. _bumped is a
+    # space-separated list of vendored submodule paths (never containing
+    # spaces), so it is deliberately left unquoted to split into arguments.
     # shellcheck disable=SC2086
     git -C "${REPO_ROOT}" add -- ${_bumped}
     _msg="$(printf 'chore(deps): upgrade %s\n\n%b' "${_bumped% }" "${_summary}")"

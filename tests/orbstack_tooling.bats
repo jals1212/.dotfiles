@@ -25,7 +25,9 @@ case "\$*" in
     *) exit 99 ;;
 esac
 EOF
-    chmod +x "${bin_dir}/orb" "${bin_dir}/docker"
+    # These checks only run on macOS (doctor skips them on Linux): pin the OS.
+    printf '#!/bin/sh\necho Darwin\n' >"${bin_dir}/uname"
+    chmod +x "${bin_dir}/orb" "${bin_dir}/docker" "${bin_dir}/uname"
 
     PATH="${bin_dir}:${PATH}"
     export PATH REPO_ROOT="${REPO_ROOT_REAL}"

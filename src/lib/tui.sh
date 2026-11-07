@@ -381,8 +381,9 @@ _tui_git_summary() {
 
 # render_menu_status [title] — one-line header, for the menu and subcommands:
 #   jals1212 DOTS · [<title> ·] <theme[/flavor]> · <prompt> · <git summary>
-# The title (a subcommand name) is omitted for the menu. Prompt and git parts are omitted when unknown. Brand in the theme accent and
-# the rest dimmed when stdout is a 256-color tty; plain text otherwise.
+# The title (a subcommand name) is omitted for the menu. Prompt and git parts
+# are omitted when unknown. Brand in the theme accent and the rest dimmed when
+# stdout is a 256-color tty; plain text otherwise.
 render_menu_status() {
     _rms_theme="$(_tui_active_theme)"
     _rms_prompt=""

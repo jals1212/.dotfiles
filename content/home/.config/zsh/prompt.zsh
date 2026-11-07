@@ -9,6 +9,14 @@ if [[ "${DOTS_PROMPT:-starship}" == "p10k" ]] && (( $+functions[zinit] )); then
     [[ -f "$ZDOTDIR/p10k.zsh" ]] && source "$ZDOTDIR/p10k.zsh"
 else
     # starship: a Homebrew binary, initialized directly and guarded by command
-    # presence so startup never errors when it is absent.
-    command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+    # presence so startup never errors when it is absent. Its init script is
+    # cached by _dots_init_cache (functions.zsh) and rebuilt when the binary
+    # changes; without a usable cache it is evaluated live.
+    if (( $+commands[starship] )); then
+        if (( $+functions[_dots_init_cache] )) && _dots_init_cache starship '' starship init zsh; then
+            source "$REPLY"
+        else
+            eval "$(starship init zsh)"
+        fi
+    fi
 fi
