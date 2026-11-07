@@ -5,7 +5,7 @@ typeset -U path PATH
 
 _dots_brew_shellenv() {
   local brew_bin
-  if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ $OSTYPE == darwin* ]]; then
     for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
       if [[ -x "$brew_bin" ]]; then
         eval "$("$brew_bin" shellenv)"

@@ -16,7 +16,7 @@ alias top='btm'
 [[ "${DOTS_FD:-fd}" != fd ]] && alias fd="$DOTS_FD"
 
 # Portable `open` (Linux uses xdg-open; macOS has open natively)
-[[ "$(uname)" != "Darwin" ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
+[[ $OSTYPE != darwin* ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
 
 # Shortcuts
 alias ..='cd ..'
@@ -36,7 +36,7 @@ alias -g NE='2>/dev/null' # Redirect stderr to /dev/null
 alias -g NO='>/dev/null' # Redirect stdout to /dev/null
 alias -g NUL='>/dev/null 2>&1' # Redirect both stdout and stderr to /dev/null
 # Copy output to clipboard (cross-platform)
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ $OSTYPE == darwin* ]]; then
   alias -g C='| pbcopy'
 elif command -v wl-copy >/dev/null 2>&1; then
   alias -g C='| wl-copy'                      # Wayland

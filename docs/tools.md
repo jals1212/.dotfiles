@@ -8,6 +8,8 @@ Brief usage for each managed CLI tool. Nvim covered separately. Tool-specific ke
 
 Login shell with completions and history search. Plugin inventory: [plugins.md](plugins.md).
 
+**Init cache.** zoxide, mise and starship generate their zsh init script at startup. `_dots_init_cache` (in `functions.zsh`) keeps each in `$XDG_CACHE_HOME/zsh/init-<tool>.zsh` so a new shell sources a file instead of forking the tool (about 40 ms of a 0.28 s start on the author's Mac). A cache is rebuilt when the tool binary changes (command path, resolved path, inode, size, mtime), and a truncated or foreign file is ignored in favour of the live `eval`. mise is cached only in a shell that inherits no mise state (`MISE_SHELL`, `__MISE_*` unset): its script embeds the current `PATH`, which the cache rewrites to read the PATH of the shell that sources it. A change to mise *settings* that alters its script is not detected; delete `init-mise.zsh`. `DOTS_INIT_CACHE=0` turns the cache off. `tools.zsh` is sourced, not a `zinit snippet`: zinit serves its own stale copy of a snippet until `zinit update`.
+
 ### Starship — [docs](https://starship.rs/)
 
 Prompt renderer (Homebrew binary, initialized from the ZDOTDIR `.zshrc`). Config at `~/.config/starship.toml`; the active theme is the `palette` selected inside its `dots:theme` fence, which `./dots theme <theme> <flavor>` rewrites in place (all per-theme palettes live in that one file). Starship re-reads its config each prompt, so no `exec zsh` is needed.

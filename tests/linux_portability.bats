@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
 # tests/linux_portability.bats
 # Linux portability: the dots work on Debian/Ubuntu and keep
-# their macOS behaviour. Every case runs against PATH shims (a fake `uname`,
-# batcat/fdfind-only PATHs) in a sandbox HOME; zsh runs with -f so no host
-# startup file leaks in.
+# their macOS behaviour. Every case runs against PATH shims (a fake `uname` for
+# the sh doctor libs, batcat/fdfind-only PATHs) or an $OSTYPE override (the zsh
+# files) in a sandbox HOME; zsh runs with -f so no host startup file leaks in.
 
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 ZSH_DIR="${REPO_ROOT_REAL}/content/home/.config/zsh"
@@ -28,13 +28,23 @@ _shim() {
     chmod +x "${SHIMS}/${1}"
 }
 
-# _uname <Linux|Darwin> — fake the kernel name for detect_os and the zsh files.
+# _uname <Linux|Darwin> — fake the kernel name for detect_os (the sh doctor libs).
 _uname() { _shim uname "echo $1"; }
 
+# _ostype <Linux|Darwin> — fake $OSTYPE for the zsh files, which read it
+# instead of forking uname. Applies to every later _zsh call of the test.
+_ostype() {
+    case $1 in
+        Linux) ZSH_OSTYPE=linux-gnu ;;
+        Darwin) ZSH_OSTYPE=darwin24.0.0 ;;
+    esac
+}
+
 # _zsh <script> — run <script> in `zsh -f` with only the shims and the base
-# system directories on PATH (Homebrew and the real bat/fd stay out).
+# system directories on PATH (Homebrew and the real bat/fd stay out), after the
+# _ostype override when there is one.
 _zsh() {
-    run env -i HOME="${HOME}" PATH="${SHIMS}:/usr/bin:/bin" "${ZSH_BIN}" -f -c "$1"
+    run env -i HOME="${HOME}" PATH="${SHIMS}:/usr/bin:/bin" "${ZSH_BIN}" -f -c "${ZSH_OSTYPE:+OSTYPE=${ZSH_OSTYPE}; }$1"
 }
 
 _has() { case "${output}" in *"$1"*) return 0 ;; esac; echo "missing: $1"; echo "output: ${output}"; return 1; }
@@ -108,7 +118,7 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 # --- 2. macOS-only functions --------------------------------------------------
 
 @test "cdf and moshi-pair are not defined on Linux" {
-    _uname Linux
+    _ostype Linux
     _zsh "source '${ZSH_DIR}/functions.zsh'
           print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
 
@@ -117,7 +127,7 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 }
 
 @test "cdf and moshi-pair stay defined on macOS" {
-    _uname Darwin
+    _ostype Darwin
     _zsh "source '${ZSH_DIR}/functions.zsh'
           print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
 
@@ -126,12 +136,28 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 }
 
 @test "moshi-pair on macOS still refuses to pair without the hardening script" {
-    _uname Darwin
+    _ostype Darwin
     _zsh "source '${ZSH_DIR}/functions.zsh'; moshi-pair"
 
     [ "${status}" -eq 1 ]
     _has "moshi-pair: missing or non-executable ${HOME}/.config/remote-agents/harden-authorized-keys.sh"
     _has "moshi-pair: refusing to pair without the hardening step"
+}
+
+@test "aliases follow \$OSTYPE: open is xdg-open and C is wl-copy on Linux, C is pbcopy on macOS" {
+    _shim xdg-open
+    _shim wl-copy
+    _ostype Linux
+    _zsh "source '${ZSH_DIR}/.zshenv'; source '${ZSH_DIR}/aliases.zsh'; alias open; alias -g C"
+    [ "${status}" -eq 0 ]
+    _has "open=xdg-open"
+    _has "C='| wl-copy'"
+
+    _ostype Darwin
+    _zsh "source '${ZSH_DIR}/.zshenv'; source '${ZSH_DIR}/aliases.zsh'; alias open; alias -g C"
+    [ "${status}" -eq 0 ]
+    _lacks "xdg-open"
+    _has "C='| pbcopy'"
 }
 
 # --- 3. the dots() wrapper finds the repo wherever it is cloned ---------------
@@ -148,7 +174,7 @@ _fake_clone() {
 
 @test "dots runs the script of the repo the zsh files are linked from, not ~/.dotfiles" {
     _fake_clone "${SANDBOX}/elsewhere/clone"
-    _uname Linux
+    _ostype Linux
     _zsh "source '${HOME}/.config/zsh/functions.zsh'; dots update --yes"
 
     [ "${status}" -eq 3 ]
@@ -160,7 +186,7 @@ _fake_clone() {
     mkdir -p "${SANDBOX}/chosen"
     printf '#!/bin/sh\necho "chosen: $*"\n' > "${SANDBOX}/chosen/dots"
     chmod +x "${SANDBOX}/chosen/dots"
-    _uname Linux
+    _ostype Linux
     _zsh "DOTS_REPO='${SANDBOX}/chosen'; source '${HOME}/.config/zsh/functions.zsh'; dots doctor"
 
     [ "${status}" -eq 0 ]
@@ -172,7 +198,7 @@ _fake_clone() {
     printf '#!/bin/sh\necho "legacy: $*"\nexit 4\n' > "${HOME}/.dotfiles/dots"
     chmod +x "${HOME}/.dotfiles/dots"
     cp "${ZSH_DIR}/functions.zsh" "${SANDBOX}/loose/functions.zsh"
-    _uname Linux
+    _ostype Linux
     _zsh "source '${SANDBOX}/loose/functions.zsh'; dots theme"
 
     [ "${status}" -eq 4 ]
@@ -182,7 +208,7 @@ _fake_clone() {
 @test "dots reports a clear error when no repo can be found" {
     mkdir -p "${SANDBOX}/loose"
     cp "${ZSH_DIR}/functions.zsh" "${SANDBOX}/loose/functions.zsh"
-    _uname Linux
+    _ostype Linux
     _zsh "source '${SANDBOX}/loose/functions.zsh'; dots theme"
 
     [ "${status}" -eq 1 ]
@@ -192,7 +218,7 @@ _fake_clone() {
 
 @test "the dotfiles alias opens the resolved repo" {
     _fake_clone "${SANDBOX}/elsewhere/clone"
-    _uname Linux
+    _ostype Linux
     _zsh "source '${ZSH_DIR}/aliases.zsh'; source '${HOME}/.config/zsh/functions.zsh'
           alias dotfiles; print -r -- \"\$DOTS_REPO\""
 
