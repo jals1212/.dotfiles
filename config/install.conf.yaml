@@ -162,9 +162,10 @@
 # ── Post-link ──────────────────────────────────────────────────────────────────
 # Build bat's binary cache after all symlinks are in place.
 # Guarded: no-op when bat is absent (|| true prevents dotbot aborting the run).
+# Debian/Ubuntu install it as batcat: used only when bat itself is missing.
 - shell:
   - description: Build bat cache (no-op when bat is absent)
-    command: command -v bat >/dev/null 2>&1 && bat cache --build >/dev/null 2>&1 || true
+    command: b=bat; command -v bat >/dev/null 2>&1 || b=batcat; command -v "$b" >/dev/null 2>&1 && "$b" cache --build >/dev/null 2>&1 || true
     quiet: true
     stdout: true
     stderr: true

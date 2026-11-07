@@ -158,7 +158,12 @@ _nvim_sandbox() {
     echo "${output}"
 
     [ "${status}" -eq 1 ]
-    _has "[FAIL] nvim theme link: not a symlink"
+    _has "[FAIL] nvim theme link: not a symlink: ${REPO}/content/home/.config/nvim/lua/dots-theme.lua"
+    _lacks "[PASS] nvim theme link"
+    _lacks "checks passed"
+    # doctor only reports: the regular file is still there, untouched.
+    [ -f "${REPO}/content/home/.config/nvim/lua/dots-theme.lua" ]
+    [ ! -L "${REPO}/content/home/.config/nvim/lua/dots-theme.lua" ]
 }
 
 @test "doctor skips the nvim theme link without a manifest" {
