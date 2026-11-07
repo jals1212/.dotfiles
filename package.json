@@ -2,6 +2,7 @@
   "name": "dotfiles",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Tooling only: runs the CI workflow locally with ci-local. The dotfiles themselves have no Node dependencies.",
   "type": "module",
   "packageManager": "pnpm@12.18.0",

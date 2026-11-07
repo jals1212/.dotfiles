@@ -38,7 +38,7 @@ _doctor_sandbox() {
     echo "${output}"
 
     [ "${status}" -eq 0 ]
-    [ "$(printf '%s\n' "${output}" | sed -n 1p)" = "jals1212 DOTS · Doctor · catppuccin/mocha · starship" ]
+    [ "$(printf '%s\n' "${output}" | sed -n 1p)" = "⁘ jals1212 DOTS · Doctor · catppuccin/mocha · starship" ]
     [[ "${output}" != *"██"* ]]
 }
 

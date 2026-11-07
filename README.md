@@ -1,4 +1,4 @@
-# JALS DOTS
+# ⁘ JALS DOTS
 
 Personal dotfiles deployed with [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` command wraps the lifecycle: install, update, switch theme, doctor, clean, upgrade, uninstall.
 
@@ -39,7 +39,7 @@ Non-interactive:
 | `./dots help` (`-h`, `--help`) | Prints the usage on stdout (exit 0); an unknown command prints the error and usage on stderr (exit 2). |
 | `./dots` (no args) | TTY: action menu. Non-TTY + manifest absent: auto-runs `update`. Non-TTY + manifest present: errors. |
 
-Every subcommand opens with a one-line header, `jals1212 DOTS · <command> · <theme> · <prompt> · <git>`, instead of a logo; the menu already shows the same line, so subcommands run from it skip it.
+Every subcommand opens with a one-line header, `⁘ jals1212 DOTS · <command> · <theme> · <prompt> · <git>`, instead of a logo; the menu already shows the same line, so subcommands run from it skip it.
 
 ## Themes
 

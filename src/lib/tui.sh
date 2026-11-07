@@ -380,7 +380,7 @@ _tui_git_summary() {
 }
 
 # render_menu_status [title] — one-line header, for the menu and subcommands:
-#   jals1212 DOTS · [<title> ·] <theme[/flavor]> · <prompt> · <git summary>
+#   ⁘ jals1212 DOTS · [<title> ·] <theme[/flavor]> · <prompt> · <git summary>
 # The title (a subcommand name) is omitted for the menu. Prompt and git parts
 # are omitted when unknown. Brand in the theme accent and the rest dimmed when
 # stdout is a 256-color tty; plain text otherwise.
@@ -399,8 +399,8 @@ render_menu_status() {
 
     if _tui_color_on 1; then
         printf '\033[1;38;5;%sm%s\033[0m \033[2m· %s\033[0m\n' \
-            "$(_header_color_code "${_rms_theme}")" "jals1212 DOTS" "${_rms_rest}"
+            "$(_header_color_code "${_rms_theme}")" "⁘ jals1212 DOTS" "${_rms_rest}"
     else
-        printf 'jals1212 DOTS · %s\n' "${_rms_rest}"
+        printf '⁘ jals1212 DOTS · %s\n' "${_rms_rest}"
     fi
 }
