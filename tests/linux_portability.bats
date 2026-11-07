@@ -229,8 +229,22 @@ _fake_clone() {
 # --- 4. doctor skips the macOS-only checks on Linux ---------------------------
 
 # _doctor <script> — run a script with the doctor libs sourced.
+# _sysbin — /usr/bin and /bin as symlinks, minus docker and orb, so the doctor
+# checks only see the tools a test puts in SHIMS (a CI runner may ship docker).
+_sysbin() {
+    _sb="${BATS_TEST_TMPDIR}/sysbin"
+    [ -d "${_sb}" ] && return 0
+    mkdir -p "${_sb}"
+    for _f in /usr/bin/* /bin/*; do
+        _n="${_f##*/}"
+        case "${_n}" in docker|docker-*|orb|orbctl) continue ;; esac
+        [ -e "${_sb}/${_n}" ] || ln -s "${_f}" "${_sb}/${_n}"
+    done
+}
+
 _doctor() {
-    run env -i HOME="${HOME}" PATH="${SHIMS}:/usr/bin:/bin" NO_COLOR=1 REPO_ROOT="${REPO_ROOT_REAL}" \
+    _sysbin
+    run env -i HOME="${HOME}" PATH="${SHIMS}:${BATS_TEST_TMPDIR}/sysbin" NO_COLOR=1 REPO_ROOT="${REPO_ROOT_REAL}" \
         sh -c ". '${REPO_ROOT_REAL}/src/lib/log.sh'; . '${REPO_ROOT_REAL}/src/lib/doctor.sh'; $1"
 }
 
