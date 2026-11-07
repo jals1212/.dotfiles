@@ -42,7 +42,7 @@ Open tmux with `tx` or `tmux`: the first start clones TPM and every plugin below
 
 ### Pinned versions
 
-Like the zsh plugins (`zsh/plugins.zsh`), every tmux plugin, TPM included, is pinned to an exact commit. TPM can only follow a branch (`owner/repo#branch`), so the pin lives in `content/home/.config/tmux/tmux.conf`: a `# pin <sha>` line directly above each `set -g @plugin` line. `scripts/pin-plugins.sh` (run by `tmux.conf` before TPM loads anything) clones a missing plugin and checks out the pin when a checkout sits on another commit; a checkout already on its pin is left alone.
+Like the zsh plugins (`zsh/plugins.zsh`), every tmux plugin, TPM included, is pinned to an exact commit. TPM can only follow a branch (`owner/repo#branch`), so the pin lives in `content/home/.config/tmux/tmux.conf`: a `# pin <sha>` line directly above each `set -g @plugin` line. `scripts/pin-plugins.sh` (run by `tmux.conf` before TPM loads anything) clones a missing plugin and checks out the pin when a checkout sits on another commit; a checkout already on its pin is left alone (a plugin with submodules runs `git submodule update` only when `git submodule status` shows one missing or off its recorded commit, so the usual start stays offline).
 
 - **Bump one:** replace its sha with a newer upstream commit (review the diff first), then reload with `tmux source ~/.config/tmux/tmux.conf` or restart tmux.
 - **Add one:** add a `# pin <sha>` line and the `set -g @plugin 'owner/repo'` line below it. `tests/dependency_pins.bats` fails when an `@plugin` has no pin.

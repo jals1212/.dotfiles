@@ -333,6 +333,58 @@ _fixture_submodule_remote() {
     [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
 }
 
+# _git_log_shim — a `git` first on PATH that records every `submodule update`
+# before running the real git, so a test can tell whether the script went there.
+_git_log_shim() {
+    local real
+    real="$(command -v git)"
+    mkdir -p "${SANDBOX}/shim"
+    printf '#!/bin/sh\ncase "$*" in *"submodule update"*) echo "$*" >> "%s/updates" ;; esac\nexec "%s" "$@"\n' \
+        "${SANDBOX}" "${real}" >"${SANDBOX}/shim/git"
+    chmod +x "${SANDBOX}/shim/git"
+}
+
+@test "pin-plugins leaves a plugin whose submodules are in place offline: no submodule update, exit 0 with a dead submodule remote" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
+
+    # The submodule is initialised at its recorded commit; its remote is gone.
+    git -C "${SANDBOX}/plugins/repo" config submodule.vendor.url "${SANDBOX}/gone"
+    git -C "${SANDBOX}/plugins/repo/vendor" remote set-url origin "${SANDBOX}/gone"
+    _git_log_shim
+
+    PATH="${SANDBOX}/shim:${PATH}" DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/gone" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 0 ]
+    [ -z "${stderr}" ]
+    [ ! -e "${SANDBOX}/updates" ]
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
+}
+
+@test "pin-plugins still updates a submodule that is checked out at another commit than the pin records" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+    [ "${status}" -eq 0 ]
+    git -C "${SANDBOX}/plugins/repo/vendor" fetch -q origin
+    git -C "${SANDBOX}/plugins/repo/vendor" checkout -q origin/HEAD 2>/dev/null || git -C "${SANDBOX}/plugins/repo/vendor" checkout -q FETCH_HEAD
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s2" ]
+    _git_log_shim
+
+    PATH="${SANDBOX}/shim:${PATH}" DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 0 ]
+    [ -e "${SANDBOX}/updates" ]
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
+}
+
 @test "pin-plugins fails closed when a submodule cannot be updated: exit 1, fresh clone removed" {
     export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
     local sha

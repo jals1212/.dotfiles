@@ -27,11 +27,13 @@ setup() {
     printf '#!/bin/sh\nexit 1\n' > "${SANDBOX}/bin/tmux"
     printf '#!/bin/sh\nexit 1\n' > "${SANDBOX}/bin/herdr"
     chmod +x "${SANDBOX}/bin/bat" "${SANDBOX}/bin/tmux" "${SANDBOX}/bin/herdr"
+    ORIG_PATH="${PATH}"
     export PATH="${SANDBOX}/bin:${PATH}"
     export NO_COLOR=1
 }
 
 teardown() {
+    PATH="${ORIG_PATH}"
     rm -rf "${SANDBOX}"
 }
 
@@ -209,8 +211,10 @@ _dotbot_marker() {
 
 # --- bat cache rebuild: batcat when only that exists --------------------------
 
-# _bat_shims <name>... — recording shims for the named commands; PATH is cut
-# down to the sandbox bin plus the system directories so no host bat leaks in.
+# _bat_shims <name>... — recording shims for the named commands. PATH is the
+# sandbox bin plus symlinks to the system tools with every bat/batcat left out:
+# a plain /usr/bin:/bin would let a host bat (/usr/bin/bat on non-Debian Linux)
+# answer for the "neither exists" and "only batcat" cases.
 _bat_shims() {
     rm -f "${SANDBOX}/bin/bat" "${SANDBOX}/bin/batcat"
     local name
@@ -218,7 +222,28 @@ _bat_shims() {
         printf '#!/bin/sh\necho "%s $*" >> "%s/bat-calls"\n' "${name}" "${SANDBOX}" > "${SANDBOX}/bin/${name}"
         chmod +x "${SANDBOX}/bin/${name}"
     done
-    export PATH="${SANDBOX}/bin:/usr/bin:/bin"
+    # Built once per file (BATS_FILE_TMPDIR), shared by the tests.
+    local sys="${BATS_FILE_TMPDIR}/sys"
+    if [ ! -d "${sys}/usr-bin" ]; then
+        mkdir -p "${sys}/usr-bin" "${sys}/bin"
+        GLOBIGNORE='/usr/bin/bat:/usr/bin/batcat'
+        ln -s /usr/bin/* "${sys}/usr-bin/" 2>/dev/null || true
+        GLOBIGNORE='/bin/bat:/bin/batcat'
+        ln -s /bin/* "${sys}/bin/" 2>/dev/null || true
+        unset GLOBIGNORE
+    fi
+    export PATH="${SANDBOX}/bin:${sys}/usr-bin:${sys}/bin"
+}
+
+@test "the bat shim PATH exposes no bat or batcat but the shims asked for" {
+    _bat_shims
+    [ -z "$(command -v bat)" ]
+    [ -z "$(command -v batcat)" ]
+    [ "$(command -v sh)" != "" ]
+
+    _bat_shims batcat
+    [ "$(command -v batcat)" = "${SANDBOX}/bin/batcat" ]
+    [ -z "$(command -v bat)" ]
 }
 
 @test "dots theme rebuilds the bat cache with batcat when only batcat exists" {

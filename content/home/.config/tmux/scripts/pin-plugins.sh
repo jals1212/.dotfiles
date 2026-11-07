@@ -9,7 +9,8 @@
 # $DOTS_TMUX_PLUGIN_BASE_URL (default https://github.com) and checks out the
 # pin when the checkout is anywhere else, before TPM loads the plugins. A
 # checkout already at its pin is not touched (no network; a plugin with
-# submodules is only synced to its recorded gitlinks).
+# submodules is only synced to its recorded gitlinks, and only when one is
+# missing or not at its recorded commit).
 #
 # It fails closed, because TPM loads every @plugin line it finds, pinned or not:
 #   - an @plugin line is accepted as `set|set-option -g @plugin 'owner/repo'`
@@ -19,7 +20,10 @@
 #   - owner/repo is limited to [A-Za-z0-9._-]+/[A-Za-z0-9._-]+ without a `.` or
 #     `..` segment, so the destination stays inside the plugins dir;
 #   - a plugin with a .gitmodules gets `git submodule update --init --recursive`
-#     at the pin (TPM clones --recursive), also when it was already at the pin;
+#     at the pin (TPM clones --recursive), also when it was already at the pin,
+#     but only if `git submodule status --recursive` shows a submodule missing
+#     (`-`), at another commit (`+`) or conflicted (`U`): the no-op path never
+#     reaches the network;
 #   - a plugin it just cloned whose pin cannot be checked out, or whose
 #     submodules cannot be updated, is removed again (a pre-existing checkout is
 #     never removed);
@@ -80,13 +84,23 @@ pin_one() {
     fi
 
     # TPM clones with --recursive, so a plugin's submodules belong to the pin
-    # too: bring them to the commits the pin records (a no-op when they already
-    # are there, so a checkout in place costs no network).
-    if [ -f "$dest/.gitmodules" ] &&
+    # too: bring them to the commits the pin records. `git submodule status` is
+    # local: a line starting with `-` is a submodule not initialised, `+` one
+    # checked out at another commit than recorded, `U` a merge conflict. Only
+    # then is the update (which may fetch) run, so the usual start of tmux with
+    # everything in place stays offline. If status itself fails, update anyway.
+    if [ -f "$dest/.gitmodules" ] && submodules_need_update "$dest" &&
         ! GIT_TERMINAL_PROMPT=0 git -C "$dest" submodule update -q --init --recursive 2>/dev/null; then
         [ -n "$fresh" ] && rm -rf "$dest"
         fail "$spec" "cannot update submodules in $dest${fresh:+ (fresh clone removed)}"
     fi
+}
+
+# submodules_need_update <checkout> — succeed when a submodule is missing, not at
+# its recorded commit or conflicted, or when that cannot be told.
+submodules_need_update() {
+    sub_status=$(git -C "$1" submodule status --recursive 2>/dev/null) || return 0
+    printf '%s\n' "$sub_status" | grep -q '^[-+U]'
 }
 
 # parse_plugin <trimmed line> — print the spec of an accepted @plugin line.
