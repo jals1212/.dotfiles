@@ -24,6 +24,8 @@ _doctor_sandbox() {
     cp "${REPO_ROOT}/dots" "${REPO}/dots"
     printf '#!/bin/sh\nexit 0\n' > "${REPO}/vendor/dotbot/bin/dotbot"
     chmod +x "${REPO}/vendor/dotbot/bin/dotbot"
+    # Trim the registry (appended to the sandbox copy only) to the one check
+    # that needs nothing but the stub dotbot above.
     printf '%s\n' 'DOCTOR_CHECKS="check_dotbot_submodule"' 'export DOCTOR_CHECKS' >> "${REPO}/src/lib/doctor.sh"
     printf '{"theme":"catppuccin","flavor":"mocha","prompt":"starship"}\n' > "${REPO}/manifest.json"
     export NO_COLOR=1
@@ -50,7 +52,8 @@ _doctor_sandbox() {
 }
 
 @test "the 12-line ASCII header is gone; the color map stays" {
-    ! grep -rq 'render_header' "${REPO_ROOT}/src" "${REPO_ROOT}/dots"
-    ! grep -q '██' "${REPO_ROOT}/src/lib/header.sh"
+    # A bare `! cmd` never fails a bats test, so the negations use `if`.
+    if grep -rq 'render_header' "${REPO_ROOT}/src" "${REPO_ROOT}/dots"; then return 1; fi
+    if grep -q '██' "${REPO_ROOT}/src/lib/header.sh"; then return 1; fi
     grep -q '_header_color_code()' "${REPO_ROOT}/src/lib/header.sh"
 }

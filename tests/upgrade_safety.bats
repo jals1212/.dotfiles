@@ -129,7 +129,7 @@ _git_sandbox() {
         git -C "${up}" add f
         git -C "${up}" commit -q -m one
         mkdir -p "$(dirname "${SUPER}/${sub}")"
-        git -C "${SUPER}" submodule add -q "${up}" "${sub}" 2>/dev/null
+        git -C "${SUPER}" submodule add -q "${up}" "${sub}"
     done
     git -C "${SUPER}" add -A
     git -C "${SUPER}" commit -q -m base
@@ -156,7 +156,6 @@ _git_sandbox() {
 
 @test "upgrade --commit without an advanced submodule creates no commit" {
     _git_sandbox
-    up="${SANDBOX}/upstream/dotbot-brew"
     git -C "${SUPER}" submodule update --remote -q vendor/plugins/dotbot-brew
     git -C "${SUPER}" commit -q -m advance vendor/plugins/dotbot-brew
     before="$(git -C "${SUPER}" rev-parse HEAD)"
