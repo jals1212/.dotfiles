@@ -1,9 +1,10 @@
 # Dotfiles — fzf
 
-if command -v fd >/dev/null 2>&1; then
-    export FZF_DEFAULT_COMMAND="fd --type f --hidden --strip-cwd-prefix --exclude .git"
+# DOTS_BAT / DOTS_FD: batcat / fdfind on Debian/Ubuntu (resolved in zsh/.zshenv).
+if command -v "${DOTS_FD:-fd}" >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND="${DOTS_FD:-fd} --type f --hidden --strip-cwd-prefix --exclude .git"
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-    export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix --exclude .git"
+    export FZF_ALT_C_COMMAND="${DOTS_FD:-fd} --type d --hidden --strip-cwd-prefix --exclude .git"
 fi
 
 [[ -f "${XDG_CONFIG_HOME}/fzf/theme.sh" ]] && source "${XDG_CONFIG_HOME}/fzf/theme.sh"
@@ -12,7 +13,7 @@ fi
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height=60% --layout=reverse --border=rounded --preview-window=right:65%:wrap:border-left"
 
 # Previews: bat for Ctrl-T files, eza tree for Alt-C directories.
-export FZF_CTRL_T_OPTS="--preview 'bat --theme=dots --color=always --style=plain,numbers --line-range=:500 {}'"
+export FZF_CTRL_T_OPTS="--preview '${DOTS_BAT:-bat} --theme=dots --color=always --style=plain,numbers --line-range=:500 {}'"
 export FZF_ALT_C_OPTS="--preview 'eza --tree --icons --color=always --level=2 {}'"
 
 if command -v fzf >/dev/null 2>&1; then

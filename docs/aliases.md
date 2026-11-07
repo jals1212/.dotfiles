@@ -69,7 +69,7 @@ If you need the original tool, prefix with `\`: `\cat`, `\ls`.
 - `..`, `...`, `....` → climb 1/2/3 levels.
 - `-` → previous directory (`cd -`).
 - `j`, `jj` → [`zoxide`](https://github.com/ajeetdsouza/zoxide) jump (`z`) and interactive pick (`zi`).
-- `dotfiles` → open `~/.dotfiles` in `$EDITOR`.
+- `dotfiles` → open the dots repo (`$DOTS_REPO`, default `~/.dotfiles`) in `$EDITOR`.
 - `fp` → `fzf` with a `bat` preview.
 - `lg` → [`lazygit`](https://github.com/jesseduffield/lazygit).
 - `ld` → [`lazydocker`](https://github.com/jesseduffield/lazydocker).

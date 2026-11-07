@@ -24,7 +24,7 @@ Polyglot runtime/version manager (Node, Python, Go, etc.). Activated in zsh. Com
 
 ### Ghostty — [docs](https://ghostty.org/docs)
 
-Terminal emulator (macOS cask). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`.
+Terminal emulator (macOS cask; `./dots doctor` skips its checks on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`.
 
 ### tmux — [docs](https://github.com/tmux/tmux/wiki)
 
@@ -50,7 +50,7 @@ A Finder Quick Action, **Open in VSCodium** (right-click a file or folder → Qu
 
 ### bat — [docs](https://github.com/sharkdp/bat)
 
-`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and selected by `~/.config/bat/config`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` when bat is present.
+`cat` with syntax highlighting and paging. Aliased to `cat`. Theme deployed to `~/.config/bat/themes/dots.tmTheme` and selected by `~/.config/bat/config`. Useful flags: `--style=plain`, `--language=md`, `-A` (show non-printable). `bat cache --build` runs automatically during `update` when bat is present. On Debian/Ubuntu the binary is `batcat`: the zsh config uses it under that name (`DOTS_BAT`) and aliases `bat` to it; see [Linux status](install.md#linux-status) for the cache step.
 
 ### eza — [docs](https://eza.rocks/)
 
@@ -58,7 +58,7 @@ Modern `ls`. Aliased to `ls`, `ll`, `la`, `lt`. Icons + group-dirs-first by defa
 
 ### fd — [docs](https://github.com/sharkdp/fd)
 
-Fast user-friendly `find`. Aliased to `find`. Common: `fd <pattern>`, `fd -e ts -x prettier -w`, `fd -H` (hidden). Drives `FZF_DEFAULT_COMMAND`.
+Fast user-friendly `find`. Aliased to `find`. Common: `fd <pattern>`, `fd -e ts -x prettier -w`, `fd -H` (hidden). Drives `FZF_DEFAULT_COMMAND`. On Debian/Ubuntu the binary is `fdfind`: the zsh config uses it under that name (`DOTS_FD`) and aliases `fd` to it.
 
 ### ripgrep (rg) — [docs](https://github.com/BurntSushi/ripgrep)
 

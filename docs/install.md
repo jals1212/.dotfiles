@@ -11,6 +11,8 @@ This repo deploys via [dotbot] + [dotbot-brew] + [dotbot-mise]. The `./dots` com
 - macOS: Xcode Command Line Tools (provides `git` + `python3`). `./dots` triggers `xcode-select --install` automatically if either is missing.
 - Linux: `python3`, `git`, and standard build deps. `./dots` installs them via `apt-get`, `dnf`, or `pacman` automatically on first run.
 
+Linux is supported on a best-effort basis: the shell config, symlinks, theme switching, `mise` and the Brewfile's formulae (Homebrew on Linux) work, while everything macOS-only is skipped (see [Linux status](#linux-status)). It is exercised by the Linux CI container (shellcheck and the bats suite), not by a full install on a real Debian/Ubuntu desktop, so expect rough edges.
+
 Homebrew is **not** a prerequisite — `./install` installs it via a dotbot `shell` directive on first run.
 
 ## First install
@@ -59,6 +61,21 @@ The `--tools` flag is **removed**. Managed packages are declared in `config/Brew
 
 A tap outside Homebrew's official ones needs trust before Homebrew loads its formulae or casks. The Brewfile trusts each such tap only for the items it installs (`tap "x/y", trusted: { formulae: [...] }` or `casks: [...]`), with a `# trusted:` comment above saying why. When you add an item from one of those taps, add its name to that list; `tests/dependency_pins.bats` checks that every listed name is installed and every trusted tap has its comment.
 
+## Linux status
+
+What works on Debian/Ubuntu (and is covered by `tests/linux_portability.bats`):
+
+- **`bat` and `fd`**: Debian installs them as `batcat` and `fdfind`. The zsh files pick the Debian name when the plain one is not on `PATH` (`DOTS_BAT` / `DOTS_FD`, set in `~/.config/zsh/.zshenv`) and use it for `PAGER`, `MANPAGER`, the `cat`/`fp`/suffix aliases, the `find` abbreviation and the fzf commands and previews; `bat` and `fd` are also aliased to the Debian names for interactive use. Homebrew's own `bat`/`fd` keep their plain names.
+- **macOS-only shell functions** (`cdf`, `moshi-pair`) are not defined on Linux, like the macOS-only clipboard alias `C` (Linux gets `wl-copy`/`xclip` when present).
+- **`dots` in zsh** runs the repo it is linked from, wherever you cloned it (`~/.dotfiles` is no longer required). Export `DOTS_REPO=/path/to/clone` to pin a checkout; `~/.dotfiles` is the last resort when `functions.zsh` was copied instead of linked. The `dotfiles` alias opens the same path.
+- **`./dots doctor`** reports the macOS-only checks as `[SKIP] ... macOS only` instead of failing: OrbStack, the Docker CLI and its buildx/compose plugins (Docker comes from OrbStack here), and the ghostty config, theme link and theme marker (ghostty is a macOS cask in the Brewfile). A skipped check counts as passed in the summary.
+
+Known gaps on Linux:
+
+- The post-link `bat cache --build` step (`config/install.conf.yaml`) and the theme switcher's bat-cache rebuild look for a command named `bat`, so they are skipped when only `batcat` exists (the theme switcher warns). To get them back, put a `bat` on `PATH`: `mkdir -p ~/.local/bin && ln -s "$(command -v batcat)" ~/.local/bin/bat` (and `fd` likewise for `fdfind`), then re-run `./dots theme <theme> <flavor>`.
+- The macOS-only Brewfile entries (casks, AeroSpace, duti, moshi-hook, OrbStack, ghostty), the Finder Quick Action and the VSCodium default-app step are not installed or linked on Linux.
+- The Homebrew installer needs `curl` and the build dependencies `./dots` installs through `apt-get`, `dnf` or `pacman`.
+
 ## Everyday commands
 
 Run `./dots` for the visual action menu: a one-line status (active theme, prompt engine and local git state of the repo) above the actions, grouped and each with a short description. Move with ↑↓ or j/k, run with enter, quit with q or esc. On first run (when `manifest.json` is absent), `./dots` auto-starts `update`.
@@ -68,7 +85,7 @@ Run `./dots` for the visual action menu: a one-line status (active theme, prompt
 | `./dots` | Open the visual action menu. |
 | `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. Unknown arguments are rejected (stderr, exit 2). |
 | `./dots theme <theme> <flavor>` | Switch theme (or `./dots theme` for interactive picker, `--current` to show active). |
-| `./dots doctor` | Non-mutating health check. |
+| `./dots doctor` | Non-mutating health check. On Linux the macOS-only checks are skipped, not failed. |
 | `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks that point into this repo; prune dotbot backups of declared links older than N days (default 30). Never touches links or backups the repo did not create. |
 | `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. `--commit` commits only the gitlinks it advanced; other staged files stay staged. |
 | `./dots uninstall [--yes] [--dry-run]` | Remove declared Dotbot symlinks + `manifest.json`. Preserves `.dotbot-backup.*` siblings. |

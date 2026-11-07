@@ -2,7 +2,7 @@
 
 # Modern replacements (flag-incompatible ones — cd/find/grep — are
 # abbreviations in abbr.zsh, so the real command stays one edit away)
-alias cat='bat'
+alias cat="${DOTS_BAT:-bat}"
 alias du='dust'
 alias la='eza -la --icons --group-directories-first'
 alias ll='eza -l --icons --group-directories-first'
@@ -10,6 +10,10 @@ alias ls='eza --icons --group-directories-first'
 alias lt='eza -T --icons --level=2'
 alias ping='gping'
 alias top='btm'
+
+# bat/fd under their Debian names (DOTS_BAT / DOTS_FD: see .zshenv)
+[[ "${DOTS_BAT:-bat}" != bat ]] && alias bat="$DOTS_BAT"
+[[ "${DOTS_FD:-fd}" != fd ]] && alias fd="$DOTS_FD"
 
 # Portable `open` (Linux uses xdg-open; macOS has open natively)
 [[ "$(uname)" != "Darwin" ]] && command -v xdg-open >/dev/null 2>&1 && alias open='xdg-open'
@@ -19,8 +23,8 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias -- -='cd -'
-alias dotfiles='$EDITOR ~/.dotfiles' # the dots command is a function — see functions.zsh
-alias fp='fzf --preview="bat --theme=dots --color=always {}"'
+alias dotfiles='$EDITOR "${DOTS_REPO:-$HOME/.dotfiles}"' # DOTS_REPO and the dots command: see functions.zsh
+alias fp="fzf --preview=\"${DOTS_BAT:-bat} --theme=dots --color=always {}\""
 alias j='z'
 alias jj='zi'
 alias ld='lazydocker'
@@ -46,11 +50,11 @@ alias -s go='$EDITOR'
 alias -s html=open
 alias -s js='$EDITOR'
 alias -s json=jless
-alias -s log=bat
-alias -s md=bat
+alias -s log="${DOTS_BAT:-bat}"
+alias -s md="${DOTS_BAT:-bat}"
 alias -s py='$EDITOR'
 alias -s rs='$EDITOR'
 alias -s ts='$EDITOR'
-alias -s txt=bat
+alias -s txt="${DOTS_BAT:-bat}"
 alias -s yaml='$EDITOR'
 alias -s yml='$EDITOR'
