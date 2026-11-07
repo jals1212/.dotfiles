@@ -31,7 +31,7 @@ JSON
     run render_command_banner "Doctor"
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · Doctor · catppuccin/mocha · starship" ]
+    [ "${output}" = "⁘ jals1212 DOTS · Doctor · catppuccin/mocha · starship" ]
 }
 
 @test "render_command_banner falls back to kanagawa and shows git state" {
@@ -41,14 +41,14 @@ JSON
     run render_command_banner "Doctor"
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · Doctor · kanagawa · ✓ clean" ]
+    [ "${output}" = "⁘ jals1212 DOTS · Doctor · kanagawa · ✓ clean" ]
 }
 
 @test "render_subcommand_banner prints the one-line header outside the menu" {
     run env -u DOTS_MENU_DISPATCH sh -c '. "$1/src/lib/paths.sh"; . "$1/src/lib/log.sh"; . "$1/src/lib/tui.sh"; render_subcommand_banner Clean' _ "${REPO_ROOT_REAL}"
 
     [ "${status}" -eq 0 ]
-    [[ "${output}" == "jals1212 DOTS · Clean"* ]] || return 1
+    [[ "${output}" == "⁘ jals1212 DOTS · Clean"* ]] || return 1
     [ "$(printf '%s\n' "${output}" | wc -l | tr -d ' ')" -eq 1 ]
 }
 
@@ -144,14 +144,14 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · catppuccin/mocha · starship" ]
+    [ "${output}" = "⁘ jals1212 DOTS · catppuccin/mocha · starship" ]
 }
 
 @test "render_menu_status omits prompt when manifest has none" {
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · kanagawa" ]
+    [ "${output}" = "⁘ jals1212 DOTS · kanagawa" ]
 }
 
 @test "render_menu_status reports a clean git tree" {
@@ -165,7 +165,7 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · kanagawa/dragon · p10k · ✓ clean" ]
+    [ "${output}" = "⁘ jals1212 DOTS · kanagawa/dragon · p10k · ✓ clean" ]
 }
 
 @test "render_menu_status counts uncommitted git changes" {
@@ -178,7 +178,7 @@ JSON
     run render_menu_status
 
     [ "${status}" -eq 0 ]
-    [ "${output}" = "jals1212 DOTS · kanagawa · 2 changed" ]
+    [ "${output}" = "⁘ jals1212 DOTS · kanagawa · 2 changed" ]
 }
 
 # --- action menu (own key reader; keys come from fd 3) -------------------

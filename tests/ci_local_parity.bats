@@ -65,3 +65,10 @@ _sandbox() {
     [ "${status}" -eq 1 ]
     [[ "${stderr}" == *'plan.project is "dotfiles-other", expected "dotfiles-ci"'* ]]
 }
+
+@test "package.json declares the MIT license like LICENSE" {
+    run grep -q '"license": "MIT"' "${BATS_TEST_DIRNAME}/../package.json"
+    [ "${status}" -eq 0 ]
+    run grep -q '^MIT License$' "${BATS_TEST_DIRNAME}/../LICENSE"
+    [ "${status}" -eq 0 ]
+}
