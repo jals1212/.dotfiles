@@ -8,7 +8,8 @@
 # the source of truth: this script clones a missing plugin from
 # $DOTS_TMUX_PLUGIN_BASE_URL (default https://github.com) and checks out the
 # pin when the checkout is anywhere else, before TPM loads the plugins. A
-# checkout already at its pin is not touched (no network).
+# checkout already at its pin is not touched (no network; a plugin with
+# submodules is only synced to its recorded gitlinks).
 #
 # It fails closed, because TPM loads every @plugin line it finds, pinned or not:
 #   - an @plugin line is accepted as `set|set-option -g @plugin 'owner/repo'`
@@ -17,8 +18,12 @@
 #   - the line above it must be `# pin <40 lowercase hex>`;
 #   - owner/repo is limited to [A-Za-z0-9._-]+/[A-Za-z0-9._-]+ without a `.` or
 #     `..` segment, so the destination stays inside the plugins dir;
-#   - a plugin it just cloned whose pin cannot be checked out is removed again
-#     (a pre-existing checkout is never removed).
+#   - a plugin with a .gitmodules gets `git submodule update --init --recursive`
+#     at the pin (TPM clones --recursive), also when it was already at the pin;
+#   - a plugin it just cloned whose pin cannot be checked out, or whose
+#     submodules cannot be updated, is removed again (a pre-existing checkout is
+#     never removed);
+#   - an unreadable or missing tmux.conf is an error, not an empty plugin list.
 # Each problem is one `pin-plugins:` line on stderr and the exit status is 1;
 # the other plugins are still handled.
 
@@ -62,24 +67,34 @@ pin_one() {
             { fail "$spec" "cannot clone $base/$spec"; return; }
         fresh=1
     fi
-    [ "$(git -C "$dest" rev-parse HEAD 2>/dev/null)" = "$sha" ] && return
-
-    git -C "$dest" cat-file -e "$sha^{commit}" 2>/dev/null ||
-        GIT_TERMINAL_PROMPT=0 git -C "$dest" fetch -q origin 2>/dev/null
-    if ! git -C "$dest" checkout -q --detach "$sha" 2>/dev/null; then
-        # A fresh clone sits on the branch tip: leaving it would let TPM load
-        # unpinned code, so take it away again.
-        [ -n "$fresh" ] && rm -rf "$dest"
-        fail "$spec" "cannot check out pinned commit $sha in $dest${fresh:+ (fresh clone removed)}"
-        return
+    if [ "$(git -C "$dest" rev-parse HEAD 2>/dev/null)" != "$sha" ]; then
+        git -C "$dest" cat-file -e "$sha^{commit}" 2>/dev/null ||
+            GIT_TERMINAL_PROMPT=0 git -C "$dest" fetch -q origin 2>/dev/null
+        if ! git -C "$dest" checkout -q --detach "$sha" 2>/dev/null; then
+            # A fresh clone sits on the branch tip: leaving it would let TPM load
+            # unpinned code, so take it away again.
+            [ -n "$fresh" ] && rm -rf "$dest"
+            fail "$spec" "cannot check out pinned commit $sha in $dest${fresh:+ (fresh clone removed)}"
+            return
+        fi
     fi
-    git -C "$dest" submodule update -q --init --recursive 2>/dev/null || true
+
+    # TPM clones with --recursive, so a plugin's submodules belong to the pin
+    # too: bring them to the commits the pin records (a no-op when they already
+    # are there, so a checkout in place costs no network).
+    if [ -f "$dest/.gitmodules" ] &&
+        ! GIT_TERMINAL_PROMPT=0 git -C "$dest" submodule update -q --init --recursive 2>/dev/null; then
+        [ -n "$fresh" ] && rm -rf "$dest"
+        fail "$spec" "cannot update submodules in $dest${fresh:+ (fresh clone removed)}"
+    fi
 }
 
 # parse_plugin <trimmed line> — print the spec of an accepted @plugin line.
 parse_plugin() {
     printf '%s\n' "$1" | sed -n -E "s/^set(-option)?[[:space:]]+-g[[:space:]]+@plugin[[:space:]]+('([^']*)'|\"([^\"]*)\")[[:space:]]*(#.*)?\$/\\3\\4/p"
 }
+
+[ -r "$conf" ] && [ -f "$conf" ] || { fail "$conf" "cannot read tmux.conf"; exit "$status"; }
 
 sha=
 while IFS= read -r line || [ -n "$line" ]; do

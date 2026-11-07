@@ -280,6 +280,102 @@ EOF
     [ "${declared}" -eq "${clone_failures}" ]
 }
 
+# _fixture_submodule_remote <owner/repo> — a plugin repo with one submodule:
+# the first commit adds the submodule at its first commit, the second moves it
+# on. Prints the first plugin commit (the pin). The submodule remote is
+# ${SANDBOX}/remote/sub; set _bad_sub to point the plugin at a dead URL instead.
+_fixture_submodule_remote() {
+    local sub="${SANDBOX}/remote/sub" dir="${SANDBOX}/remote/$1" url
+    mkdir -p "${sub}" "${dir}"
+    _git -C "${sub}" init -q
+    echo s1 >"${sub}/sfile"
+    _git -C "${sub}" add sfile
+    _git -C "${sub}" commit -q -m s1
+    _git -C "${dir}" init -q
+    url="${sub}"
+    [ -z "${_bad_sub:-}" ] || url="${SANDBOX}/gone"
+    _git -c protocol.file.allow=always -C "${dir}" submodule add -q "${sub}" vendor
+    [ -z "${_bad_sub:-}" ] || _git -C "${dir}" config -f .gitmodules submodule.vendor.url "${url}"
+    _git -C "${dir}" add -A
+    _git -C "${dir}" commit -q -m one
+    _git -C "${dir}" rev-parse HEAD
+    echo s2 >"${sub}/sfile"
+    _git -C "${sub}" commit -q -a -m s2
+    _git -C "${dir}/vendor" -c protocol.file.allow=always pull -q 2>/dev/null
+    _git -C "${dir}" commit -q -a -m two
+}
+
+@test "pin-plugins brings a plugin's submodules to the pinned commit's gitlinks" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 0 ]
+    [ "$(git -C "${SANDBOX}/plugins/repo" rev-parse HEAD)" = "${sha}" ]
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
+}
+
+@test "pin-plugins initialises the submodules of a checkout that is already at its pin" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+    git clone -q "${SANDBOX}/remote/owner/repo" "${SANDBOX}/plugins/repo"
+    git -C "${SANDBOX}/plugins/repo" checkout -q "${sha}"
+    [ ! -e "${SANDBOX}/plugins/repo/vendor/sfile" ]
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${SANDBOX}/plugins/repo/vendor/sfile")" = "s1" ]
+}
+
+@test "pin-plugins fails closed when a submodule cannot be updated: exit 1, fresh clone removed" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_bad_sub=1 _fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/repo: cannot update submodules"* ]] || { echo "${stderr}" >&3; return 1; }
+    [ ! -e "${SANDBOX}/plugins/repo" ]
+}
+
+@test "pin-plugins exits 1 when a submodule of an existing checkout cannot be updated and keeps it" {
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+    local sha
+    sha="$(_bad_sub=1 _fixture_submodule_remote owner/repo)"
+    _fixture_conf "${sha}"
+    git clone -q "${SANDBOX}/remote/owner/repo" "${SANDBOX}/plugins/repo"
+    echo local >"${SANDBOX}/plugins/repo/untracked"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/repo: cannot update submodules"* ]] || { echo "${stderr}" >&3; return 1; }
+    [ "$(cat "${SANDBOX}/plugins/repo/untracked")" = "local" ]
+}
+
+@test "pin-plugins exits 1 with a message when tmux.conf is unreadable or missing" {
+    [ "$(id -u)" -ne 0 ] || skip "root reads every file"
+    _fixture_conf "$(printf '0%.0s' $(seq 40))"
+    chmod 000 "${SANDBOX}/tmux.conf"
+
+    run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: ${SANDBOX}/tmux.conf: cannot read tmux.conf"* ]] || { echo "${stderr}" >&3; return 1; }
+    [ ! -e "${SANDBOX}/plugins" ]
+
+    run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/absent.conf" "${SANDBOX}/plugins"
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: ${SANDBOX}/absent.conf: cannot read tmux.conf"* ]] || { echo "${stderr}" >&3; return 1; }
+}
+
 # ── Brewfile trusted taps ────────────────────────────────────────────────────
 
 @test "no tap trusts the whole tap: trust is scoped to the items the Brewfile installs" {
@@ -310,6 +406,21 @@ EOF
                 return 1
             }
         done
+    done < <(grep -E '^tap .*trusted:' "${BREWFILE}")
+}
+
+@test "every brew/cask item installed from a trusted tap is in that tap's trust list" {
+    local line tap list item name
+    while IFS= read -r line; do
+        tap="$(printf '%s' "${line}" | sed -E 's/^tap "([^"]+)".*/\1/')"
+        list="$(printf '%s' "${line}" | sed -E 's/.*(formulae|casks): *\[([^]]*)\].*/\2/' | tr -d '" ' | tr ',' '\n')"
+        while IFS= read -r item; do
+            name="${item#"${tap}"/}"
+            printf '%s\n' "${list}" | grep -Fxq -- "${name}" || {
+                echo "${tap}/${name} is installed but missing from the trust list of ${tap}" >&3
+                return 1
+            }
+        done < <(grep -oE "^(brew|cask) \"${tap}/[^\"/]+\"" "${BREWFILE}" | cut -d'"' -f2)
     done < <(grep -E '^tap .*trusted:' "${BREWFILE}")
 }
 
