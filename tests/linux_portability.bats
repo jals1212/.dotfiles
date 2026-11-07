@@ -268,3 +268,52 @@ _doctor() {
     _has "5/5 checks passed"
     _lacks "[FAIL]"
 }
+
+# --- 5. _doc_macos_only fails closed: only a positive Linux skips ---------------
+
+# _doctor_os <setup> <check> — doctor.sh sourced with no REPO_ROOT, so it does
+# not load detect.sh itself; <setup> may define or break detect_os.
+_doctor_os() {
+    run env -i HOME="${HOME}" PATH="${SHIMS}:/usr/bin:/bin" NO_COLOR=1 \
+        sh -c ". '${REPO_ROOT_REAL}/src/lib/log.sh'; . '${REPO_ROOT_REAL}/src/lib/doctor.sh'; $1; $2; echo \"rc=\$?\""
+}
+
+@test "doctor runs the macOS-only check when detect_os is not defined" {
+    _doctor_os 'command -v detect_os >/dev/null 2>&1 && unset -f detect_os' 'check_orbstack'
+
+    [ "${status}" -eq 0 ]
+    _has "[FAIL] OrbStack CLI present: command not found: orb"
+    _lacks "[SKIP]"
+    _has "rc=1"
+}
+
+@test "doctor runs the macOS-only check when detect_os fails" {
+    _doctor_os 'detect_os() { return 1; }' 'check_orbstack'
+
+    [ "${status}" -eq 0 ]
+    _has "[FAIL] OrbStack CLI present: command not found: orb"
+    _lacks "[SKIP]"
+    _has "rc=1"
+}
+
+@test "doctor runs the macOS-only check when detect_os says unknown or prints nothing" {
+    _doctor_os 'detect_os() { printf unknown; }' 'check_orbstack'
+    [ "${status}" -eq 0 ]
+    _has "[FAIL] OrbStack CLI present: command not found: orb"
+    _lacks "[SKIP]"
+
+    _doctor_os 'detect_os() { :; }' 'check_ghostty_theme_marker'
+    [ "${status}" -eq 0 ]
+    _has "[FAIL] ghostty theme = dots"
+    _lacks "[SKIP]"
+}
+
+@test "doctor skips the macOS-only check only when detect_os says linux" {
+    _doctor_os 'detect_os() { printf linux; }' 'check_orbstack'
+
+    [ "${status}" -eq 0 ]
+    _has "[SKIP] OrbStack CLI: macOS only"
+    _lacks "[FAIL]"
+    _has "rc=0"
+}
+

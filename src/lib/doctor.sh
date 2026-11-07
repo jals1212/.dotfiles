@@ -31,12 +31,15 @@ _doc_warn() { _log_line 214 '[WARN]' "${1}: ${2}"; }
 _doc_skip() { _log_line 250 '[SKIP]' "${1}: ${2}"; }
 
 # _doc_macos_only <label>
-#   Returns 0 after reporting [SKIP] when the host is not macOS (the caller then
-#   returns 0 without running its check); returns 1 on macOS, so the check runs.
+#   Returns 0 after reporting [SKIP] when the host is positively Linux (the
+#   caller then returns 0 without running its check); returns 1 for macOS and
+#   for anything else, so the check runs. Fail closed: if detect_os is missing,
+#   fails or says something unexpected, the check runs instead of being skipped.
 #   The checks that use it cover macOS-only tools (see the macOS-only casks in
 #   config/Brewfile). The OS comes from detect_os, which reads `uname -s`.
 _doc_macos_only() {
-    [ "$(detect_os)" = macos ] && return 1
+    _dmo_os="$(detect_os 2>/dev/null)" || return 1
+    [ "${_dmo_os}" = linux ] || return 1
     _doc_skip "${1}" "macOS only"
     return 0
 }
