@@ -47,7 +47,8 @@ Like the zsh plugins (`zsh/plugins.zsh`), every tmux plugin, TPM included, is pi
 - **Bump one:** replace its sha with a newer upstream commit (review the diff first), then reload with `tmux source ~/.config/tmux/tmux.conf` or restart tmux.
 - **Add one:** add a `# pin <sha>` line and the `set -g @plugin 'owner/repo'` line below it. `tests/dependency_pins.bats` fails when an `@plugin` has no pin.
 - **`Ctrl-a U` (TPM update)** moves a plugin off its pin until the next reload re-pins it; do not rely on it. `Ctrl-a I` installs only what `pin-plugins.sh` has not.
-- **Offline or failed pin:** the script prints one `pin-plugins:` line per plugin it could not clone or check out and tmux still starts with whatever is on disk.
+- **Fails closed:** the script exits 1 and prints one `pin-plugins:` line per problem; tmux still starts. A plugin it just cloned whose pin cannot be checked out is removed again, so TPM never loads unpinned code; an existing checkout is kept. It also reports an `@plugin` line it cannot parse (accepted: `set` or `set-option -g @plugin 'owner/repo'`, single or double quotes, leading whitespace, trailing `# comment`), an `@plugin` without a valid `# pin <40-hex>` line above it, and a name that is not a plain `owner/repo` (`[A-Za-z0-9._-]` only, no `..`; `owner/repo#branch` is refused).
+- **Offline:** a plugin already on its pin needs no network; a missing one is reported as `cannot clone` and tmux starts without it.
 
 - [tmux-sensible](https://github.com/tmux-plugins/tmux-sensible) — safer defaults.
 - [tmux-yank](https://github.com/tmux-plugins/tmux-yank) — copy mode selections go to the system clipboard.

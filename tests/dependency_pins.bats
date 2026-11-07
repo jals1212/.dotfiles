@@ -50,16 +50,19 @@ EOF
 
 # ── tmux plugins ─────────────────────────────────────────────────────────────
 
-@test "every tmux @plugin is preceded by a 40-hex '# pin <sha>' line" {
+@test "every tmux @plugin line, in any form, is preceded by a 40-hex '# pin <sha>' line" {
+    # Any non-comment line with an @plugin token counts, indented, double
+    # quoted, set-option, with a trailing comment or not.
     run awk '
-        /^set -g @plugin / {
+        { line = $0; sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line) }
+        line ~ /^# pin [0-9a-f]+$/ && length(line) == 46 { sha = 1; next }
+        line !~ /^#/ && line ~ /(^|[ \t])@plugin([ \t]|$)/ {
             n++
-            if (sha == "") { print "unpinned: " $0; bad = 1 }
-            sha = ""
+            if (!sha) { print "unpinned: " $0; bad = 1 }
+            sha = 0
             next
         }
-        /^# pin [0-9a-f]{40}$/ { sha = $3; next }
-        { sha = "" }
+        { sha = 0 }
         END { if (n == 0) { print "no @plugin lines"; bad = 1 } exit bad }
     ' "${TMUX_CONF}"
     echo "${output}" >&3
@@ -145,16 +148,136 @@ EOF
     [ ! -e "${SANDBOX}/plugins/repo" ]
 }
 
+@test "pin-plugins removes a fresh clone whose pin cannot be checked out and exits 1" {
+    _fixture_remote owner/repo >/dev/null
+    _fixture_conf "0000000000000000000000000000000000000000"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/repo:"* ]] || return 1
+    [ ! -e "${SANDBOX}/plugins/repo" ]
+}
+
+@test "pin-plugins exits 1 for a bad pin on an existing checkout and keeps it" {
+    _fixture_remote owner/repo >/dev/null
+    _fixture_conf "0000000000000000000000000000000000000000"
+    git clone -q "${SANDBOX}/remote/owner/repo" "${SANDBOX}/plugins/repo"
+    echo local >"${SANDBOX}/plugins/repo/untracked"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/repo:"* ]] || return 1
+    [ "$(cat "${SANDBOX}/plugins/repo/file")" = "two" ]
+    [ "$(cat "${SANDBOX}/plugins/repo/untracked")" = "local" ]
+}
+
+@test "pin-plugins clones indented, double-quoted, set-option and commented @plugin lines at their pins" {
+    local sha_a sha_b sha_c
+    sha_a="$(_fixture_remote owner/repo)"
+    sha_b="$(_fixture_remote owner/other)"
+    sha_c="$(_fixture_remote owner/third)"
+    cat >"${SANDBOX}/tmux.conf" <<EOF
+  # pin ${sha_a}
+    set -g @plugin "owner/repo"
+# pin ${sha_b}
+set-option -g @plugin 'owner/other' # note
+	# pin ${sha_c}
+	set  -g  @plugin  "owner/third"   # note
+EOF
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 0 ]
+    [ -z "${stderr}" ]
+    [ "$(git -C "${SANDBOX}/plugins/repo" rev-parse HEAD)" = "${sha_a}" ]
+    [ "$(git -C "${SANDBOX}/plugins/other" rev-parse HEAD)" = "${sha_b}" ]
+    [ "$(git -C "${SANDBOX}/plugins/third" rev-parse HEAD)" = "${sha_c}" ]
+}
+
+@test "pin-plugins exits 1 naming an unpinned @plugin line and still pins the others" {
+    local sha
+    sha="$(_fixture_remote owner/repo)"
+    _fixture_remote owner/other >/dev/null
+    cat >"${SANDBOX}/tmux.conf" <<EOF
+# pin ${sha}
+set -g @plugin 'owner/repo'
+  set -g @plugin "owner/other"
+EOF
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/other:"* ]] || return 1
+    [ "$(git -C "${SANDBOX}/plugins/repo" rev-parse HEAD)" = "${sha}" ]
+    [ ! -e "${SANDBOX}/plugins/other" ]
+}
+
+@test "pin-plugins exits 1 for a short or non-hex pin without cloning" {
+    _fixture_remote owner/repo >/dev/null
+    _fixture_conf "abc123"
+
+    DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"pin-plugins: owner/repo:"* ]] || return 1
+    [ ! -e "${SANDBOX}/plugins/repo" ]
+}
+
+@test "pin-plugins exits 1 for an @plugin line it cannot parse, naming the line" {
+    local sha
+    sha="$(_fixture_remote owner/repo)"
+    local forms=(
+        "set -g @plugin owner/repo"
+        "set -ag @plugin 'owner/repo'"
+        "set -g @plugin 'owner/repo' 'extra'"
+        "set -g @plugin ''"
+    )
+    local form
+    for form in "${forms[@]}"; do
+        printf '# pin %s\n%s\n' "${sha}" "${form}" >"${SANDBOX}/tmux.conf"
+
+        DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+        [ "${status}" -eq 1 ] || { echo "accepted: ${form}" >&3; return 1; }
+        [[ "${stderr}" == *"${form}"* ]] || { echo "not named: ${form}: ${stderr}" >&3; return 1; }
+        [ ! -e "${SANDBOX}/plugins" ] || { echo "created for: ${form}" >&3; return 1; }
+    done
+}
+
+@test "pin-plugins rejects specs that are not owner/repo and creates nothing outside the plugins dir" {
+    local sha
+    sha="$(_fixture_remote owner/repo)"
+    local specs=("o/.." "../x" "./x" "a/b/c" "/x" "x/" "o/ev il" 'o/$HOME' "o/..repo/x" "owner/repo#main")
+    local spec before after
+    for spec in "${specs[@]}"; do
+        printf "# pin %s\nset -g @plugin '%s'\n" "${sha}" "${spec}" >"${SANDBOX}/tmux.conf"
+        before="$(cd "${SANDBOX}" && find . | sort)"
+
+        DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/remote" run --separate-stderr sh "${PIN_SCRIPT}" "${SANDBOX}/tmux.conf" "${SANDBOX}/plugins"
+
+        after="$(cd "${SANDBOX}" && find . | sort)"
+        [ "${status}" -eq 1 ] || { echo "accepted: ${spec}" >&3; return 1; }
+        [[ "${stderr}" == *"${spec}"* ]] || { echo "not named: ${spec}: ${stderr}" >&3; return 1; }
+        [ "${before}" = "${after}" ] || { echo "changed tree for: ${spec}" >&3; return 1; }
+    done
+}
+
 @test "pin-plugins reads every @plugin entry of the real tmux.conf" {
-    # Dry parse: with an unreachable remote and empty plugin dir every plugin
-    # is reported once, in order, so the script reads every conf entry.
+    # Dry parse: with an unreachable remote and empty plugin dir every entry
+    # that parses and is pinned fails only at the clone, once. An entry of any
+    # form the script cannot parse or that has no pin reports something else.
     DOTS_TMUX_PLUGIN_BASE_URL="${SANDBOX}/none" run --separate-stderr sh "${PIN_SCRIPT}" "${TMUX_CONF}" "${SANDBOX}/plugins"
 
-    [ "${status}" -ne 0 ]
-    local declared reported
-    declared="$(grep -c '^set -g @plugin ' "${TMUX_CONF}")"
-    reported="$(printf '%s\n' "${stderr}" | grep -c 'pin-plugins:')"
+    [ "${status}" -eq 1 ]
+    local declared reported clone_failures
+    declared="$(grep -Ec '^[[:space:]]*[^#[:space:]].*[[:space:]]@plugin([[:space:]]|$)' "${TMUX_CONF}")"
+    reported="$(printf '%s\n' "${stderr}" | grep -c '^pin-plugins:')"
+    clone_failures="$(printf '%s\n' "${stderr}" | grep -c '^pin-plugins: .*: cannot clone ')"
+    [ "${declared}" -gt 0 ]
     [ "${declared}" -eq "${reported}" ]
+    [ "${declared}" -eq "${clone_failures}" ]
 }
 
 # ── Brewfile trusted taps ────────────────────────────────────────────────────
