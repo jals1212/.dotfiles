@@ -30,9 +30,11 @@ Non-interactive:
 
 | Command | What it does |
 |---|---|
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. Any other argument is rejected (error on stderr, exit 2) before anything runs. |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Runs `./install` (dotbot base config: brew install if missing, `brew bundle`, every symlink, `mise install`) then applies the active theme. With no flags on a TTY, shows `Change theme?` defaulting to No; press Enter to re-apply the manifest theme, or Y to open the pickers. With `--pull`, runs `git pull --ff-only` first. On a TTY it also asks the component checklist once while no `DOTS_COMPONENTS` is recorded (see `./dots components`); `--yes` never asks. Any other argument is rejected (error on stderr, exit 2) before anything runs. |
 | `./dots theme <theme> <flavor>` | Switches the active theme. Re-links the 7 per-app theme files; rewrites the Starship (`palette`) and Herdr (`theme.name`) fenced lines; persists `DOTS_THEME` in `~/.config/zsh/local.zsh` (read by tmux's `@themux_theme` and the p10k palette); rebuilds the bat cache; reloads running tmux/Herdr servers; writes the slim manifest. |
-| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning. On Linux the macOS-only checks (OrbStack, Docker, ghostty) are skipped, not failed ([Linux status](docs/install.md#linux-status)). |
+| `./dots font <font>` | Switches the terminal font: `jetbrains-mono` (default) or `iosevka`. Machine-local: writes `font-family` to `~/.config/ghostty/font.conf` (loaded by the Ghostty config with `config-file = ?font.conf`) and `DOTS_FONT` to `~/.config/zsh/local.zsh`; on macOS installs the font's Nerd Font cask when missing, and `config/Brewfile` declares only the chosen font, so `./dots upgrade --cleanup` keeps it. With `herdr-app` selected it also sets `font` in `~/.config/herdr-app/settings.json` (under `XDG_CONFIG_HOME` when set; Herdr reloads it live; other keys kept; needs `jq` or `python3`; an invalid file is left untouched with a warning; unselected: never touched). `./dots font` alone opens a picker; `--current` prints the active font. `./dots update` re-applies it and, on a TTY, asks once while no font is recorded. |
+| `./dots components [--yes] [<id>... \| none]` | Chooses which terminal components you want, as checkboxes: `tmux` (tmux + gitmux), `herdr-tui` (Herdr TUI), `herdr-core` (Herdr core), `herdr-app` (Herdr desktop app) and `ghostty`. Nothing is checked by default; checking `herdr-app` also checks `herdr-core` (the app brings it). Machine-local: recorded as `DOTS_COMPONENTS` in `~/.config/zsh/local.zsh` (space-separated ids in that fixed order, `none` for an empty selection, no line when never recorded); the repo never changes. `./dots components` alone opens the checklist (space toggles, enter confirms, q cancels and changes nothing); `./dots components <id>...` sets it non-interactively (an unknown id exits 1 and changes nothing); `--current` prints it. `./dots update` asks the same checklist once on a TTY while nothing is recorded (`--yes` never asks). When the change adds components, `./dots components` asks `Install the new components now? [Y/n]` and installs only those (see *Installing what you check* below); `--yes` installs without asking. Unchecking a component that was recorded as selected uninstalls it and removes its repo symlinks, after a confirmation that lists exactly what goes (default No; `--yes` skips it, and without a TTY and without `--yes` a change that removes something exits 2 and changes nothing); see *Unchecking* below. `./dots update` then installs, links, themes and checks only the selected components (see below). |
+| `./dots doctor` | Non-mutating: symlink integrity, theme symlink agreement, content markers, Starship/Herdr theme fences, slim manifest schema, submodule presence, stale dotbot-backup warning, machine-local `local.zsh` state whitelist (`DOTS_PROMPT`, `DOTS_FONT`, `DOTS_COMPONENTS`). The tmux, Herdr and Ghostty checks of components you did not select are skipped (`[SKIP] ... not selected`), not failed. On Linux the macOS-only checks (OrbStack, Docker, ghostty) are skipped, not failed ([Linux status](docs/install.md#linux-status)). |
 | `./dots clean [--age=N] [--dry-run]` | Removes broken symlinks that point into this repo and prunes dotbot backups (`<link>.dotbot-backup.<timestamp>`) of links this repo declares, older than `N` days (default 30). Links and backups it did not create are never touched. |
 | `./dots upgrade [--commit] [--dry-run]` | Bumps pinned submodule commits, runs `brew bundle cleanup`, `mise prune`. With `--commit`, commits only the gitlinks it advanced; other staged changes stay staged. |
 | `./dots uninstall [--yes] [--dry-run]` | Removes declared Dotbot symlinks and `manifest.json`. Preserves `*.dotbot-backup.*` siblings. |
@@ -55,6 +57,41 @@ Switch theme:
 ./dots theme              # interactive picker
 ./dots theme --current    # show active theme
 ```
+
+### Terminal components
+
+`./dots update` only installs, links and themes the components you selected with `./dots components`; nothing recorded, or `none`, means none of them:
+
+| Component | Installed by | Linked | Themed |
+|-----------|--------------|--------|--------|
+| `tmux` | `brew "tmux"` + `brew "gitmux"` | `~/.config/tmux/*` | running server reloaded |
+| `herdr-tui` | `brew "herdr"` | `~/.config/herdr/config.toml` (also for `herdr-core`/`herdr-app`) | fenced `theme.name`, running server reloaded |
+| `herdr-core` | official installer `https://releases.herdr.dev/core/install.sh` (macOS and Linux; skipped when `herdr-core` is already on `PATH` or in `~/.local/bin`, and on Linux when `herdr-app` is selected, since the official app installer brings the core; on macOS it runs with `herdr-app` too, since the cask brings no core) | Herdr config | same |
+| `herdr-app` | macOS: `cask "herdr-app"` (an official install in `~/Applications/Herdr.app` is moved out first, see below); Linux: official installer `https://releases.herdr.dev/app/install.sh` | Herdr config | same |
+| `ghostty` | `cask "ghostty"` (macOS only) | `~/.config/ghostty/config` and `shaders` (any OS) | `~/.config/ghostty/themes/dots` link |
+
+The Herdr installers are the official ones, unpinned, and only warn when they fail. Homebrew has no Herdr core package, so the core updates through its own installer, not `brew upgrade`.
+
+On macOS, `./dots update` with `herdr-app` selected moves an official Herdr app install out of the way before Homebrew runs, so the cask is the only copy: it lists `~/Applications/Herdr.app` and the `~/.local/bin/herdr-app` link pointing into it, and asks `[y/N]` (`--yes` moves it without asking; without a TTY it is kept, with a warning). The core (`~/.local/share/herdr-core`, `herdr-core`, `hc`) stays. While Herdr app is running nothing is removed: quit it and run `./dots update` again. The Nerd Font cask stays declared whatever you select (any terminal needs it, and `./dots font` installs it without Ghostty).
+
+#### Installing what you check
+
+When `./dots components` records a selection that **adds** components (ids not recorded before; `herdr-app` counts as `herdr-core` too), it asks `Install the new components now? [Y/n]` on a TTY. Yes installs only those, never the rest of `./dots update` (no full `brew bundle`, no `mise`, nothing of other tools): a direct `brew install` / `brew install --cask` of the component's own entries (`tmux` + `gitmux`; `herdr`; cask `herdr-app`; cask `ghostty`), skipping what is installed; the macOS Herdr app move of the section above before the `herdr-app` cask; Herdr's official installers (the same script, `content/home/.config/dots/herdr-install.sh`, that `config/install.conf.yaml` runs, so the conditions cannot drift); and exactly the config links of those components (a Dotbot run over a config filtered to the `~/.config/tmux`, `~/.config/herdr` and `~/.config/ghostty` links, plus the Ghostty theme link of the active theme, so everything else keeps its links). `--yes` installs without asking; without a TTY and without `--yes`, or when you decline, nothing is installed and it says to run `./dots update`. A failing step warns and the rest continues; the exit code is non-zero and the selection stays recorded. A change that only removes or keeps components asks nothing.
+
+#### Unchecking
+
+Unchecking uninstalls, but only a component that was **recorded** as selected: the first selection on an existing machine (nothing recorded) removes nothing, and neither does a component you never checked. `./dots components` (picker or `<id>...|none`) lists exactly what will be removed and asks `[y/N]` (default No). Declining or cancelling changes nothing and exits non-zero; `--yes` skips the question; without a TTY and without `--yes` the command exits 2 and changes nothing. Checking `herdr-app` implies `herdr-core` on both sides of the comparison. A running official Herdr app (`~/Applications/Herdr.app`) is never removed: those paths are skipped with a warning to quit it first, and the rest of the removal still runs.
+
+| Unchecked | Removed |
+|-----------|---------|
+| `tmux` | `brew uninstall tmux gitmux` (the installed ones) and the `~/.config/tmux/*` symlinks into this repo |
+| `herdr-tui` | `brew uninstall herdr` |
+| `herdr-app` | macOS: `brew uninstall --cask herdr-app`, plus an official install (`~/Applications/Herdr.app` and the `~/.local/bin/herdr-app` link into it) when present. Linux: the official install (`${XDG_DATA_HOME:-~/.local/share}/herdr-app`, `~/.local/bin/herdr-app` and the `herdr-app` `.desktop`/icon files) |
+| `herdr-core` | `~/.local/bin/herdr-core` and `~/.local/bin/hc` when they are regular files or symlinks (otherwise a warning); never while `herdr-app` stays selected |
+| Herdr config | the `~/.config/herdr/config.toml` link, only when no Herdr component remains |
+| `ghostty` | macOS: `brew uninstall --cask ghostty`; the `~/.config/ghostty` `config`, `shaders` and `themes/dots` links into this repo (`font.conf` and any other file stay) |
+
+Only symlinks that point into this repo are removed. A package that is not installed is skipped; a failing `brew uninstall` warns and the rest continues, the exit code is non-zero and the new selection is still recorded. Nothing outside the listed paths is touched.
 
 If `@themux_theme` does not refresh in an active tmux session after a switch, run `tmux kill-server` (heavy) or restart tmux manually.
 

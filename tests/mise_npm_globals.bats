@@ -26,8 +26,14 @@ MISE_CONFIG="${REPO_ROOT_REAL}/content/home/.config/mise/config.toml"
     [ "$status" -ne 0 ]
 }
 
+@test "azure-cli and vercel are casks: homebrew-core migrated both formulae" {
+    run grep -Eq '^brew "(azure-cli|vercel)"' "${REPO_ROOT_REAL}/config/Brewfile"
+    [ "${status}" -ne 0 ]
+    grep -Fxq 'cask "azure-cli" if OS.mac?' "${REPO_ROOT_REAL}/config/Brewfile"
+}
+
 @test "vercel is owned by Homebrew, not mise" {
-    grep -Fxq 'brew "vercel"' "${REPO_ROOT_REAL}/config/Brewfile"
+    grep -Fxq 'cask "vercel" if OS.mac?' "${REPO_ROOT_REAL}/config/Brewfile"
     run grep -Fq '"npm:vercel" = ' "${MISE_CONFIG}"
     [ "$status" -ne 0 ]
 }

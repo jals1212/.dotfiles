@@ -10,6 +10,13 @@ if ! command -v path_manifest >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v components_has >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/components.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/components.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # dotbot_managed_dirs
 #   Print unique $HOME directories managed by the repository's Dotbot configs.
@@ -320,6 +327,79 @@ PY
 }
 
 # ---------------------------------------------------------------------------
+# dotbot_links_config <config.yaml> <destination prefix>...
+#   Print a Dotbot config holding the `defaults` of <config> and only its link:
+#   entries whose destination (as written, e.g. ~/.config/tmux/tmux.conf)
+#   starts with one of the prefixes, each with its own path/if/glob options.
+#   Prints nothing when no entry matches. Used to make exactly the links of a
+#   few components without running the rest of the config.
+# ---------------------------------------------------------------------------
+dotbot_links_config() {
+    _dlc_root="${REPO_ROOT:?REPO_ROOT required}"
+    _dlc_config="${1:?dotbot_links_config: config required}"
+    shift
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        log_error "python3 not found; cannot derive the Dotbot links"
+        return 1
+    fi
+
+    python3 - "${_dlc_root}" "${_dlc_config}" "$@" <<'PY'
+import os
+import sys
+
+repo_root = sys.argv[1]
+config = sys.argv[2]
+prefixes = tuple(sys.argv[3:])
+sys.path.insert(0, os.path.join(repo_root, "vendor/dotbot/lib/pyyaml/lib"))
+
+import yaml
+
+with open(config, encoding="utf-8") as fh:
+    data = yaml.safe_load(fh) or []
+
+out = []
+links = {}
+for item in data if isinstance(data, list) else []:
+    if not isinstance(item, dict):
+        continue
+    if isinstance(item.get("defaults"), dict) and not any("defaults" in o for o in out):
+        out.append({"defaults": item["defaults"]})
+    link = item.get("link")
+    if isinstance(link, dict):
+        for destination, spec in link.items():
+            if str(destination).strip().startswith(prefixes):
+                links[destination] = spec
+
+if links:
+    out.append({"link": links})
+    sys.stdout.write(yaml.safe_dump(out, default_flow_style=False, sort_keys=False))
+PY
+}
+
+# ---------------------------------------------------------------------------
+# dotbot_links_apply <config.yaml> <destination prefix>...
+#   Make only the links of <config> under the prefixes (dotbot_links_config),
+#   through the Dotbot wrapper, so relink/backup/if: behave exactly as in a
+#   full run. Nothing else of the config runs. Returns the wrapper's status.
+# ---------------------------------------------------------------------------
+dotbot_links_apply() {
+    _dla_tmp="$(mktemp)" || return 1
+    if ! dotbot_links_config "$@" > "${_dla_tmp}"; then
+        rm -f "${_dla_tmp}"
+        return 1
+    fi
+    if [ ! -s "${_dla_tmp}" ]; then
+        rm -f "${_dla_tmp}"
+        return 0
+    fi
+    "$(path_install_wrapper)" "${_dla_tmp}"
+    _dla_rc=$?
+    rm -f "${_dla_tmp}"
+    return "${_dla_rc}"
+}
+
+# ---------------------------------------------------------------------------
 # dotbot_filter_repo_owned_links
 #   Read symlink paths (one per line) on stdin; print only those whose link
 #   target points inside REPO_ROOT. Relative targets are resolved against the
@@ -434,5 +514,21 @@ dotbot_theme_apply() {
     fi
 
     log_step "Applying theme config: content/themes/${_dta_theme}-${_dta_flavor}.yaml"
-    "$(path_install_wrapper)" "${_dta_config}"
+
+    # The Ghostty theme link is made only when Ghostty is selected
+    # (./dots components): run a copy of the config without that one link.
+    # Fail open: without the components lib the config runs as it is.
+    _dta_run="${_dta_config}"
+    _dta_tmp=""
+    if command -v components_has >/dev/null 2>&1 && command -v dots_local_get >/dev/null 2>&1 \
+        && ! components_has ghostty; then
+        _dta_tmp="$(mktemp)" || return 1
+        grep -v '^[[:space:]]*~/\.config/ghostty/themes/dots:' "${_dta_config}" > "${_dta_tmp}" || true
+        _dta_run="${_dta_tmp}"
+    fi
+
+    "$(path_install_wrapper)" "${_dta_run}"
+    _dta_rc=$?
+    [ -z "${_dta_tmp}" ] || rm -f "${_dta_tmp}"
+    return "${_dta_rc}"
 }

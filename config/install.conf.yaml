@@ -101,18 +101,35 @@
       glob: true
       path: content/home/.config/nvim/.*
 
-    # Tmux
-    ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
-    ~/.config/tmux/theme.conf: content/home/.config/tmux/theme.conf
-    ~/.config/tmux/scripts/session-picker.sh: content/home/.config/tmux/scripts/session-picker.sh
-    ~/.config/tmux/scripts/pin-plugins.sh: content/home/.config/tmux/scripts/pin-plugins.sh
+    # Tmux, Herdr and Ghostty — linked only for the components chosen with
+    # ./dots components (DOTS_COMPONENTS in ~/.config/zsh/local.zsh). The if:
+    # predicate runs from the repo root; nothing recorded or `none` links none.
+    # herdr-core and herdr-app share the Herdr config with the TUI.
+    ~/.config/tmux/tmux.conf:
+      path: content/home/.config/tmux/tmux.conf
+      if: &if_tmux 'sh content/home/.config/dots/component-selected.sh tmux'
+    ~/.config/tmux/theme.conf:
+      path: content/home/.config/tmux/theme.conf
+      if: *if_tmux
+    ~/.config/tmux/scripts/session-picker.sh:
+      path: content/home/.config/tmux/scripts/session-picker.sh
+      if: *if_tmux
+    ~/.config/tmux/scripts/pin-plugins.sh:
+      path: content/home/.config/tmux/scripts/pin-plugins.sh
+      if: *if_tmux
 
-    # Herdr
-    ~/.config/herdr/config.toml: content/home/.config/herdr/config.toml
+    ~/.config/herdr/config.toml:
+      path: content/home/.config/herdr/config.toml
+      if: 'sh content/home/.config/dots/component-selected.sh herdr-tui herdr-core herdr-app'
 
-    # Ghostty — config file + shaders directory link
-    ~/.config/ghostty/config: content/home/.config/ghostty/config
-    ~/.config/ghostty/shaders: content/home/.config/ghostty/shaders
+    # Ghostty — config file + shaders directory link (the config is useful on
+    # Linux too when Ghostty comes from the distro; only the cask is macOS-only)
+    ~/.config/ghostty/config:
+      path: content/home/.config/ghostty/config
+      if: &if_ghostty 'sh content/home/.config/dots/component-selected.sh ghostty'
+    ~/.config/ghostty/shaders:
+      path: content/home/.config/ghostty/shaders
+      if: *if_ghostty
 
 
     # Mise — linked before the mise: directive so mise install reads the XDG path
@@ -128,7 +145,7 @@
       path: content/home/.config/duti/vscodium.duti
       if: '[ "$(uname)" = Darwin ]'
 
-    # Remote agents — SSH key hardening run by the moshi-pair zsh function, macOS only
+    # Remote agents — SSH key hardening, run by hand after pairing a phone (Herdr Mobile), macOS only
     ~/.config/remote-agents/harden-authorized-keys.sh:
       path: content/home/.config/remote-agents/harden-authorized-keys.sh
       if: '[ "$(uname)" = Darwin ]'
@@ -148,6 +165,36 @@
       if [ "$(uname)" = Darwin ] && command -v duti >/dev/null 2>&1 && open -Ra VSCodium >/dev/null 2>&1; then
         duti ~/.config/duti/vscodium.duti || echo "warning: duti could not apply ~/.config/duti/vscodium.duti" >&2
       fi
+    quiet: true
+    stdout: true
+    stderr: true
+
+# ── Herdr installers ───────────────────────────────────────────────────────────
+# Herdr's official installers, run only for the selected components (no version
+# pin). The conditions and the installer calls live in one script, also used by
+# `./dots components` for its targeted install, so they cannot drift:
+# content/home/.config/dots/herdr-install.sh. Both skip when already installed and
+# only warn on failure (`|| true`), so an offline run still finishes.
+#
+# Herdr app, Linux only: macOS gets it from the herdr-app cask (Brewfile); Homebrew
+# has no Linux package. It installs ~/.local/share/herdr-app with herdr-app and hc
+# in ~/.local/bin, and brings the core.
+- shell:
+  - description: Install Herdr desktop app (Linux, official installer)
+    command: |
+      sh content/home/.config/dots/herdr-install.sh app || true
+    quiet: true
+    stdout: true
+    stderr: true
+
+# Herdr core, macOS and Linux (Homebrew has no core package): on Linux skipped
+# when the app is selected (its official installer brings the core); on macOS the
+# app is the herdr-app cask, which brings no core, so it runs with the app too.
+# Skipped when herdr-core already exists on PATH or in ~/.local/bin.
+- shell:
+  - description: Install Herdr core (official installer)
+    command: |
+      sh content/home/.config/dots/herdr-install.sh core || true
     quiet: true
     stdout: true
     stderr: true

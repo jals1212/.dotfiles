@@ -81,7 +81,9 @@ EOF
 }
 
 @test "install.conf.yaml links the pin script" {
-    grep -q '~/.config/tmux/scripts/pin-plugins.sh: content/home/.config/tmux/scripts/pin-plugins.sh' "${INSTALL_CONF}"
+    # Linked only when tmux is selected (./dots components): dest line, then its path.
+    grep -A1 -E '^ +~/\.config/tmux/scripts/pin-plugins\.sh:$' "${INSTALL_CONF}" |
+        grep -q 'path: content/home/.config/tmux/scripts/pin-plugins.sh'
     [ -f "${PIN_SCRIPT}" ]
 }
 

@@ -117,31 +117,22 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 
 # --- 2. macOS-only functions --------------------------------------------------
 
-@test "cdf and moshi-pair are not defined on Linux" {
+@test "cdf is not defined on Linux" {
     _ostype Linux
     _zsh "source '${ZSH_DIR}/functions.zsh'
-          print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
+          print -r -- \"cdf:\${+functions[cdf]}\""
 
     [ "${status}" -eq 0 ]
-    _has "cdf:0 moshi-pair:0"
+    _has "cdf:0"
 }
 
-@test "cdf and moshi-pair stay defined on macOS" {
+@test "cdf stays defined on macOS" {
     _ostype Darwin
     _zsh "source '${ZSH_DIR}/functions.zsh'
-          print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
+          print -r -- \"cdf:\${+functions[cdf]}\""
 
     [ "${status}" -eq 0 ]
-    _has "cdf:1 moshi-pair:1"
-}
-
-@test "moshi-pair on macOS still refuses to pair without the hardening script" {
-    _ostype Darwin
-    _zsh "source '${ZSH_DIR}/functions.zsh'; moshi-pair"
-
-    [ "${status}" -eq 1 ]
-    _has "moshi-pair: missing or non-executable ${HOME}/.config/remote-agents/harden-authorized-keys.sh"
-    _has "moshi-pair: refusing to pair without the hardening step"
+    _has "cdf:1"
 }
 
 @test "aliases follow \$OSTYPE: open is xdg-open and C is wl-copy on Linux, C is pbcopy on macOS" {
@@ -242,8 +233,16 @@ _sysbin() {
     done
 }
 
+# _select_all — every terminal component selected, so the doctor runs the
+# tmux/herdr/ghostty checks (it skips the unselected ones).
+_select_all() {
+    mkdir -p "${HOME}/.config/zsh"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux herdr-tui herdr-core herdr-app ghostty}"\n' > "${HOME}/.config/zsh/local.zsh"
+}
+
 _doctor() {
     _sysbin
+    _select_all
     run env -i HOME="${HOME}" PATH="${SHIMS}:${BATS_TEST_TMPDIR}/sysbin" NO_COLOR=1 REPO_ROOT="${REPO_ROOT_REAL}" \
         sh -c ". '${REPO_ROOT_REAL}/src/lib/log.sh'; . '${REPO_ROOT_REAL}/src/lib/doctor.sh'; $1"
 }
@@ -297,6 +296,7 @@ _doctor() {
         'DOCTOR_CHECKS="check_dotbot_submodule check_orbstack check_docker check_ghostty_link check_ghostty_theme_marker"' \
         'export DOCTOR_CHECKS' >> "${REPO}/src/lib/doctor.sh"
     printf '{}\n' > "${REPO}/manifest.json"
+    _select_all
     _uname Linux
 
     run env PATH="${SHIMS}:${PATH}" sh "${REPO}/dots" doctor
@@ -357,3 +357,15 @@ _doctor_os() {
     _has "rc=0"
 }
 
+
+# --- remote access: Tailscale + Herdr Mobile ----------------------------------
+
+@test "mosh and Moshi are gone; tailscale and the SSH key hardening script stay" {
+    root="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
+    run grep -rniE 'mosh|moshi|easy pair' "${root}/config" "${root}/content/home/.config/zsh" \
+        "${root}/content/home/.config/remote-agents" "${root}/docs"
+    [ "${status}" -ne 0 ]
+    grep -Fxq 'brew "tailscale"' "${root}/config/Brewfile"
+    [ -x "${root}/content/home/.config/remote-agents/harden-authorized-keys.sh" ]
+    grep -Fq '~/.config/remote-agents/harden-authorized-keys.sh:' "${root}/config/install.conf.yaml"
+}

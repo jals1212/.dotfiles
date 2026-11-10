@@ -1,5 +1,5 @@
 #!/bin/sh
-# lib/select.sh — interactive theme/flavor/prompt pickers (lib/tui.sh)
+# lib/select.sh — interactive theme/flavor/prompt/font/components pickers (lib/tui.sh)
 # POSIX sh. Source this file; do not execute directly.
 # Requires: lib/tui.sh (tui_choose, tui_card), jq.
 #
@@ -9,6 +9,7 @@
 # shellcheck source=src/lib/log.sh
 # shellcheck source=src/lib/detect.sh
 # shellcheck source=src/lib/header.sh
+# shellcheck source=src/lib/components.sh
 
 if ! command -v path_manifest >/dev/null 2>&1; then
     if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/paths.sh" ]; then
@@ -21,6 +22,13 @@ if ! command -v _header_color_code >/dev/null 2>&1; then
     if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib header.sh)" ]; then
         # shellcheck disable=SC1091
         . "$(path_src_lib header.sh)"
+    fi
+fi
+
+if ! command -v components_normalize >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib components.sh)" ]; then
+        # shellcheck disable=SC1091
+        . "$(path_src_lib components.sh)"
     fi
 fi
 
@@ -117,6 +125,37 @@ select_prompt() {
 
     _sp_chosen="$(tui_choose "Select prompt engine:" "${_sp_current}" starship p10k)" || exit 130
     printf '%s' "${_sp_chosen}"
+}
+
+# ---------------------------------------------------------------------------
+# select_font [current_font]
+#   Presents a tui_choose picker over the supported terminal fonts.
+#   Pre-focuses current_font when provided.
+# ---------------------------------------------------------------------------
+select_font() {
+    _sfo_current="${1:-}"
+
+    _sfo_chosen="$(tui_choose "Select terminal font:" "${_sfo_current}" jetbrains-mono iosevka)" || exit 130
+    printf '%s' "${_sfo_chosen}"
+}
+
+# ---------------------------------------------------------------------------
+# select_components [current_ids]
+#   Presents a tui_checklist over the terminal components (lib/components.sh);
+#   [current_ids] (space-separated) start checked, none by default. Prints the
+#   normalized selection on one line (empty for none), herdr-core included
+#   whenever herdr-app is checked. Exits 130 on cancel.
+# ---------------------------------------------------------------------------
+select_components() {
+    _sco_current="${1:-}"
+
+    set --
+    for _sco_id in ${COMPONENT_IDS}; do
+        set -- "$@" "${_sco_id}|$(component_label "${_sco_id}")"
+    done
+    _sco_chosen="$(tui_checklist "Select components to install:" "${_sco_current}" "${COMPONENT_IMPLIES}" "$@")" || exit 130
+    # shellcheck disable=SC2086
+    components_normalize ${_sco_chosen}
 }
 
 # ---------------------------------------------------------------------------

@@ -28,6 +28,13 @@ if ! command -v dotbot_theme_apply >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v components_has >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "$(path_src_lib components.sh)" ]; then
+        # shellcheck disable=SC1090,SC1091
+        . "$(path_src_lib components.sh)"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # Internal helpers (prefixed _th_)
 # ---------------------------------------------------------------------------
@@ -431,6 +438,8 @@ theme_current() {
 # theme_apply <theme> <flavor>
 #   Full theme apply: validate → nvim link preflight → dotbot → nvim link →
 #   starship fence → local state → bat cache → tmux reload → manifest.
+#   The Herdr fence, the tmux reload and the Herdr reload only run for the
+#   components selected with ./dots components; the rest always runs.
 #   Returns 0 on success, non-zero on any failure.
 # ---------------------------------------------------------------------------
 theme_apply() {
@@ -468,7 +477,10 @@ theme_apply() {
     # --- Step 3b: Herdr config fence ---
     # Herdr ships built-in theme names, so dots maps its richer flavor matrix
     # to the closest Herdr built-in and keeps auto_switch disabled.
-    _th_apply_herdr_theme "${_ta_theme}" "${_ta_flavor}" || return 1
+    # Skipped unless a Herdr component is selected (./dots components).
+    if components_has_any herdr-tui herdr-core herdr-app; then
+        _th_apply_herdr_theme "${_ta_theme}" "${_ta_flavor}" || return 1
+    fi
 
     # --- Step 3c: machine-local theme state ---
     # p10k reads its palette and tmux.conf its @themux_theme from DOTS_THEME,
@@ -493,15 +505,17 @@ theme_apply() {
     # tmux.conf reads @themux_theme from DOTS_THEME at parse time, and the
     # server keeps the environment it was started with, so push the new value
     # into its global environment before re-sourcing the config.
-    if tmux info >/dev/null 2>&1; then
+    # Skipped unless tmux is selected (./dots components).
+    if components_has tmux && tmux info >/dev/null 2>&1; then
         tmux set-environment -g DOTS_THEME "${_ta_theme}_${_ta_flavor}" 2>/dev/null \
             || log_warn "tmux set-environment failed; active sessions may keep the old theme"
         tmux source-file "$(path_home_tmux_config)" 2>/dev/null \
             || log_warn "tmux source-file failed; active sessions may need a manual reload"
     fi
 
-    # --- Step 6: Herdr server reload ---
-    if command -v herdr >/dev/null 2>&1 && herdr status server >/dev/null 2>&1; then
+    # --- Step 6: Herdr server reload (only when a Herdr component is selected) ---
+    if components_has_any herdr-tui herdr-core herdr-app \
+        && command -v herdr >/dev/null 2>&1 && herdr status server >/dev/null 2>&1; then
         herdr server reload-config >/dev/null 2>&1 \
             || log_warn "herdr reload-config failed; active clients may keep the old theme"
     fi
