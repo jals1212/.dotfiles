@@ -212,7 +212,6 @@ components_herdr_app_migrate "${_yes}" || log_warn "Moving Herdr app to Homebrew
 # ---------------------------------------------------------------------------
 # Base dotbot run
 # ---------------------------------------------------------------------------
-log_step "Running base dotbot config..."
 dotbot_base_apply || {
     log_error "Base dotbot apply failed"
     exit 1
