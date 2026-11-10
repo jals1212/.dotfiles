@@ -9,7 +9,7 @@ MISE_CONFIG="${REPO_ROOT_REAL}/content/home/.config/mise/config.toml"
     for pkg in \
         '"npm:@colbymchenry/codegraph"' \
         '"npm:@earendil-works/pi-coding-agent"' \
-        '"npm:@jals1212/pi-spaces-cli"' \
+        '"npm:pi-spaces-cli"' \
         '"npm:gentle-pi"' \
         '"npm:neon"'; do
         grep -Fq "${pkg} = " "${MISE_CONFIG}"
@@ -17,7 +17,7 @@ MISE_CONFIG="${REPO_ROOT_REAL}/content/home/.config/mise/config.toml"
 }
 
 @test "own packages skip the release-age gate so new releases install at once" {
-    grep -Fq 'minimum_release_age_excludes = ["npm:@jals1212/pi-spaces-cli"]' "${MISE_CONFIG}"
+    grep -Fq 'minimum_release_age_excludes = ["npm:pi-spaces-cli"]' "${MISE_CONFIG}"
 }
 
 @test "Brewfile does not duplicate CLIs owned by mise" {
