@@ -221,6 +221,9 @@ _menu() {
     run _menu "" 'jj\n'
     [ "${output}" = "clean" ]
 
+    run _menu "" 'jjjj\n'
+    [ "${output}" = "components" ]
+
     run _menu "" '\033[B\033[B\033[A\n'
     [ "${output}" = "upgrade" ]
 
@@ -250,9 +253,10 @@ _menu() {
     grep -qx "Danger" "${SANDBOX}/menu.err"
     grep -qx "> update     Apply dotfiles and the active theme" "${SANDBOX}/menu.err"
     grep -qx "  doctor     Health checks that change nothing" "${SANDBOX}/menu.err"
+    grep -qx "  components Choose which terminal components get installed" "${SANDBOX}/menu.err"
     grep -qx "  uninstall  ⚠ Remove managed symlinks and manifest" "${SANDBOX}/menu.err"
     grep -qx "↑↓/jk move · enter run · q quit" "${SANDBOX}/menu.err"
-    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor theme prompt font uninstall help quit " ]
+    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor components theme prompt font uninstall help quit " ]
 }
 
 # --- confirm ---------------------------------------------------------------
@@ -599,4 +603,133 @@ _cancel_keys_continue() {
 
 @test "q and esc at a confirm or picker still cancel and the caller continues" {
     _each_pty_shell _cancel_keys_continue
+}
+
+# --- checklist (tui_checklist: checkboxes, space toggles) -------------------
+
+# _checklist <checked> <implies> <keys> <item...> — tui_checklist reading <keys>
+# (printf format) from fd 3; stdout is the checked ids in item order, stderr
+# the drawn frames. Items are "id|label".
+_checklist() {
+    _ck="$1"; _imp="$2"; _k="$3"; shift 3
+    printf "${_k}" > "${SANDBOX}/keys"
+    tui_checklist "Pick tools:" "${_ck}" "${_imp}" "$@" 3<"${SANDBOX}/keys" 2>"${SANDBOX}/checklist.err"
+}
+
+@test "tui_checklist space toggles the row under the cursor and enter confirms" {
+    run _checklist "" "" ' j j\n' 'a|Alpha' 'b|Beta' 'c|Gamma'
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'a\nb')" ]
+}
+
+@test "tui_checklist starts from the checked ids and space unchecks" {
+    run _checklist "a c" "" '\n' 'a|Alpha' 'b|Beta' 'c|Gamma'
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'a\nc')" ]
+
+    run _checklist "a c" "" ' \n' 'a|Alpha' 'b|Beta' 'c|Gamma'
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "c" ]
+}
+
+@test "tui_checklist prints ids in item order whatever the toggle order" {
+    run _checklist "" "" 'jj jk\033[B\033[A \n' 'a|Alpha' 'b|Beta' 'c|Gamma'
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'b\nc')" ]
+}
+
+@test "tui_checklist cursor stops at the first and last rows" {
+    run _checklist "" "" 'kk jjjjjj \n' 'a|Alpha' 'b|Beta' 'c|Gamma'
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'a\nc')" ]
+}
+
+@test "tui_checklist confirms an empty selection with status 0 and no output" {
+    run _checklist "" "" '\n' 'a|Alpha' 'b|Beta'
+
+    [ "${status}" -eq 0 ]
+    [ -z "${output}" ]
+}
+
+@test "tui_checklist q, esc and end of input cancel with status 1 and no output" {
+    run _checklist "a" "" ' jjq' 'a|Alpha' 'b|Beta'
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+
+    run _checklist "a" "" 'j \033' 'a|Alpha' 'b|Beta'
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+
+    run _checklist "a" "" ' ' 'a|Alpha' 'b|Beta'
+    [ "${status}" -eq 1 ]
+    [ -z "${output}" ]
+}
+
+@test "tui_checklist draws the header, checkboxes, cursor and key hints" {
+    run _checklist "b" "" 'q' 'a|Alpha' 'b|Beta'
+
+    grep -Fqx "Pick tools:" "${SANDBOX}/checklist.err"
+    grep -Fqx "> [ ] Alpha" "${SANDBOX}/checklist.err"
+    grep -Fqx "  [x] Beta" "${SANDBOX}/checklist.err"
+    grep -Fqx "↑↓/jk move · space toggle · enter confirm · q cancel" "${SANDBOX}/checklist.err"
+}
+
+@test "tui_checklist checking a row checks the rows it implies" {
+    run _checklist "" "app>core" 'jj \n' 'tmux|Tmux' 'core|Core' 'app|App'
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'core\napp')" ]
+    grep -Fqx "  [x] Core" "${SANDBOX}/checklist.err"
+}
+
+@test "tui_checklist shows an implied row checked when the implying row starts checked" {
+    run _checklist "app" "app>core" 'q' 'core|Core' 'app|App'
+
+    grep -Fqx "> [x] Core" "${SANDBOX}/checklist.err"
+    run _checklist "app" "app>core" '\n' 'core|Core' 'app|App'
+    [ "${output}" = "$(printf 'core\napp')" ]
+}
+
+@test "tui_checklist keeps an implied row checked while the implying row is" {
+    run _checklist "app" "app>core" ' \n' 'core|Core' 'app|App'
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "$(printf 'core\napp')" ]
+}
+
+@test "tui_checklist unchecking the implying row leaves the implied row checked" {
+    run _checklist "app" "app>core" 'j \n' 'core|Core' 'app|App'
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "core" ]
+}
+
+@test "tui_checklist keeps the caller's INT trap and leaks none" {
+    printf ' \n' > "${SANDBOX}/keys"
+
+    run _sh_tui "
+        trap 'echo caller' INT
+        picked=\$(tui_checklist 'h' '' '' 'a|A' 'b|B' 3<\"\$2\" 2>/dev/null)
+        echo picked=\$picked
+        trap"
+    _has 'picked=a'
+    _has 'echo caller'
+
+    run _sh_tui "
+        picked=\$(tui_checklist 'h' '' '' 'a|A' 3<\"\$2\" 2>/dev/null)
+        trap"
+    _lacks 'INT'
+    _lacks 'TERM'
+}
+
+@test "tui_checklist cancels with 1 and does not abort when there is no tty" {
+    run _no_tty 'tui_checklist "h" "" "" "a|A" "b|B" 3<&-; echo "after rc=$?"'
+
+    _lacks 'Device not configured'
+    _has 'after rc=1'
+}
+
+@test "tui_confirm still ignores the space key" {
+    run _confirm n '  y'
+    [ "${status}" -eq 0 ]
 }

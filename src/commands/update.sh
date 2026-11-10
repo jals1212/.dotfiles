@@ -15,13 +15,17 @@ _update_usage() {
     printf '  selected theme. Theme/flavor are read from manifest.json when\n' >&2
     printf '  present; flags override; hardcoded defaults apply on first run.\n\n' >&2
     printf 'FLAGS\n' >&2
-    printf '  --yes             Non-interactive: skip pickers, apply immediately.\n' >&2
+    printf '  --yes             Non-interactive: skip pickers (theme, font, components),\n' >&2
+    printf '                    apply immediately.\n' >&2
     printf '  --theme=NAME      Override active theme (e.g. kanagawa, catppuccin).\n' >&2
     printf '  --flavor=NAME     Override active flavor (e.g. dragon, mocha).\n' >&2
     printf '  --pull            Run git pull --ff-only against upstream before\n' >&2
     printf '                    invoking dotbot. Aborts on non-fast-forward or\n' >&2
     printf '                    missing upstream; does not touch the remote otherwise.\n' >&2
     printf '  --help / -h       Show this message.\n\n' >&2
+    printf 'On a TTY, update also asks once for the terminal components (tmux,\n' >&2
+    printf 'Herdr, Ghostty) while none is recorded; choose them later with\n' >&2
+    printf './dots components. --yes never asks.\n\n' >&2
     printf 'Any other argument is an error (exit 2); nothing runs.\n\n' >&2
     printf 'NOTE\n' >&2
     printf '  --tools is not accepted. Managed packages are declared in Brewfile\n' >&2
@@ -57,6 +61,8 @@ export REPO_ROOT
 . "$(path_src_lib detect.sh)"
 # shellcheck source=src/lib/font.sh
 . "$(path_src_lib font.sh)"
+# shellcheck source=src/lib/components.sh
+. "$(path_src_lib components.sh)"
 
 # ---------------------------------------------------------------------------
 # Parse flags
@@ -174,6 +180,23 @@ fi
 _active_font="$(font_current)"
 if [ "${_yes}" -eq 0 ] && [ -z "$(font_recorded)" ] && [ -t 0 ] && [ -t 1 ]; then
     _active_font="$(select_font "${_active_font}")"
+fi
+
+# ---------------------------------------------------------------------------
+# Components: the recorded machine-local selection; asked once on a TTY while
+# none is recorded (first install), then recorded. --yes never asks and never
+# records. Change it later with ./dots components.
+# ---------------------------------------------------------------------------
+if [ "${_yes}" -eq 0 ] && [ -z "$(components_recorded)" ] && [ -t 0 ] && [ -t 1 ]; then
+    _chosen_components="$(select_components "")" || {
+        log_warn "Update cancelled."
+        exit 130
+    }
+    # shellcheck disable=SC2086
+    components_apply ${_chosen_components} || {
+        log_error "Recording the component selection failed"
+        exit 1
+    }
 fi
 
 # ---------------------------------------------------------------------------

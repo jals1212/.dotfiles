@@ -434,6 +434,13 @@ check_local_state() {
         jetbrains-mono|iosevka) ;;
         *) _doc_fail "${_cls_label}" "DOTS_FONT not whitelisted: ${_cls_font}"; return 1 ;;
     esac
+    _cls_components="$(sed -n 's/^export DOTS_COMPONENTS="\${DOTS_COMPONENTS:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
+    for _cls_id in ${_cls_components}; do
+        case "${_cls_id}" in
+            none|tmux|herdr-tui|herdr-core|herdr-app|ghostty) ;;
+            *) _doc_fail "${_cls_label}" "DOTS_COMPONENTS not whitelisted: ${_cls_id}"; return 1 ;;
+        esac
+    done
     _doc_pass "${_cls_label}"
     return 0
 }

@@ -55,7 +55,7 @@ _require_bsd_script() {
 
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"jals1212 DOTS"*"· kanagawa/dragon"* ]] || return 1
-    [[ "${output}" == *"update"*"upgrade"*"clean"*"doctor"*"theme"*"prompt"*"font"*"uninstall"*"help"*"quit"* ]] || return 1
+    [[ "${output}" == *"update"*"upgrade"*"clean"*"doctor"*"components"*"theme"*"prompt"*"font"*"uninstall"*"help"*"quit"* ]] || return 1
     [[ "${output}" == *"q quit"* ]]
 }
 
@@ -81,10 +81,10 @@ _require_bsd_script() {
 @test "help menu choice prints usage and loops back, then quits" {
     _require_bsd_script || skip "PTY script syntax unavailable"
 
-    # Keys: move to help (9th item), enter (loops back), then q (exits).
+    # Keys: move to help (10th item), enter (loops back), then q (exits).
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        DOTS_MENU_INPUT="$(_keys 'jjjjjjjj\nq')" \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjjjj\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
@@ -97,7 +97,7 @@ _require_bsd_script() {
 
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        DOTS_MENU_INPUT="$(_keys 'jjjjjjjjj\n')" \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjjjjj\n')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 
@@ -113,7 +113,7 @@ _require_bsd_script() {
     # Pick help (enter), then enter again on the pre-selected help, then q.
     run script -q /dev/null env \
         PATH="${MOCKBIN}:${PATH}" \
-        DOTS_MENU_INPUT="$(_keys 'jjjjjjjj\n\nq')" \
+        DOTS_MENU_INPUT="$(_keys 'jjjjjjjjj\n\nq')" \
         DOTS_NO_PAUSE=1 \
         "${REPO_COPY}/dots"
 

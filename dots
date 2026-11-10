@@ -39,6 +39,7 @@ _dots_help() {
     printf '  theme       Switch the active theme/flavor.\n'
     printf '  prompt      Switch the active prompt engine (starship | p10k).\n'
     printf '  font        Switch the terminal font (jetbrains-mono | iosevka).\n'
+    printf '  components  Choose which terminal components get installed.\n'
     printf '  doctor      Non-mutating health checks.\n'
     printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n'
     printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n'
@@ -65,6 +66,7 @@ _dots_run() {
         theme)     sh "$(path_command theme)"     "$@" ;;
         prompt)    sh "$(path_command prompt)"    "$@" ;;
         font)      sh "$(path_command font)"      "$@" ;;
+        components) sh "$(path_command components)" "$@" ;;
         doctor)    sh "$(path_command doctor)"    "$@" ;;
         clean)     sh "$(path_command clean)"     "$@" ;;
         upgrade)   sh "$(path_command upgrade)"   "$@" ;;

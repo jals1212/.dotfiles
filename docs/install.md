@@ -83,9 +83,10 @@ Run `./dots` for the visual action menu: a one-line status (active theme, prompt
 | Command | Use when you want to... |
 | --- | --- |
 | `./dots` | Open the visual action menu. |
-| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. Unknown arguments are rejected (stderr, exit 2). |
+| `./dots update [--pull] [--theme=X --flavor=Y] [--yes]` | Run `./install` (full base config) then apply the active theme. `--pull` runs `git pull --ff-only` first. On a TTY with no flags, `Change theme?` defaults to No; press Enter to reapply the manifest theme, or Y to choose a new theme/flavor. On a TTY it also asks the component checklist once while none is recorded (`./dots components`); `--yes` never asks. Unknown arguments are rejected (stderr, exit 2). |
 | `./dots theme <theme> <flavor>` | Switch theme (or `./dots theme` for interactive picker, `--current` to show active). |
 | `./dots font <font>` | Switch the terminal font: `jetbrains-mono` (default) or `iosevka` (or `./dots font` for the picker, `--current` to show active). On macOS the Nerd Font cask is installed when missing. |
+| `./dots components [<id>... \| none]` | Choose with checkboxes which terminal components you want: `tmux`, `herdr-tui`, `herdr-core`, `herdr-app` (checking it also checks `herdr-core`) and `ghostty`. None are checked by default. Recorded machine-locally as `DOTS_COMPONENTS` in `~/.config/zsh/local.zsh`; `./dots components` opens the checklist, `--current` shows the selection, and `./dots update` asks it once on a TTY while nothing is recorded (`--yes` never asks). |
 | `./dots doctor` | Non-mutating health check. On Linux the macOS-only checks are skipped, not failed. |
 | `./dots clean [--age=N] [--dry-run]` | Remove dead symlinks that point into this repo; prune dotbot backups of declared links older than N days (default 30). Never touches links or backups the repo did not create. |
 | `./dots upgrade [--commit] [--dry-run]` | Bump pinned submodule commits; `brew bundle cleanup`; `mise prune`. `--commit` commits only the gitlinks it advanced; other staged files stay staged. |

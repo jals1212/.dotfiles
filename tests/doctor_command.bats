@@ -86,6 +86,23 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
     _has "[FAIL] machine-local zsh state: DOTS_FONT not whitelisted: comic"
 }
 
+@test "doctor accepts whitelisted DOTS_COMPONENTS ids and none, and rejects any other" {
+    mkdir -p "${HOME}/.config/zsh"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux herdr-tui herdr-core herdr-app ghostty}"\n' > "${HOME}/.config/zsh/local.zsh"
+    run sh "${REPO}/dots" doctor
+    [ "${status}" -eq 0 ]
+    _has "[PASS] machine-local zsh state"
+
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-none}"\n' > "${HOME}/.config/zsh/local.zsh"
+    run sh "${REPO}/dots" doctor
+    [ "${status}" -eq 0 ]
+
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux vim}"\n' > "${HOME}/.config/zsh/local.zsh"
+    run sh "${REPO}/dots" doctor
+    [ "${status}" -eq 1 ]
+    _has "[FAIL] machine-local zsh state: DOTS_COMPONENTS not whitelisted: vim"
+}
+
 @test "doctor --help exits 0 without running any check" {
     run sh "${REPO}/dots" doctor --help
 

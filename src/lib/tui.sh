@@ -117,6 +117,7 @@ _TUI_MENU_ROWS='Maintain|update|Apply dotfiles and the active theme
 Maintain|upgrade|Bump vendored deps plus brew and mise
 Maintain|clean|Remove dead symlinks and stale backups
 Maintain|doctor|Health checks that change nothing
+Maintain|components|Choose which terminal components get installed
 Appearance|theme|Switch theme or flavor
 Appearance|prompt|Switch prompt engine: starship or p10k
 Appearance|font|Switch terminal font: jetbrains-mono or iosevka
@@ -158,8 +159,8 @@ _tui_menu_frame() {
     '
 }
 
-# _tui_read_key — read one key from fd 3: up, down, enter, quit or other.
-# End of input and a lone esc count as quit.
+# _tui_read_key — read one key from fd 3: up, down, enter, toggle (space),
+# yes, no, quit or other. End of input and a lone esc count as quit.
 _tui_read_key() {
     _trk_c="$(dd bs=1 count=1 2>/dev/null <&3; printf x)"
     _trk_c="${_trk_c%x}"
@@ -168,6 +169,7 @@ _tui_read_key() {
         # Literal newline: "$(printf '\n')" would be empty (stripped).
         '
 '|"$(printf '\r')") printf 'enter' ;;
+        ' ') printf 'toggle' ;;
         q|Q) printf 'quit' ;;
         y|Y) printf 'yes' ;;
         n|N) printf 'no' ;;
@@ -225,6 +227,10 @@ _tui_die_by() {
 # Draws "<frame-fn> <cursor> <accent> <color>" on stderr after each key and
 # prints the chosen 1-based index, or 0 for q, esc or end of input. Needs
 # _TUI_PICK_ACCENT set by the caller.
+# Checklists add two optional hooks (function names): _TUI_PICK_TOGGLE_FN is
+# called with the cursor row on space, and _TUI_PICK_RESULT_FN prints extra
+# lines after the index when a row was chosen. Both run in this subshell, so
+# the state they keep reaches the frame function but not the caller.
 # The body is a subshell: its INT/TERM trap, stty changes and helper never
 # touch the caller's shell, so there are no caller traps to save and replay.
 # On INT/TERM it restores the terminal, then dies by that signal (see
@@ -265,12 +271,16 @@ _tui_pick() (
         case "$(_tui_read_key)" in
             up) [ "${_tp_cur}" -gt 1 ] && _tp_cur=$((_tp_cur - 1)) ;;
             down) [ "${_tp_cur}" -lt "${_tp_n}" ] && _tp_cur=$((_tp_cur + 1)) ;;
+            toggle) [ -n "${_TUI_PICK_TOGGLE_FN:-}" ] && { "${_TUI_PICK_TOGGLE_FN}" "${_tp_cur}" || :; } ;;
             enter) _tp_pick="${_tp_cur}"; break ;;
             quit) _tp_pick=0; break ;;
         esac
     done
     _tp_restore
     printf '%s\n' "${_tp_pick}"
+    if [ "${_tp_pick}" -gt 0 ] && [ -n "${_TUI_PICK_RESULT_FN:-}" ]; then
+        "${_TUI_PICK_RESULT_FN}"
+    fi
 )
 
 # render_action_menu [last] — the ./dots action picker. Draws on stderr, reads
@@ -358,6 +368,109 @@ tui_choose() {
     _tch_idx="$(_tui_pick _tui_choose_frame "$#" "${_tch_cur}")"
     [ "${_tch_idx:-0}" -gt 0 ] || return 1
     printf '%s\n' "${_TUI_CHOOSE_ITEMS}" | sed -n "${_tch_idx}p"
+}
+
+# --- checklist -------------------------------------------------------------
+# State lives in globals (the pick loop runs in a subshell, see _tui_pick):
+#   _TUI_CK_HEADER   header line
+#   _TUI_CK_ITEMS    newline-separated "id|label" rows
+#   _TUI_CK_STATE    space-separated ids that are checked
+#   _TUI_CK_IMPLIES  newline-separated "a>b" rules: checking a checks b, and
+#                    b cannot be unchecked while a is checked
+
+# _tui_ck_has <list> <id> — true when <id> is in the space-separated <list>.
+_tui_ck_has() {
+    case " $1 " in
+        *" $2 "*) return 0 ;;
+    esac
+    return 1
+}
+
+# _tui_ck_close — add every row implied by a checked row, until stable.
+_tui_ck_close() {
+    _tck_changed=1
+    while [ "${_tck_changed}" -eq 1 ]; do
+        _tck_changed=0
+        while IFS='>' read -r _tck_from _tck_to; do
+            [ -n "${_tck_from}" ] || continue
+            if _tui_ck_has "${_TUI_CK_STATE}" "${_tck_from}" && ! _tui_ck_has "${_TUI_CK_STATE}" "${_tck_to}"; then
+                _TUI_CK_STATE="${_TUI_CK_STATE} ${_tck_to}"
+                _tck_changed=1
+            fi
+        done <<EOF
+${_TUI_CK_IMPLIES}
+EOF
+    done
+    return 0
+}
+
+# _tui_ck_toggle <row> — flip the 1-based <row>; always succeeds.
+_tui_ck_toggle() {
+    _tck_id="$(printf '%s\n' "${_TUI_CK_ITEMS}" | sed -n "${1}p" | cut -d'|' -f1)"
+    if _tui_ck_has "${_TUI_CK_STATE}" "${_tck_id}"; then
+        while IFS='>' read -r _tck_from _tck_to; do
+            if [ "${_tck_to}" = "${_tck_id}" ] && _tui_ck_has "${_TUI_CK_STATE}" "${_tck_from}"; then
+                return 0
+            fi
+        done <<EOF
+${_TUI_CK_IMPLIES}
+EOF
+        _tck_new=""
+        # shellcheck disable=SC2086
+        for _tck_w in ${_TUI_CK_STATE}; do
+            [ "${_tck_w}" = "${_tck_id}" ] || _tck_new="${_tck_new} ${_tck_w}"
+        done
+        _TUI_CK_STATE="${_tck_new}"
+    else
+        _TUI_CK_STATE="${_TUI_CK_STATE} ${_tck_id}"
+        _tui_ck_close
+    fi
+    return 0
+}
+
+# _tui_ck_result — the checked ids, one per line, in row order.
+_tui_ck_result() {
+    printf '%s\n' "${_TUI_CK_ITEMS}" | awk -F'|' -v state=" ${_TUI_CK_STATE} " \
+        'index(state, " " $1 " ") { print $1 }'
+}
+
+# _tui_ck_frame <cursor> <accent> <color> — frame for tui_checklist.
+_tui_ck_frame() {
+    printf '%s\n' "${_TUI_CK_ITEMS}" | awk -F'|' -v cur="$1" -v acc="$2" -v color="$3" \
+        -v hdr="${_TUI_CK_HEADER}" -v state=" ${_TUI_CK_STATE} " '
+        function paint(code, text) { return color ? "\033[" code "m" text "\033[0m" : text }
+        NR == 1 { print paint("1;38;5;" acc, hdr) }
+        {
+            line = (index(state, " " $1 " ") ? "[x] " : "[ ] ") $2
+            print (NR == cur) ? paint("1;38;5;" acc, "> " line) : "  " line
+        }
+        END { print ""; print paint("2", "↑↓/jk move · space toggle · enter confirm · q cancel") }
+    '
+}
+
+# tui_checklist <header> <checked> <implies> <id|label>... — pick any number
+# of rows with checkboxes: space toggles, enter confirms. Prints the checked
+# ids one per line in row order and returns 0 (an empty selection prints
+# nothing); prints nothing and returns 1 on q, esc or end of input.
+# <checked> is a space-separated list of ids checked at the start; <implies>
+# is newline-separated "a>b" rules (see above), applied to <checked> too.
+tui_checklist() {
+    _TUI_CK_HEADER="${1:?tui_checklist: header required}"
+    _TUI_CK_STATE="${2:-}"
+    _TUI_CK_IMPLIES="${3:-}"
+    shift 3
+    _TUI_CK_ITEMS="$(printf '%s\n' "$@")"
+    _tui_ck_close
+    _TUI_PICK_ACCENT="${_TUI_PICK_ACCENT:-$(_header_color_code "$(_tui_active_theme)")}"
+    _TUI_PICK_TOGGLE_FN=_tui_ck_toggle
+    _TUI_PICK_RESULT_FN=_tui_ck_result
+    _tck_out="$(_tui_pick _tui_ck_frame "$#" 1)"
+    _TUI_PICK_TOGGLE_FN=""
+    _TUI_PICK_RESULT_FN=""
+    _tck_idx="$(printf '%s\n' "${_tck_out}" | sed -n 1p)"
+    [ "${_tck_idx:-0}" -gt 0 ] || return 1
+    printf '%s\n' "${_tck_out}" | sed 1d
+    return 0
 }
 
 # _tui_git_summary — "✓ clean", "N changed", "N unpushed" or both; empty when
