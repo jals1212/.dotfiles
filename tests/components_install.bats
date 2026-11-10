@@ -166,6 +166,8 @@ brew install --cask ghostty" ]
     [ "$(_log)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh" ]
     _has "ran core/install.sh"
     _points_into_repo .config/herdr/config.toml
+    # the Herdr app config belongs to herdr-app only
+    [ ! -e "${HOME}/.config/herdr-app" ]
 
     : > "${TOOL_LOG}"
     _record none
@@ -189,6 +191,10 @@ pgrep -f ${HOME}/Applications/Herdr.app/Contents/MacOS/" ]
     [ ! -e "${HOME}/Applications/Herdr.app" ]
     [ ! -L "${HOME}/.local/bin/herdr-app" ]
     _points_into_repo .config/herdr/config.toml
+    _points_into_repo .config/herdr-app/settings.json
+    _points_into_repo .config/herdr-app/keys.json
+    _points_into_repo .config/herdr-app/layouts/jals1212.json
+    _points_into_repo .config/herdr-app/mods/jals1212
     _recorded_is "herdr-core herdr-app"
 }
 

@@ -1,0 +1,2 @@
+# Herdr app rewrites the API typings on every start.
+gpui-kit.d.ts

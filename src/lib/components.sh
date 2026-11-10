@@ -245,6 +245,7 @@ components_removal_plan() {
                         _components_plan_file herdr-app "${_crp_f}"
                     done
                 fi
+                _components_plan_links herdr-app "${_crp_home}/.config/herdr-app/"
                 ;;
             herdr-core)
                 _crp_herdr=1
@@ -584,6 +585,7 @@ components_install_links() {
         case "${_cil_id}" in
             tmux) _cil_prefixes="${_cil_prefixes} ~/.config/tmux/" ;;
             herdr-tui | herdr-core | herdr-app)
+                [ "${_cil_id}" = herdr-app ] && _cil_prefixes="${_cil_prefixes} ~/.config/herdr-app/"
                 if [ "${_cil_herdr}" -eq 0 ]; then
                     _cil_herdr=1
                     _cil_prefixes="${_cil_prefixes} ~/.config/herdr/"

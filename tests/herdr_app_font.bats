@@ -95,6 +95,20 @@ _tools_path() {
     [ "$(_norm "${SETTINGS}")" = '{"font":"JetBrainsMono Nerd Font","font_size":13}' ]
 }
 
+@test "selected: a settings.json symlink (the dots link) stays a link and its target gets the font" {
+    _select herdr-app
+    mkdir -p "$(dirname "${SETTINGS}")" "${SANDBOX}/repo"
+    printf '{"zoom": 1}\n' > "${SANDBOX}/repo/settings.json"
+    ln -s "${SANDBOX}/repo/settings.json" "${SETTINGS}"
+
+    run sh "${FONT_CMD}" iosevka
+    [ "${status}" -eq 0 ]
+    [ -L "${SETTINGS}" ]
+    [ "$(readlink "${SETTINGS}")" = "${SANDBOX}/repo/settings.json" ]
+    [ "$(_norm "${SANDBOX}/repo/settings.json")" = '{"font":"IosevkaTerm NF","zoom":1}' ]
+    [ "$(ls "${SANDBOX}/repo")" = "settings.json" ]
+}
+
 @test "selected: XDG_CONFIG_HOME decides where settings.json lives" {
     _select herdr-app
     export XDG_CONFIG_HOME="${SANDBOX}/xdg"

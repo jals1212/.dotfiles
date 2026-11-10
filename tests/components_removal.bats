@@ -296,6 +296,38 @@ _tty_components() {
     grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-herdr-core}"' "${LOCAL_ZSH}"
 }
 
+_herdr_app_links() {
+    _repo_link .config/herdr-app/settings.json content/home/.config/herdr-app/settings.json
+    _repo_link .config/herdr-app/keys.json content/home/.config/herdr-app/keys.json
+    _repo_link .config/herdr-app/layouts/jals1212.json content/home/.config/herdr-app/layouts/jals1212.json
+    _repo_link .config/herdr-app/mods/jals1212 content/home/.config/herdr-app/mods/jals1212
+}
+
+@test "herdr-app unchecked removes its repo-owned config links and keeps Herdr's own files" {
+    _record herdr-app
+    _herdr_app_links
+    printf '{}\n' > "${HOME}/.config/herdr-app/shared.json"
+    run sh "${CMD}" --yes herdr-core
+    [ "${status}" -eq 0 ]
+    [ ! -L "${HOME}/.config/herdr-app/settings.json" ]
+    [ ! -L "${HOME}/.config/herdr-app/keys.json" ]
+    [ ! -L "${HOME}/.config/herdr-app/layouts/jals1212.json" ]
+    [ ! -L "${HOME}/.config/herdr-app/mods/jals1212" ]
+    [ -f "${HOME}/.config/herdr-app/shared.json" ]
+    # the repo files themselves are untouched
+    [ -f "${REPO_ROOT_REAL}/content/home/.config/herdr-app/settings.json" ]
+    [ -f "${REPO_ROOT_REAL}/content/home/.config/herdr-app/mods/jals1212/main.js" ]
+}
+
+@test "the herdr-app config links stay while herdr-app stays selected" {
+    _record herdr-tui herdr-app
+    _herdr_app_links
+    BREW_INSTALLED="herdr" run sh "${CMD}" --yes herdr-core herdr-app
+    [ "${status}" -eq 0 ]
+    [ -L "${HOME}/.config/herdr-app/settings.json" ]
+    [ -L "${HOME}/.config/herdr-app/mods/jals1212" ]
+}
+
 @test "herdr-app unchecked on macOS also removes an official install (~/Applications/Herdr.app and its link); the core stays" {
     _record herdr-app
     mkdir -p "${HOME}/Applications/Herdr.app/Contents/MacOS" "${HOME}/.local/share/herdr-core"

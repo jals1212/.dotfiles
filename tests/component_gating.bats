@@ -101,16 +101,18 @@ _linked() {
 
 TMUX_LINKS="~/.config/tmux/tmux.conf ~/.config/tmux/theme.conf ~/.config/tmux/scripts/session-picker.sh ~/.config/tmux/scripts/pin-plugins.sh"
 HERDR_LINKS="~/.config/herdr/config.toml"
+HERDR_APP_LINKS="~/.config/herdr-app/settings.json ~/.config/herdr-app/keys.json ~/.config/herdr-app/layouts/jals1212.json ~/.config/herdr-app/mods/jals1212"
 GHOSTTY_LINKS="~/.config/ghostty/config ~/.config/ghostty/shaders"
 OTHER_LINKS="~/.zshenv ~/.config/zsh/.zshrc ~/.config/starship.toml ~/.config/mise/config.toml ~/.config/bat/config"
 
 # _expect <linked ids...> — assert exactly the links of these groups are made.
-# Groups: tmux herdr ghostty.
+# Groups: tmux herdr herdr-app ghostty.
 _expect() {
-    for _g in tmux herdr ghostty; do
+    for _g in tmux herdr herdr-app ghostty; do
         case "${_g}" in
             tmux) _l="${TMUX_LINKS}" ;;
             herdr) _l="${HERDR_LINKS}" ;;
+            herdr-app) _l="${HERDR_APP_LINKS}" ;;
             ghostty) _l="${GHOSTTY_LINKS}" ;;
         esac
         _want=0
@@ -138,7 +140,7 @@ _expect() {
     _record herdr-core
     _expect herdr
     _record herdr-app herdr-core
-    _expect herdr
+    _expect herdr herdr-app
 }
 
 @test "the ghostty configs are linked on Linux too when ghostty is selected" {
@@ -149,7 +151,7 @@ _expect() {
 
 @test "with every component, every link is made and unrelated links never depend on the selection" {
     _record ${ALL_COMPONENTS}
-    _expect tmux herdr ghostty
+    _expect tmux herdr herdr-app ghostty
     # Links outside the three components carry no component predicate.
     for _d in ${OTHER_LINKS}; do
         _cond="$(_links | awk -F'\t' -v d="${_d}" '$1 == d { print $2 }')"

@@ -130,7 +130,8 @@ PY
 # _font_herdr_app_apply <font>
 #   When herdr-app is selected, set "font" in Herdr app's settings.json to the
 #   font's family, atomically (temp file + mv), creating the file and its
-#   directory when missing. Never fails: a missing jq/python3 or an existing
+#   directory when missing. A symlinked settings.json (the dots link) is
+#   followed, so the link stays and its target gets the font. Never fails: a missing jq/python3 or an existing
 #   file that is not a JSON object only warns and leaves the file untouched.
 #   Not selected: nothing is read or written.
 _font_herdr_app_apply() {
@@ -138,6 +139,14 @@ _font_herdr_app_apply() {
     components_has herdr-app || return 0
     _fh_file="$(font_herdr_app_settings_path)"
     _fh_family="$(font_family "$1")" || return 0
+    # Follow the dots link so mv replaces its target, not the link itself.
+    while [ -L "${_fh_file}" ]; do
+        _fh_link="$(readlink "${_fh_file}")" || break
+        case "${_fh_link}" in
+            /*) _fh_file="${_fh_link}" ;;
+            *) _fh_file="$(dirname "${_fh_file}")/${_fh_link}" ;;
+        esac
+    done
     mkdir -p "$(dirname "${_fh_file}")" || {
         log_warn "Could not create $(dirname "${_fh_file}"); Herdr app font left unchanged"
         return 0

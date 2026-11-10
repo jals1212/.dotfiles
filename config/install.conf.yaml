@@ -122,6 +122,22 @@
       path: content/home/.config/herdr/config.toml
       if: 'sh content/home/.config/dots/component-selected.sh herdr-tui herdr-core herdr-app'
 
+    # Herdr app — only the files that are the person's (settings, keys, the
+    # jals1212 layout and its mod); Herdr's own state stays out of the repo.
+    # Herdr app writes through these links (checked with app.zoom_in).
+    ~/.config/herdr-app/settings.json:
+      path: content/home/.config/herdr-app/settings.json
+      if: &if_herdr_app 'sh content/home/.config/dots/component-selected.sh herdr-app'
+    ~/.config/herdr-app/keys.json:
+      path: content/home/.config/herdr-app/keys.json
+      if: *if_herdr_app
+    ~/.config/herdr-app/layouts/jals1212.json:
+      path: content/home/.config/herdr-app/layouts/jals1212.json
+      if: *if_herdr_app
+    ~/.config/herdr-app/mods/jals1212:
+      path: content/home/.config/herdr-app/mods/jals1212
+      if: *if_herdr_app
+
     # Ghostty — config file + shaders directory link (the config is useful on
     # Linux too when Ghostty comes from the distro; only the cask is macOS-only)
     ~/.config/ghostty/config:
