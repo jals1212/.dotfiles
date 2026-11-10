@@ -40,7 +40,8 @@ brew "zoxide"
 
 # ── Terminal components (chosen with ./dots components) ─
 # Herdr core has no Homebrew package: the official installer runs from
-# config/install.conf.yaml (the app installer brings the core too).
+# config/install.conf.yaml, with the app cask too (the cask brings no core;
+# on Linux the official app installer brings it).
 if dots_components.include?("tmux")
   brew "tmux"
   brew "gitmux" # tmux status-line git module

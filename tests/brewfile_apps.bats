@@ -205,13 +205,25 @@ _calls() { cat "${SANDBOX}/calls" 2>/dev/null || true; }
     done
 }
 
-@test "the core installer is skipped when the app is selected (it brings the core)" {
-    for os in Linux Darwin; do
-        _stubs "${os}"
-        _record herdr-app herdr-core
+@test "on Linux the core installer is skipped when the app is selected (its installer brings the core)" {
+    _stubs Linux
+    for sel in "herdr-app herdr-core" "herdr-app"; do
+        _record ${sel}
         _run_step "${CORE_STEP}"
         [ "${status}" -eq 0 ]
         [ "$(_calls)" = "" ]
+    done
+}
+
+@test "on macOS the core installer runs with the app selected (the cask brings no core)" {
+    _stubs Darwin
+    for sel in "herdr-app herdr-core" "herdr-app"; do
+        rm -f "${SANDBOX}/calls"
+        _record ${sel}
+        _run_step "${CORE_STEP}"
+        [ "${status}" -eq 0 ]
+        [ "$(_calls)" = "curl -fsSL https://releases.herdr.dev/core/install.sh" ]
+        [ "${output}" = "ran core/install.sh" ]
     done
 }
 

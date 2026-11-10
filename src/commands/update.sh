@@ -26,6 +26,10 @@ _update_usage() {
     printf 'On a TTY, update also asks once for the terminal components (tmux,\n' >&2
     printf 'Herdr, Ghostty) while none is recorded; choose them later with\n' >&2
     printf './dots components. --yes never asks.\n\n' >&2
+    printf 'On macOS with herdr-app selected, an official Herdr app install\n' >&2
+    printf '(~/Applications/Herdr.app) is removed before Homebrew installs the\n' >&2
+    printf 'herdr-app cask, after a [y/N] question (--yes removes it; no TTY keeps\n' >&2
+    printf 'it). The core stays; a running app is never removed.\n\n' >&2
     printf 'Any other argument is an error (exit 2); nothing runs.\n\n' >&2
     printf 'NOTE\n' >&2
     printf '  --tools is not accepted. Managed packages are declared in Brewfile\n' >&2
@@ -198,6 +202,12 @@ if [ "${_yes}" -eq 0 ] && [ -z "$(components_recorded)" ] && [ -t 0 ] && [ -t 1 
         exit 1
     }
 fi
+
+# ---------------------------------------------------------------------------
+# Herdr app on macOS comes from Homebrew: move an official install out of the
+# way before the Brewfile runs (asks; --yes moves it; no TTY keeps it).
+# ---------------------------------------------------------------------------
+components_herdr_app_migrate "${_yes}" || log_warn "Moving Herdr app to Homebrew left something in place"
 
 # ---------------------------------------------------------------------------
 # Base dotbot run

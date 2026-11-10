@@ -66,11 +66,13 @@ Switch theme:
 |-----------|--------------|--------|--------|
 | `tmux` | `brew "tmux"` + `brew "gitmux"` | `~/.config/tmux/*` | running server reloaded |
 | `herdr-tui` | `brew "herdr"` | `~/.config/herdr/config.toml` (also for `herdr-core`/`herdr-app`) | fenced `theme.name`, running server reloaded |
-| `herdr-core` | official installer `https://releases.herdr.dev/core/install.sh` (macOS and Linux; skipped when `herdr-core` is already on `PATH` or in `~/.local/bin`, and when `herdr-app` is selected, since the app installer brings the core) | Herdr config | same |
-| `herdr-app` | macOS: `cask "herdr-app"`; Linux: official installer `https://releases.herdr.dev/app/install.sh` | Herdr config | same |
+| `herdr-core` | official installer `https://releases.herdr.dev/core/install.sh` (macOS and Linux; skipped when `herdr-core` is already on `PATH` or in `~/.local/bin`, and on Linux when `herdr-app` is selected, since the official app installer brings the core; on macOS it runs with `herdr-app` too, since the cask brings no core) | Herdr config | same |
+| `herdr-app` | macOS: `cask "herdr-app"` (an official install in `~/Applications/Herdr.app` is moved out first, see below); Linux: official installer `https://releases.herdr.dev/app/install.sh` | Herdr config | same |
 | `ghostty` | `cask "ghostty"` (macOS only) | `~/.config/ghostty/config` and `shaders` (any OS) | `~/.config/ghostty/themes/dots` link |
 
-The Herdr installers are the official ones, unpinned, and only warn when they fail. The Nerd Font cask stays declared whatever you select (any terminal needs it, and `./dots font` installs it without Ghostty).
+The Herdr installers are the official ones, unpinned, and only warn when they fail. Homebrew has no Herdr core package, so the core updates through its own installer, not `brew upgrade`.
+
+On macOS, `./dots update` with `herdr-app` selected moves an official Herdr app install out of the way before Homebrew runs, so the cask is the only copy: it lists `~/Applications/Herdr.app` and the `~/.local/bin/herdr-app` link pointing into it, and asks `[y/N]` (`--yes` moves it without asking; without a TTY it is kept, with a warning). The core (`~/.local/share/herdr-core`, `herdr-core`, `hc`) stays. While Herdr app is running nothing is removed: quit it and run `./dots update` again. The Nerd Font cask stays declared whatever you select (any terminal needs it, and `./dots font` installs it without Ghostty).
 
 #### Unchecking
 
@@ -80,7 +82,7 @@ Unchecking uninstalls, but only a component that was **recorded** as selected: t
 |-----------|---------|
 | `tmux` | `brew uninstall tmux gitmux` (the installed ones) and the `~/.config/tmux/*` symlinks into this repo |
 | `herdr-tui` | `brew uninstall herdr` |
-| `herdr-app` | macOS: `brew uninstall --cask herdr-app`. Linux: the official install (`${XDG_DATA_HOME:-~/.local/share}/herdr-app`, `~/.local/bin/herdr-app` and the `herdr-app` `.desktop`/icon files) |
+| `herdr-app` | macOS: `brew uninstall --cask herdr-app`, plus an official install (`~/Applications/Herdr.app` and the `~/.local/bin/herdr-app` link into it) when present. Linux: the official install (`${XDG_DATA_HOME:-~/.local/share}/herdr-app`, `~/.local/bin/herdr-app` and the `herdr-app` `.desktop`/icon files) |
 | `herdr-core` | `~/.local/bin/herdr-core` and `~/.local/bin/hc` when they are regular files or symlinks (otherwise a warning); never while `herdr-app` stays selected |
 | Herdr config | the `~/.config/herdr/config.toml` link, only when no Herdr component remains |
 | `ghostty` | macOS: `brew uninstall --cask ghostty`; the `~/.config/ghostty` `config`, `shaders` and `themes/dots` links into this repo (`font.conf` and any other file stay) |

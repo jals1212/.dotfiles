@@ -140,7 +140,7 @@ components_removed() {
 }
 
 # _components_plan_add <id> <kind> <value> — one plan line (tab separated).
-# Kinds: formula, cask, link, dir, file.
+# Kinds: formula, cask, link, dir, file, app.
 _components_plan_add() {
     printf '%s\t%s\t%s\n' "$1" "$2" "$3"
 }
@@ -227,6 +227,12 @@ components_removal_plan() {
                     if _components_brew_has cask herdr-app; then
                         _components_plan_add herdr-app cask herdr-app
                     fi
+                    components_herdr_app_official_paths | while IFS= read -r _crp_f; do
+                        case "${_crp_f}" in
+                            */Herdr.app) _components_plan_add herdr-app app "${_crp_f}" ;;
+                            ?*) _components_plan_add herdr-app file "${_crp_f}" ;;
+                        esac
+                    done
                 elif [ "${_crp_os}" = linux ]; then
                     if [ -d "${_crp_data}/herdr-app" ] || [ -L "${_crp_data}/herdr-app" ]; then
                         _components_plan_add herdr-app dir "${_crp_data}/herdr-app"
@@ -281,6 +287,7 @@ components_removal_lines() {
             link) printf 'remove symlink %s\n' "${_crl_v}" ;;
             dir) printf 'remove directory %s\n' "${_crl_v}" ;;
             file) printf 'remove file %s\n' "${_crl_v}" ;;
+            app) printf 'remove app %s\n' "${_crl_v}" ;;
         esac
     done <<EOF
 $1
@@ -321,6 +328,17 @@ _components_rm() {
                 rm -rf -- "$2"
             fi
             ;;
+        app)
+            if [ "$2" != "${HOME:?}/Applications/Herdr.app" ]; then
+                log_warn "Refusing to remove '$2' (not the official Herdr app)"
+                return 1
+            fi
+            if [ -L "$2" ]; then
+                rm -f -- "$2"
+            elif [ -d "$2" ]; then
+                rm -rf -- "$2"
+            fi
+            ;;
         *) return 1 ;;
     esac
 }
@@ -346,7 +364,7 @@ components_remove() {
                         _cm_fail=1
                     fi
                     ;;
-                link | file | dir)
+                link | file | dir | app)
                     if _components_rm "${_cm_k}" "${_cm_v}"; then
                         log_ok "removed ${_cm_v}"
                     else
@@ -369,4 +387,68 @@ EOF
         fi
     done
     return "${_cm_fail}"
+}
+
+# components_herdr_app_official_paths — the official installer's macOS Herdr app
+# on this machine: ~/Applications/Herdr.app and the ~/.local/bin/herdr-app link
+# that points into it, one per line; nothing when the app is absent. The core
+# (~/.local/share/herdr-core, hc, herdr-core) is never listed.
+components_herdr_app_official_paths() {
+    _chop_app="${HOME:?components_herdr_app_official_paths: HOME required}/Applications/Herdr.app"
+    [ -d "${_chop_app}" ] || return 0
+    printf '%s\n' "${_chop_app}"
+    _chop_link="${HOME}/.local/bin/herdr-app"
+    if [ -L "${_chop_link}" ]; then
+        case "$(readlink "${_chop_link}")" in
+            "${_chop_app}"/*) printf '%s\n' "${_chop_link}" ;;
+        esac
+    fi
+}
+
+# components_herdr_app_migrate <yes 0|1> — macOS with herdr-app selected: remove
+# an official Herdr app install so the herdr-app cask (Homebrew) is the only
+# copy. Lists what goes and asks (default No); <yes>=1 skips the question; no
+# TTY without <yes> keeps it. A running app is never removed. Status is non-zero
+# only when a removal failed.
+components_herdr_app_migrate() {
+    [ "$(detect_os)" = macos ] || return 0
+    components_has herdr-app || return 0
+    _cham_paths="$(components_herdr_app_official_paths)"
+    [ -n "${_cham_paths}" ] || return 0
+    _cham_app="${HOME}/Applications/Herdr.app"
+    if command -v pgrep >/dev/null 2>&1 && pgrep -f "${_cham_app}/Contents/MacOS/" >/dev/null 2>&1; then
+        log_warn "Herdr app is running from ${_cham_app}: quit it and run ./dots update again to move it to Homebrew. Nothing removed."
+        return 0
+    fi
+    log_warn "Herdr app moves to Homebrew (cask herdr-app). This removes the official install; the core stays:"
+    printf '%s\n' "${_cham_paths}" | while IFS= read -r _cham_p; do
+        printf '    %s\n' "${_cham_p}" >&2
+    done
+    if [ "${1:-0}" -ne 1 ]; then
+        if [ -t 0 ] && [ -t 1 ]; then
+            if ! tui_confirm "Remove it so Homebrew installs Herdr app?" n; then
+                log_warn "Kept the official Herdr app; the cask adds a second copy in /Applications."
+                return 0
+            fi
+        else
+            log_warn "No TTY to confirm: kept the official Herdr app (pass --yes to move it); the cask adds a second copy in /Applications."
+            return 0
+        fi
+    fi
+    _cham_fail=0
+    while IFS= read -r _cham_p; do
+        case "${_cham_p}" in
+            */Herdr.app) _cham_k="app" ;;
+            *) _cham_k="file" ;;
+        esac
+        if _components_rm "${_cham_k}" "${_cham_p}"; then
+            log_ok "removed ${_cham_p}"
+        else
+            log_warn "could not remove ${_cham_p}"
+            _cham_fail=1
+        fi
+    done <<EOF
+${_cham_paths}
+EOF
+    return "${_cham_fail}"
 }

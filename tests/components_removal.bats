@@ -294,6 +294,24 @@ _tty_components() {
     grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-herdr-core}"' "${LOCAL_ZSH}"
 }
 
+@test "herdr-app unchecked on macOS also removes an official install (~/Applications/Herdr.app and its link); the core stays" {
+    _record herdr-app
+    mkdir -p "${HOME}/Applications/Herdr.app/Contents/MacOS" "${HOME}/.local/share/herdr-core"
+    printf 'app\n' > "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr"
+    ln -s "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" "${HOME}/.local/bin/herdr-app"
+    printf 'core\n' > "${HOME}/.local/bin/herdr-core"
+    BREW_INSTALLED="herdr-app" run sh "${CMD}" --yes herdr-core
+    [ "${status}" -eq 0 ]
+    _has "brew uninstall --cask herdr-app"
+    _has "remove app ${HOME}/Applications/Herdr.app"
+    _has "remove file ${HOME}/.local/bin/herdr-app"
+    [ "$(_brew_calls)" = "brew uninstall --cask herdr-app" ]
+    [ ! -e "${HOME}/Applications/Herdr.app" ]
+    [ ! -L "${HOME}/.local/bin/herdr-app" ]
+    [ -f "${HOME}/.local/bin/herdr-core" ]
+    [ -d "${HOME}/.local/share/herdr-core" ]
+}
+
 @test "herdr-app on Linux: the official install dir, launcher and desktop files go; the core stays" {
     _record herdr-app
     export FAKE_UNAME=Linux

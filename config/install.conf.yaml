@@ -187,12 +187,14 @@
     stdout: true
     stderr: true
 
-# Herdr core, macOS and Linux: skipped when the app is selected (its installer
-# brings the core) and when herdr-core already exists on PATH or in ~/.local/bin.
+# Herdr core, macOS and Linux (Homebrew has no core package): on Linux skipped
+# when the app is selected (its official installer brings the core); on macOS the
+# app is the herdr-app cask, which brings no core, so it runs with the app too.
+# Skipped when herdr-core already exists on PATH or in ~/.local/bin.
 - shell:
   - description: Install Herdr core (official installer)
     command: |
-      if sh content/home/.config/dots/component-selected.sh herdr-core && ! sh content/home/.config/dots/component-selected.sh herdr-app && ! command -v herdr-core >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/herdr-core" ]; then
+      if sh content/home/.config/dots/component-selected.sh herdr-core && { [ "$(uname -s)" != Linux ] || ! sh content/home/.config/dots/component-selected.sh herdr-app; } && ! command -v herdr-core >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/herdr-core" ]; then
         script="$(curl -fsSL https://releases.herdr.dev/core/install.sh)" && printf '%s\n' "$script" | sh || echo "warning: the Herdr core installer failed" >&2
       fi
     quiet: true
