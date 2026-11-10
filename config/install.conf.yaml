@@ -171,8 +171,10 @@
 
 # ── Herdr installers ───────────────────────────────────────────────────────────
 # Herdr's official installers, run only for the selected components (no version
-# pin). Both skip when already installed and only warn on failure, so an offline
-# run still finishes. The predicate is content/home/.config/dots/component-selected.sh.
+# pin). The conditions and the installer calls live in one script, also used by
+# `./dots components` for its targeted install, so they cannot drift:
+# content/home/.config/dots/herdr-install.sh. Both skip when already installed and
+# only warn on failure (`|| true`), so an offline run still finishes.
 #
 # Herdr app, Linux only: macOS gets it from the herdr-app cask (Brewfile); Homebrew
 # has no Linux package. It installs ~/.local/share/herdr-app with herdr-app and hc
@@ -180,9 +182,7 @@
 - shell:
   - description: Install Herdr desktop app (Linux, official installer)
     command: |
-      if [ "$(uname -s)" = Linux ] && sh content/home/.config/dots/component-selected.sh herdr-app && [ ! -d "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app" ]; then
-        script="$(curl -fsSL https://releases.herdr.dev/app/install.sh)" && printf '%s\n' "$script" | sh || echo "warning: the Herdr app installer failed" >&2
-      fi
+      sh content/home/.config/dots/herdr-install.sh app || true
     quiet: true
     stdout: true
     stderr: true
@@ -194,9 +194,7 @@
 - shell:
   - description: Install Herdr core (official installer)
     command: |
-      if sh content/home/.config/dots/component-selected.sh herdr-core && { [ "$(uname -s)" != Linux ] || ! sh content/home/.config/dots/component-selected.sh herdr-app; } && ! command -v herdr-core >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/herdr-core" ]; then
-        script="$(curl -fsSL https://releases.herdr.dev/core/install.sh)" && printf '%s\n' "$script" | sh || echo "warning: the Herdr core installer failed" >&2
-      fi
+      sh content/home/.config/dots/herdr-install.sh core || true
     quiet: true
     stdout: true
     stderr: true

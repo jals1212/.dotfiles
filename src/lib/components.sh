@@ -482,3 +482,147 @@ ${_cham_paths}
 EOF
     return "${_cham_fail}"
 }
+
+# ---------------------------------------------------------------------------
+# Targeted install of newly selected components (S9)
+#
+# ./dots components offers to install only the components a change ADDS: their
+# own brew entries, Herdr's official installers, the Herdr app migration of S8
+# and exactly their config links. It never runs the rest of ./dots update (no
+# brew bundle, no mise, no theme/font of other tools). Every step that fails
+# warns and the rest continues; the status is non-zero when any failed.
+# Requires lib/detect.sh, lib/dotbot.sh (dotbot_links_apply) and lib/tui.sh.
+# ---------------------------------------------------------------------------
+
+# components_added <old ids> <new ids> — print the ids (normalized, fixed order)
+# in <new> that are not in <old>. All of <new> when <old> is empty.
+components_added() {
+    components_removed "${2:-}" "${1:-}"
+}
+
+# _components_install_brew <formula|cask> <name> — brew install <name> unless it
+# is already installed (the model is _font_ensure_cask in lib/font.sh).
+_components_install_brew() {
+    if ! command -v brew >/dev/null 2>&1; then
+        log_warn "brew not found; install $2 manually"
+        return 1
+    fi
+    if brew list "--$1" "$2" >/dev/null 2>&1; then
+        log_ok "$2 already installed"
+        return 0
+    fi
+    log_step "Installing $2..."
+    if [ "$1" = cask ]; then
+        brew install --cask "$2"
+    else
+        brew install "$2"
+    fi || {
+        if [ "$1" = cask ]; then
+            log_warn "brew install --cask $2 failed"
+        else
+            log_warn "brew install $2 failed"
+        fi
+        return 1
+    }
+}
+
+# _components_install_herdr <app|core> — Herdr's official installer, through the
+# script that config/install.conf.yaml also runs (same conditions, same URL).
+_components_install_herdr() {
+    _cih_script="${REPO_ROOT:?components install: REPO_ROOT required}/content/home/.config/dots/herdr-install.sh"
+    if [ ! -f "${_cih_script}" ]; then
+        log_warn "${_cih_script} is missing; the Herdr $1 installer did not run"
+        return 1
+    fi
+    sh "${_cih_script}" "$1" || {
+        log_warn "the Herdr $1 installer failed"
+        return 1
+    }
+}
+
+# components_install_links <id>... — make only the config links of these
+# components, declared in config/install.conf.yaml (tmux, Herdr, Ghostty) plus
+# the Ghostty theme link of the active theme (content/themes), through Dotbot.
+components_install_links() {
+    _cil_prefixes=""
+    _cil_herdr=0
+    _cil_ghostty=0
+    for _cil_id in "$@"; do
+        case "${_cil_id}" in
+            tmux) _cil_prefixes="${_cil_prefixes} ~/.config/tmux/" ;;
+            herdr-tui | herdr-core | herdr-app)
+                if [ "${_cil_herdr}" -eq 0 ]; then
+                    _cil_herdr=1
+                    _cil_prefixes="${_cil_prefixes} ~/.config/herdr/"
+                fi
+                ;;
+            ghostty)
+                _cil_ghostty=1
+                _cil_prefixes="${_cil_prefixes} ~/.config/ghostty/"
+                ;;
+        esac
+    done
+    [ -n "${_cil_prefixes}" ] || return 0
+    if ! command -v dotbot_links_apply >/dev/null 2>&1; then
+        log_warn "Dotbot helpers unavailable; config links not made"
+        return 1
+    fi
+    _cil_fail=0
+    log_step "Linking the component configs"
+    # shellcheck disable=SC2086
+    dotbot_links_apply "$(path_install_config)" ${_cil_prefixes} || {
+        log_warn "linking the component configs failed"
+        _cil_fail=1
+    }
+    if [ "${_cil_ghostty}" -eq 1 ]; then
+        _cil_pair="$(theme_current 2>/dev/null)" || _cil_pair="kanagawa dragon"
+        # shellcheck disable=SC2086
+        set -- ${_cil_pair}
+        # The literal ~ is the destination as install/theme configs write it.
+        # shellcheck disable=SC2088
+        dotbot_links_apply "$(path_theme_config "$1" "$2")" "~/.config/ghostty/" || {
+            log_warn "linking the Ghostty theme failed"
+            _cil_fail=1
+        }
+    fi
+    return "${_cil_fail}"
+}
+
+# components_install <yes 0|1> <id>... — install the given components and
+# nothing else. <yes>=1 lets the Herdr app migration move an official install
+# without asking. Status is non-zero when any step failed.
+components_install() {
+    _cin_yes="${1:-0}"
+    shift
+    _cin_fail=0
+    _cin_os="$(detect_os)"
+    for _cin_id in "$@"; do
+        case "${_cin_id}" in
+            tmux)
+                _components_install_brew formula tmux || _cin_fail=1
+                _components_install_brew formula gitmux || _cin_fail=1
+                ;;
+            herdr-tui)
+                _components_install_brew formula herdr || _cin_fail=1
+                ;;
+            herdr-core)
+                _components_install_herdr core || _cin_fail=1
+                ;;
+            herdr-app)
+                if [ "${_cin_os}" = macos ]; then
+                    components_herdr_app_migrate "${_cin_yes}" || _cin_fail=1
+                    _components_install_brew cask herdr-app || _cin_fail=1
+                elif [ "${_cin_os}" = linux ]; then
+                    _components_install_herdr app || _cin_fail=1
+                fi
+                ;;
+            ghostty)
+                if [ "${_cin_os}" = macos ]; then
+                    _components_install_brew cask ghostty || _cin_fail=1
+                fi
+                ;;
+        esac
+    done
+    components_install_links "$@" || _cin_fail=1
+    return "${_cin_fail}"
+}

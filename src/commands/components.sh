@@ -26,6 +26,15 @@ _components_usage() {
     printf '  confirmation that lists exactly what goes (default No). Components\n'
     printf '  never recorded are never uninstalled, so the first selection removes\n'
     printf '  nothing. See REMOVAL below.\n\n'
+    printf '  CHECKING INSTALLS (only what you added). When the change adds components\n'
+    printf '  (ids not recorded before), it asks "Install the new components now?\n'
+    printf '  [Y/n]". Yes installs only those: their own brew packages (skipped when\n'
+    printf '  installed), the Herdr installers, the Herdr app move to Homebrew\n'
+    printf '  (macOS) and their config links; never the rest of ./dots update (no\n'
+    printf '  full brew bundle, no mise, nothing of other tools). No, or no TTY, installs\n'
+    printf '  nothing and says to run ./dots update. A failing step warns, the rest\n'
+    printf '  continues, the exit code is non-zero and the selection stays recorded.\n'
+    printf '  A change that only removes or keeps components asks nothing.\n\n'
     printf 'COMPONENTS\n'
     printf '  tmux        : tmux + gitmux\n'
     printf '  herdr-tui   : Herdr terminal UI (brew formula "herdr")\n'
@@ -37,9 +46,10 @@ _components_usage() {
     printf '  --help, -h    Print this message and exit 0.\n'
     printf '  --current     Print the recorded selection (none when empty or\n'
     printf '                never recorded) and exit.\n'
-    printf '  --yes         Skip the removal confirmation. Without it and without a\n'
+    printf '  --yes         Skip the removal confirmation and install the new\n'
+    printf '                components without asking. Without it and without a\n'
     printf '                TTY, a change that removes something exits 2 and\n'
-    printf '                changes nothing.\n\n'
+    printf '                changes nothing, and nothing is installed.\n\n'
     printf 'REMOVAL (only for components recorded before and unchecked now)\n'
     printf '  tmux        : brew uninstall tmux gitmux (the installed ones); the\n'
     printf '                ~/.config/tmux symlinks into this repo\n'
@@ -65,7 +75,8 @@ _components_usage() {
     printf '  the exit code is non-zero and the new selection is still recorded.\n'
     printf '  Declining or cancelling the confirmation changes nothing.\n\n'
     printf 'EXAMPLES\n'
-    printf '  ./dots components tmux herdr-app   # Select tmux, the Herdr app and its core\n'
+    printf '  ./dots components tmux herdr-app   # Select tmux, the Herdr app and its core (offers to install them)\n'
+    printf '  ./dots components --yes ghostty    # Same, installing without asking\n'
     printf '  ./dots components none             # Select nothing (asks before uninstalling)\n'
     printf '  ./dots components --yes none       # Same, without asking\n'
     printf '  ./dots components --current        # Show the selection\n'
@@ -206,10 +217,41 @@ if [ -n "${_co_plan}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Install what this change adds (S9): only those components, never the rest of
+# ./dots update. Asks on a TTY; --yes installs; otherwise nothing is installed.
+# ---------------------------------------------------------------------------
+_co_install_failed=0
+_co_added="$(components_added "${_co_old}" "${_co_chosen}")"
+if [ -n "${_co_added}" ]; then
+    _co_install=0
+    if [ "${_co_yes}" -eq 1 ]; then
+        _co_install=1
+    elif [ -t 0 ] && [ -t 1 ]; then
+        log_info "New components: ${_co_added}"
+        # Only an explicit y or enter (default y) installs; n, q, esc and end
+        # of input all install nothing.
+        _co_rc=0
+        tui_confirm "Install the new components now?" y || _co_rc=$?
+        [ "${_co_rc}" -ne 0 ] || _co_install=1
+    fi
+    if [ "${_co_install}" -eq 1 ]; then
+        log_step "Installing the new components: ${_co_added}"
+        # shellcheck disable=SC2086
+        components_install "${_co_yes}" ${_co_added} || _co_install_failed=1
+    else
+        log_warn "Not installed yet: ${_co_added}. Run ./dots update to install them."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Success banner
 # ---------------------------------------------------------------------------
 if [ "${_co_failed}" -ne 0 ]; then
     log_warn "Selection recorded as ${_co_chosen:-${COMPONENT_NONE}}, but some removals failed (see warnings above)."
+    exit 1
+fi
+if [ "${_co_install_failed}" -ne 0 ]; then
+    log_warn "Selection recorded as ${_co_chosen:-${COMPONENT_NONE}}, but some installs failed (see warnings above); ./dots update retries them."
     exit 1
 fi
 _co_applied_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
