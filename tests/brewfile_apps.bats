@@ -154,7 +154,7 @@ _calls() { cat "${SANDBOX}/calls" 2>/dev/null || true; }
     _record herdr-app herdr-core
     _run_step "${APP_STEP}"
     [ "${status}" -eq 0 ]
-    [ "$(_calls)" = "curl -fsSL https://releases.herdr.dev/app/install.sh" ]
+    [ "$(_calls)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/app/install.sh" ]
     [ "${output}" = "ran app/install.sh" ]
 }
 
@@ -200,7 +200,7 @@ _calls() { cat "${SANDBOX}/calls" 2>/dev/null || true; }
         _record herdr-core
         _run_step "${CORE_STEP}"
         [ "${status}" -eq 0 ]
-        [ "$(_calls)" = "curl -fsSL https://releases.herdr.dev/core/install.sh" ]
+        [ "$(_calls)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh" ]
         [ "${output}" = "ran core/install.sh" ]
     done
 }
@@ -222,7 +222,7 @@ _calls() { cat "${SANDBOX}/calls" 2>/dev/null || true; }
         _record ${sel}
         _run_step "${CORE_STEP}"
         [ "${status}" -eq 0 ]
-        [ "$(_calls)" = "curl -fsSL https://releases.herdr.dev/core/install.sh" ]
+        [ "$(_calls)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh" ]
         [ "${output}" = "ran core/install.sh" ]
     done
 }

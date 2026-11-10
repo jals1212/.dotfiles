@@ -3,10 +3,11 @@ bats_require_minimum_version 1.5.0
 # tests/herdr_app_migration.bats
 # On macOS the Herdr app comes from the herdr-app cask. When it is selected and
 # an official install exists (~/Applications/Herdr.app), `./dots update` removes
-# that install before Homebrew runs, after listing it and asking (default No;
-# --yes moves it without asking; no TTY without --yes keeps it). The core and
-# anything else stay. A running app is never removed.
-# Sandbox HOME; uname and pgrep are stubs; nothing reaches the real machine.
+# that install only after Homebrew installed the cask (the Brewfile run), after
+# listing it and asking (default No; --yes moves it without asking; no TTY
+# without --yes keeps it). The core and anything else stay. A running app is
+# never removed; without the cask installed nothing is removed.
+# Sandbox HOME; uname, pgrep and brew are stubs; nothing reaches the real machine.
 
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 
@@ -25,7 +26,11 @@ exec /usr/bin/uname "$@"
 STUB
     # pgrep succeeds only when FAKE_RUNNING=1.
     printf '#!/bin/sh\n[ "${FAKE_RUNNING:-0}" = 1 ]\n' > "${SANDBOX}/bin/pgrep"
-    chmod +x "${SANDBOX}/bin/uname" "${SANDBOX}/bin/pgrep"
+    # brew: `list --cask herdr-app` succeeds unless FAKE_NO_CASK=1; calls are logged.
+    BREW_LOG="${SANDBOX}/brew.log"
+    export BREW_LOG
+    printf '#!/bin/sh\nprintf "brew %%s\\n" "$*" >> "${BREW_LOG}"\n[ "$1" = list ] && [ "${FAKE_NO_CASK:-0}" = 1 ] && exit 1\nexit 0\n' > "${SANDBOX}/bin/brew"
+    chmod +x "${SANDBOX}/bin/uname" "${SANDBOX}/bin/pgrep" "${SANDBOX}/bin/brew"
     export PATH="${SANDBOX}/bin:${PATH}"
 }
 
@@ -47,7 +52,8 @@ _official_install() {
     ln -s "${CORE}/current/Contents/MacOS/herdr-core" "${HOME}/.local/bin/hc"
 }
 
-# _migrate <yes 0|1> — run components_herdr_app_migrate with no TTY.
+# _migrate <yes 0|1> [function] — run components_herdr_app_migrate (or the
+# given function) with no TTY.
 _migrate() {
     run --separate-stderr sh -c '
         REPO_ROOT="$1"; export REPO_ROOT
@@ -57,7 +63,7 @@ _migrate() {
         . "$REPO_ROOT/src/lib/tui.sh"
         . "$REPO_ROOT/src/lib/theme.sh"
         . "$REPO_ROOT/src/lib/components.sh"
-        components_herdr_app_migrate "$2"' _ "${REPO_ROOT_REAL}" "$1" </dev/null
+        "$3" "$2"' _ "${REPO_ROOT_REAL}" "$1" "${2:-components_herdr_app_migrate}" </dev/null
 }
 
 _core_intact() {
@@ -130,9 +136,47 @@ _core_intact() {
     [ "$(readlink "${HOME}/.local/bin/herdr-app")" = /opt/homebrew/bin/herdr-app ]
 }
 
-@test "update moves the official Herdr app before the base dotbot run (Homebrew)" {
+@test "update moves the official Herdr app only after the base dotbot run (Homebrew)" {
     upd="${REPO_ROOT_REAL}/src/commands/update.sh"
-    mig="$(grep -n 'components_herdr_app_migrate "${_yes}"' "${upd}" | cut -d: -f1)"
+    mig="$(grep -n 'components_herdr_app_migrate_installed "${_yes}"' "${upd}" | cut -d: -f1)"
     base="$(grep -n '^dotbot_base_apply' "${upd}" | cut -d: -f1)"
-    [ -n "${mig}" ] && [ -n "${base}" ] && [ "${mig}" -lt "${base}" ]
+    [ -n "${mig}" ] && [ -n "${base}" ] && [ "${mig}" -gt "${base}" ]
+    run grep -c 'components_herdr_app_migrate ' "${upd}"
+    [ "${output}" = 0 ]
+}
+
+@test "after the Brewfile: without the herdr-app cask installed the official app is kept, with a warning" {
+    _record herdr-app
+    _official_install
+    FAKE_NO_CASK=1 _migrate 1 components_herdr_app_migrate_installed
+    [ "${status}" -eq 0 ]
+    [[ "${stderr}" == *"Homebrew has not installed herdr-app; kept the official Herdr app"* ]] || return 1
+    [ -f "${APP}/Contents/MacOS/Herdr" ]
+    [ -L "${HOME}/.local/bin/herdr-app" ]
+    grep -Fqx "brew list --cask herdr-app" "${BREW_LOG}"
+}
+
+@test "after the Brewfile: with the herdr-app cask installed the official app is moved out" {
+    _record herdr-app
+    _official_install
+    _migrate 1 components_herdr_app_migrate_installed
+    [ "${status}" -eq 0 ]
+    [ ! -e "${APP}" ]
+    [ ! -L "${HOME}/.local/bin/herdr-app" ]
+    _core_intact
+}
+
+@test "after the Brewfile: nothing asks brew on Linux, unselected, or with no official install" {
+    _official_install
+    _record herdr-core
+    _migrate 1 components_herdr_app_migrate_installed
+    [ "${status}" -eq 0 ]
+    _record herdr-app
+    FAKE_UNAME=Linux _migrate 1 components_herdr_app_migrate_installed
+    [ "${status}" -eq 0 ]
+    rm -rf "${APP}" "${HOME}/.local/bin/herdr-app"
+    _migrate 1 components_herdr_app_migrate_installed
+    [ "${status}" -eq 0 ]
+    [ -z "${stderr}" ]
+    [ ! -e "${BREW_LOG}" ]
 }

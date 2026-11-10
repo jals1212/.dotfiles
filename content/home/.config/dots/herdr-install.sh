@@ -52,7 +52,7 @@ case "${_hi_kind}" in
         ;;
 esac
 
-if _hi_script="$(curl -fsSL "https://releases.herdr.dev/${_hi_kind}/install.sh")" \
+if _hi_script="$(curl -fsSL --connect-timeout 10 --max-time 120 "https://releases.herdr.dev/${_hi_kind}/install.sh")" \
     && printf '%s\n' "${_hi_script}" | sh; then
     exit 0
 fi

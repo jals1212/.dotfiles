@@ -163,7 +163,7 @@ brew install --cask ghostty" ]
 @test "--yes with herdr-core runs only the official core installer (skipped when the core exists)" {
     run sh "${CMD}" --yes herdr-core
     [ "${status}" -eq 0 ]
-    [ "$(_log)" = "curl -fsSL https://releases.herdr.dev/core/install.sh" ]
+    [ "$(_log)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh" ]
     _has "ran core/install.sh"
     _points_into_repo .config/herdr/config.toml
 
@@ -176,20 +176,33 @@ brew install --cask ghostty" ]
     [ "$(_log)" = "" ]
 }
 
-@test "on macOS herdr-app migrates an official install, then installs the cask; the core installer runs too" {
+@test "on macOS herdr-app installs the cask, then migrates an official install; the core installer runs too" {
     mkdir -p "${HOME}/Applications/Herdr.app/Contents/MacOS"
     printf 'app\n' > "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr"
     ln -s "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" "${HOME}/.local/bin/herdr-app"
     run sh "${CMD}" --yes herdr-app
     [ "${status}" -eq 0 ]
-    [ "$(_log)" = "curl -fsSL https://releases.herdr.dev/core/install.sh
-pgrep -f ${HOME}/Applications/Herdr.app/Contents/MacOS/
+    [ "$(_log)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh
 brew list --cask herdr-app
-brew install --cask herdr-app" ]
+brew install --cask herdr-app
+pgrep -f ${HOME}/Applications/Herdr.app/Contents/MacOS/" ]
     [ ! -e "${HOME}/Applications/Herdr.app" ]
     [ ! -L "${HOME}/.local/bin/herdr-app" ]
     _points_into_repo .config/herdr/config.toml
     _recorded_is "herdr-core herdr-app"
+}
+
+@test "a failing herdr-app cask install keeps the official Herdr app (no migration) and fails" {
+    mkdir -p "${HOME}/Applications/Herdr.app/Contents/MacOS"
+    printf 'app\n' > "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr"
+    ln -s "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" "${HOME}/.local/bin/herdr-app"
+    BREW_FAIL_INSTALL="herdr-app" run sh "${CMD}" --yes herdr-app
+    [ "${status}" -ne 0 ]
+    _has "brew install --cask herdr-app failed"
+    [ -f "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" ]
+    [ -L "${HOME}/.local/bin/herdr-app" ]
+    run grep -q '^pgrep' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
 }
 
 @test "a running official Herdr app is kept by the migration; the cask is still installed" {
@@ -205,7 +218,7 @@ brew install --cask herdr-app" ]
 @test "on Linux herdr-app runs the official app installer only (it brings the core) and no brew" {
     FAKE_UNAME=Linux run sh "${CMD}" --yes herdr-app
     [ "${status}" -eq 0 ]
-    [ "$(_log)" = "curl -fsSL https://releases.herdr.dev/app/install.sh" ]
+    [ "$(_log)" = "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/app/install.sh" ]
     _has "ran app/install.sh"
     _points_into_repo .config/herdr/config.toml
 
@@ -338,7 +351,7 @@ brew install herdr" ]
     grep -Fqx "brew install tmux" "${TOOL_LOG}"
     grep -Fqx "brew install gitmux" "${TOOL_LOG}"
     grep -Fqx "brew install --cask ghostty" "${TOOL_LOG}"
-    grep -Fq "curl -fsSL https://releases.herdr.dev/core/install.sh" "${TOOL_LOG}"
+    grep -Fq "curl -fsSL --connect-timeout 10 --max-time 120 https://releases.herdr.dev/core/install.sh" "${TOOL_LOG}"
     _points_into_repo .config/tmux/tmux.conf
     _points_into_repo .config/ghostty/config
     _recorded_is "tmux herdr-core ghostty"
