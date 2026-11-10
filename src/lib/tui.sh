@@ -159,6 +159,22 @@ _tui_menu_frame() {
     '
 }
 
+# _tui_menu_frame_cursor <cursor> — the 1-based line of _tui_menu_frame that
+# holds the cursor row (group headers and the blank lines between groups count).
+_tui_menu_frame_cursor() {
+    printf '%s\n' "${_TUI_MENU_ROWS}" | awk -F'|' -v cur="$1" '
+        {
+            if ($1 != prev) {
+                if (NR > 1) line++
+                line++
+                prev = $1
+            }
+            line++
+            if (NR == cur) { print line; exit }
+        }
+    '
+}
+
 # _tui_read_key — read one key from fd 3: up, down, enter, toggle (space),
 # yes, no, quit or other. End of input and a lone esc count as quit.
 _tui_read_key() {
@@ -223,10 +239,105 @@ _tui_die_by() {
     exit 130
 }
 
+# _tui_rows — the terminal height in lines, empty when unknown. DOTS_TUI_ROWS
+# forces it (tests, odd terminals). Otherwise, with stderr on a tty: `stty
+# size` on the key tty (fd 3), then `tput lines`, then ${LINES}. Anything that
+# is not a positive integer counts as unknown.
+_tui_rows() {
+    _tr_r="${DOTS_TUI_ROWS:-}"
+    if [ -z "${_tr_r}" ] && [ -t 2 ]; then
+        _tr_r="$(stty size <&3 2>/dev/null | awk '{ print $1 }')"
+        case "${_tr_r}" in ''|*[!0-9]*|0) _tr_r="$(tput lines 2>/dev/null)" ;; esac
+        case "${_tr_r}" in ''|*[!0-9]*|0) _tr_r="${LINES:-}" ;; esac
+    fi
+    case "${_tr_r}" in
+        ''|*[!0-9]*|0) return 0 ;;
+    esac
+    printf '%s\n' "${_tr_r}"
+}
+
+# _tui_window <total> <avail> <cursor> <top> — scroll window over <total>
+# content lines that must fit <avail> output lines, with the cursor line
+# <cursor> visible, scrolling as little as possible from the previous <top>.
+# Prints "<top> <last> <up 0|1> <down 0|1>": the first and last content line
+# shown and whether an "↑ more" / "↓ more" indicator line (each costs one of
+# <avail>) goes above / below. Indicators are dropped when <avail> < 3.
+_tui_window() {
+    _tw_total="$1"; _tw_avail="$2"; _tw_c="$3"; _tw_top="$4"
+    [ "${_tw_top}" -ge 1 ] || _tw_top=1
+    _tw_i=0
+    while [ "${_tw_i}" -lt 5 ]; do
+        _tw_i=$((_tw_i + 1))
+        _tw_up=0; _tw_down=0
+        if [ "${_tw_avail}" -ge 3 ]; then
+            [ "${_tw_top}" -gt 1 ] && _tw_up=1
+            [ $((_tw_top + _tw_avail - _tw_up - 1)) -lt "${_tw_total}" ] && _tw_down=1
+        fi
+        _tw_w=$((_tw_avail - _tw_up - _tw_down))
+        if [ "${_tw_c}" -lt "${_tw_top}" ]; then
+            # One line of context above the cursor (a group header, say).
+            _tw_top=$((_tw_c - 1))
+            [ "${_tw_top}" -ge 1 ] || _tw_top=1
+        elif [ "${_tw_c}" -gt $((_tw_top + _tw_w - 1)) ]; then
+            _tw_top=$((_tw_c - _tw_w + 1))
+        elif [ $((_tw_top + _tw_w - 1)) -gt "${_tw_total}" ] && [ "${_tw_top}" -gt 1 ]; then
+            _tw_top=$((_tw_total - _tw_w + 1))
+            [ "${_tw_top}" -ge 1 ] || _tw_top=1
+        else
+            break
+        fi
+    done
+    printf '%s %s %s %s\n' "${_tw_top}" $((_tw_top + _tw_w - 1)) "${_tw_up}" "${_tw_down}"
+}
+
+# _tui_more <text> <color> — one dim indicator line.
+_tui_more() {
+    if [ "$2" = 1 ]; then
+        printf '  \033[2m%s\033[0m\n' "$1"
+    else
+        printf '  %s\n' "$1"
+    fi
+}
+
+# _tui_fit_frame <frame> <cursor-line> <color> <rows> <top> — leave in
+# _TUI_FIT the text of <frame> (the last line is the key hint, the one before
+# it a blank), taking at most <rows> - 1 lines so the prompt line stays free.
+# A frame that fits, or an unknown <rows> (empty, or < 3), is kept unchanged.
+# Otherwise _TUI_FIT is a window of the content lines (all but the blank and
+# the hint) that holds <cursor-line>, dim "  ↑ more" / "  ↓ more" lines when
+# content is hidden above / below, then the hint. The window start goes to
+# _TUI_FIT_TOP, to be passed back as <top> for the next frame. Not run in a
+# subshell, so those two globals reach the caller.
+_tui_fit_frame() {
+    _TUI_FIT="$1"
+    _TUI_FIT_TOP="${5:-1}"
+    _tff_rows="$4"
+    _tff_n="$(printf '%s\n' "$1" | wc -l | tr -d ' ')"
+    if [ -z "${_tff_rows}" ] || [ "${_tff_rows}" -lt 3 ] || [ "${_tff_n}" -le $((_tff_rows - 1)) ]; then
+        return 0
+    fi
+    # shellcheck disable=SC2046
+    set -- "$@" $(_tui_window $((_tff_n - 2)) $((_tff_rows - 2)) "$2" "${5:-1}")
+    _TUI_FIT_TOP="$6"
+    _tff_out=""
+    [ "$8" -eq 1 ] && _tff_out="$(_tui_more '↑ more' "$3")
+"
+    _tff_out="${_tff_out}$(printf '%s\n' "${_TUI_FIT}" | sed -n "$6,$7p")"
+    [ "$9" -eq 1 ] && _tff_out="${_tff_out}
+$(_tui_more '↓ more' "$3")"
+    _TUI_FIT="${_tff_out}
+$(printf '%s\n' "${_TUI_FIT}" | sed -n '$p')"
+    return 0
+}
+
 # _tui_pick <frame-fn> <count> <cursor> — key loop shared by every picker.
 # Draws "<frame-fn> <cursor> <accent> <color>" on stderr after each key and
 # prints the chosen 1-based index, or 0 for q, esc or end of input. Needs
 # _TUI_PICK_ACCENT set by the caller.
+# Short terminals: a frame taller than the terminal (see _tui_rows) is cut to
+# a scrolling window by _tui_fit_frame, so the cursor never leaves the screen.
+# That needs a second function, "<frame-fn>_cursor <cursor>", printing the
+# frame line that holds the cursor row.
 # Checklists add two optional hooks (function names): _TUI_PICK_TOGGLE_FN is
 # called with the cursor row on space, and _TUI_PICK_RESULT_FN prints extra
 # lines after the index when a row was chosen. Both run in this subshell, so
@@ -259,8 +370,15 @@ _tui_pick() (
     [ -t 2 ] && printf '\033[?25l' >&2
 
     _tp_lines=0
+    _tp_top=1
     while :; do
         _tp_frame="$("${_tp_frame_fn}" "${_tp_cur}" "${_TUI_PICK_ACCENT:-141}" "${_tp_color}")"
+        _tp_rows="$(_tui_rows)"
+        if [ -n "${_tp_rows}" ]; then
+            _tui_fit_frame "${_tp_frame}" "$("${_tp_frame_fn}_cursor" "${_tp_cur}")" "${_tp_color}" "${_tp_rows}" "${_tp_top}"
+            _tp_frame="${_TUI_FIT}"
+            _tp_top="${_TUI_FIT_TOP}"
+        fi
         if [ -t 2 ]; then
             [ "${_tp_lines}" -gt 0 ] && printf '\033[%dA' "${_tp_lines}" >&2
             printf '%s\n' "${_tp_frame}" | awk '{ printf "\033[2K%s\n", $0 }' >&2
@@ -342,6 +460,12 @@ tui_confirm() (
         *) exit 130 ;;
     esac
 )
+
+# _tui_choose_frame_cursor <cursor> — the line of _tui_choose_frame holding
+# the cursor row (the header is line 1).
+_tui_choose_frame_cursor() {
+    printf '%s\n' "$(($1 + 1))"
+}
 
 # _tui_choose_frame <cursor> <accent> <color> — frame for tui_choose, from
 # _TUI_CHOOSE_HEADER and the newline-separated _TUI_CHOOSE_ITEMS.
@@ -432,6 +556,12 @@ EOF
 _tui_ck_result() {
     printf '%s\n' "${_TUI_CK_ITEMS}" | awk -F'|' -v state=" ${_TUI_CK_STATE} " \
         'index(state, " " $1 " ") { print $1 }'
+}
+
+# _tui_ck_frame_cursor <cursor> — the line of _tui_ck_frame holding the
+# cursor row (the header is line 1).
+_tui_ck_frame_cursor() {
+    printf '%s\n' "$(($1 + 1))"
 }
 
 # _tui_ck_frame <cursor> <accent> <color> — frame for tui_checklist.
