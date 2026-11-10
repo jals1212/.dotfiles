@@ -347,19 +347,33 @@ _official_app() {
     [ ! -L "${HOME}/.local/bin/herdr-app" ]
 }
 
-@test "unchecking something else never asks whether Herdr app runs, and Linux removal ignores it" {
+@test "unchecking something else never asks whether Herdr app runs" {
     _record tmux
     BREW_INSTALLED="tmux" FAKE_RUNNING=1 run sh "${CMD}" --yes none
     [ "${status}" -eq 0 ]
     run grep -q '^pgrep' "${TOOL_LOG}"
     [ "${status}" -ne 0 ]
+}
 
+@test "a running Herdr app on Linux is never removed on uncheck: dir and launcher kept with a warning, the rest still runs" {
     _record herdr-app
     export FAKE_UNAME=Linux
-    mkdir -p "${HOME}/.local/share/herdr-app"
+    mkdir -p "${HOME}/.local/share/herdr-app/bin" "${HOME}/.local/share/applications"
+    printf 'app\n' > "${HOME}/.local/share/herdr-app/bin/herdr"
+    ln -s "${HOME}/.local/share/herdr-app/bin/herdr" "${HOME}/.local/bin/herdr-app"
+    printf '[Desktop Entry]\n' > "${HOME}/.local/share/applications/herdr-app.desktop"
+    printf 'core\n' > "${HOME}/.local/bin/herdr-core"
     FAKE_RUNNING=1 run sh "${CMD}" --yes herdr-core
     [ "${status}" -eq 0 ]
-    [ ! -e "${HOME}/.local/share/herdr-app" ]
+    grep -Fqx "pgrep -f ${HOME}/.local/share/herdr-app/" "${TOOL_LOG}"
+    [ -f "${HOME}/.local/share/herdr-app/bin/herdr" ]
+    [ -L "${HOME}/.local/bin/herdr-app" ]
+    _has "Herdr app is running; quit it first"
+    _has "${HOME}/.local/share/herdr-app"
+    # the rest ran: the desktop entry went, the core stays, the selection is recorded
+    [ ! -e "${HOME}/.local/share/applications/herdr-app.desktop" ]
+    [ -f "${HOME}/.local/bin/herdr-core" ]
+    grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-herdr-core}"' "${LOCAL_ZSH}"
 }
 
 @test "herdr-app on Linux: the official install dir, launcher and desktop files go; the core stays" {

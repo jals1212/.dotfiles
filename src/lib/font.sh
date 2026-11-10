@@ -89,11 +89,17 @@ font_herdr_app_settings_path() {
 
 # _font_herdr_app_write <settings> <family> <tmp>
 #   Write <tmp> = <settings> (or {}) with "font" set to <family>, every other
-#   key kept. Uses jq, else python3. Fails when the existing file is not a
-#   JSON object, or when neither tool exists (status 3).
+#   key kept. Uses jq, else python3. An empty or whitespace-only file counts
+#   as {}. Fails when the existing file is not a JSON object, or when neither
+#   tool exists (status 3).
 _font_herdr_app_write() {
+    _fhw_src="$1"
+    if [ -f "${_fhw_src}" ] && ! grep -q '[^[:space:]]' "${_fhw_src}"; then
+        _fhw_src=""
+    fi
+    set -- "${_fhw_src}" "$2" "$3"
     if command -v jq >/dev/null 2>&1; then
-        if [ -f "$1" ]; then
+        if [ -n "$1" ] && [ -f "$1" ]; then
             jq -e 'type == "object"' "$1" >/dev/null 2>&1 || return 1
             jq --arg f "$2" '.font = $f' "$1" > "$3"
         else
@@ -106,7 +112,7 @@ _font_herdr_app_write() {
 import json, os, sys
 src, family, dst = sys.argv[1:4]
 data = {}
-if os.path.exists(src):
+if src and os.path.exists(src):
     with open(src, encoding="utf-8") as fh:
         data = json.load(fh)
     if not isinstance(data, dict):

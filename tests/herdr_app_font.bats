@@ -22,7 +22,7 @@ setup() {
     LOCAL_ZSH="${HOME}/.config/zsh/local.zsh"
     FONT_CMD="${REPO_ROOT_REAL}/src/commands/font.sh"
     SETTINGS="${HOME}/.config/herdr-app/settings.json"
-    JQ="$(command -v jq)"
+    PY="$(command -v python3 || true)"
     printf '#!/bin/sh\nprintf "Linux\\n"\n' > "${SANDBOX}/bin/uname"
     chmod +x "${SANDBOX}/bin/uname"
     export PATH="${SANDBOX}/bin:${PATH}"
@@ -38,8 +38,12 @@ _select() {
 
 _has() { case "${output}" in *"$1"*) return 0 ;; esac; echo "missing: $1 in: ${output}"; return 1; }
 
-# _norm <file> — the JSON of <file> in canonical form (sorted keys, compact).
-_norm() { "${JQ}" -S -c . "$1"; }
+# _norm <file> — the JSON of <file> in canonical form (sorted keys, compact),
+# through python3 so the suite needs no jq (Dotbot already needs python3).
+_norm() {
+    [ -n "${PY}" ] || skip "needs python3"
+    "${PY}" -c 'import json, sys; print(json.dumps(json.load(open(sys.argv[1], encoding="utf-8")), sort_keys=True, separators=(",", ":"), ensure_ascii=False))' "$1"
+}
 
 # _tools_path [python3] — PATH of symlinks to every system tool except jq and
 # python*, plus the host python3 when asked, so the font code sees exactly the
@@ -171,6 +175,21 @@ _tools_path() {
     [ "${status}" -eq 0 ]
     _has "[WARN]"
     cmp -s "${SETTINGS}" "${SANDBOX}/before"
+}
+
+@test "an empty or whitespace-only settings.json counts as {}: the font is set, no warning (jq and python3)" {
+    command -v python3 >/dev/null 2>&1 || skip "needs python3"
+    _select herdr-app
+    mkdir -p "$(dirname "${SETTINGS}")"
+    for content in '' ' \n\t\n'; do
+        for path in "${PATH}" "$(_tools_path python3)"; do
+            printf "${content}" > "${SETTINGS}"
+            run env PATH="${path}" sh "${FONT_CMD}" iosevka
+            [ "${status}" -eq 0 ]
+            case "${output}" in *WARN*) echo "unexpected warning: ${output}"; return 1 ;; esac
+            [ "$(_norm "${SETTINGS}")" = '{"font":"IosevkaTerm NF"}' ]
+        done
+    done
 }
 
 @test "neither jq nor python3: warns, leaves the file, exit 0" {

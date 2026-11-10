@@ -27,7 +27,7 @@ _update_usage() {
     printf 'Herdr, Ghostty) while none is recorded; choose them later with\n' >&2
     printf './dots components. --yes never asks.\n\n' >&2
     printf 'On macOS with herdr-app selected, an official Herdr app install\n' >&2
-    printf '(~/Applications/Herdr.app) is removed before Homebrew installs the\n' >&2
+    printf '(~/Applications/Herdr.app) is removed once Homebrew has installed the\n' >&2
     printf 'herdr-app cask, after a [y/N] question (--yes removes it; no TTY keeps\n' >&2
     printf 'it). The core stays; a running app is never removed.\n\n' >&2
     printf 'Any other argument is an error (exit 2); nothing runs.\n\n' >&2
@@ -204,18 +204,18 @@ if [ "${_yes}" -eq 0 ] && [ -z "$(components_recorded)" ] && [ -t 0 ] && [ -t 1 
 fi
 
 # ---------------------------------------------------------------------------
-# Herdr app on macOS comes from Homebrew: move an official install out of the
-# way before the Brewfile runs (asks; --yes moves it; no TTY keeps it).
-# ---------------------------------------------------------------------------
-components_herdr_app_migrate "${_yes}" || log_warn "Moving Herdr app to Homebrew left something in place"
-
-# ---------------------------------------------------------------------------
 # Base dotbot run
 # ---------------------------------------------------------------------------
 dotbot_base_apply || {
     log_error "Base dotbot apply failed"
     exit 1
 }
+
+# ---------------------------------------------------------------------------
+# Herdr app on macOS comes from Homebrew: once the Brewfile installed the cask,
+# move an official install out (asks; --yes moves it; no TTY keeps it).
+# ---------------------------------------------------------------------------
+components_herdr_app_migrate_installed "${_yes}" || log_warn "Moving Herdr app to Homebrew left something in place"
 
 # ---------------------------------------------------------------------------
 # Theme apply

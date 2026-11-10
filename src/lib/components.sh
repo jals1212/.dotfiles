@@ -343,20 +343,39 @@ _components_rm() {
     esac
 }
 
-# components_herdr_app_running — succeed when the official Herdr app
-# (~/Applications/Herdr.app) is running, the check shared by the removal on
-# uncheck and the migration to Homebrew. Without pgrep nothing is known to run.
+# _components_herdr_app_linux_dir — print the Linux official Herdr app dir.
+_components_herdr_app_linux_dir() {
+    printf '%s/herdr-app\n' "${XDG_DATA_HOME:-${HOME:?}/.local/share}"
+}
+
+# components_herdr_app_running — succeed when the official Herdr app is running
+# (macOS: ~/Applications/Herdr.app; Linux: the official install dir), the check
+# shared by the removal on uncheck and the migration to Homebrew. Without pgrep
+# nothing is known to run.
 components_herdr_app_running() {
     command -v pgrep >/dev/null 2>&1 || return 1
-    pgrep -f "${HOME:?components_herdr_app_running: HOME required}/Applications/Herdr.app/Contents/MacOS/" >/dev/null 2>&1
+    case "$(detect_os)" in
+        macos) pgrep -f "${HOME:?components_herdr_app_running: HOME required}/Applications/Herdr.app/Contents/MacOS/" >/dev/null 2>&1 ;;
+        linux) pgrep -f "$(_components_herdr_app_linux_dir)/" >/dev/null 2>&1 ;;
+        *) return 1 ;;
+    esac
 }
 
 # _components_official_app_path <path> — succeed when <path> belongs to the
-# macOS official Herdr app install: the app bundle or its herdr-app link.
+# official Herdr app install: on macOS the app bundle or its herdr-app link, on
+# Linux the install dir or its herdr-app launcher.
 _components_official_app_path() {
-    [ "$(detect_os)" = macos ] || return 1
-    case "$1" in
-        "${HOME:?}/Applications/Herdr.app" | "${HOME}/.local/bin/herdr-app") return 0 ;;
+    case "$(detect_os)" in
+        macos)
+            case "$1" in
+                "${HOME:?}/Applications/Herdr.app" | "${HOME}/.local/bin/herdr-app") return 0 ;;
+            esac
+            ;;
+        linux)
+            case "$1" in
+                "$(_components_herdr_app_linux_dir)" | "${HOME:?}/.local/bin/herdr-app") return 0 ;;
+            esac
+            ;;
     esac
     return 1
 }
@@ -457,11 +476,11 @@ components_herdr_app_migrate() {
     if [ "${1:-0}" -ne 1 ]; then
         if [ -t 0 ] && [ -t 1 ]; then
             if ! tui_confirm "Remove it so Homebrew installs Herdr app?" n; then
-                log_warn "Kept the official Herdr app; the cask adds a second copy in /Applications."
+                log_warn "Kept the official Herdr app; the cask's copy in /Applications is a second one."
                 return 0
             fi
         else
-            log_warn "No TTY to confirm: kept the official Herdr app (pass --yes to move it); the cask adds a second copy in /Applications."
+            log_warn "No TTY to confirm: kept the official Herdr app (pass --yes to move it); the cask's copy in /Applications is a second one."
             return 0
         fi
     fi
@@ -481,6 +500,20 @@ components_herdr_app_migrate() {
 ${_cham_paths}
 EOF
     return "${_cham_fail}"
+}
+
+# components_herdr_app_migrate_installed <yes 0|1> — the update's migration,
+# run after the Brewfile: it moves an official install out only when Homebrew
+# has the herdr-app cask installed, so a failed brew run never leaves no app.
+components_herdr_app_migrate_installed() {
+    [ "$(detect_os)" = macos ] || return 0
+    components_has herdr-app || return 0
+    [ -n "$(components_herdr_app_official_paths)" ] || return 0
+    if ! command -v brew >/dev/null 2>&1 || ! brew list --cask herdr-app >/dev/null 2>&1; then
+        log_warn "Homebrew has not installed herdr-app; kept the official Herdr app (run ./dots update again once brew installs it)."
+        return 0
+    fi
+    components_herdr_app_migrate "$1"
 }
 
 # ---------------------------------------------------------------------------
@@ -610,8 +643,12 @@ components_install() {
                 ;;
             herdr-app)
                 if [ "${_cin_os}" = macos ]; then
-                    components_herdr_app_migrate "${_cin_yes}" || _cin_fail=1
-                    _components_install_brew cask herdr-app || _cin_fail=1
+                    # The official install goes only once the cask is in place.
+                    if _components_install_brew cask herdr-app; then
+                        components_herdr_app_migrate "${_cin_yes}" || _cin_fail=1
+                    else
+                        _cin_fail=1
+                    fi
                 elif [ "${_cin_os}" = linux ]; then
                     _components_install_herdr app || _cin_fail=1
                 fi
