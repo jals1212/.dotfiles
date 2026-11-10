@@ -18,11 +18,14 @@ setup() {
     CMD="${REPO_ROOT_REAL}/src/commands/components.sh"
     TOOL_LOG="${SANDBOX}/tools.log"
     export TOOL_LOG
-    # Stubs that log any call: the command must never reach them.
+    # Stubs that log any call. brew reports nothing installed (`brew list`
+    # fails), so unchecking a component finds nothing to uninstall; the
+    # removal behavior itself is in components_removal.bats.
     for tool in brew curl; do
         printf '#!/bin/sh\nprintf "%%s %%s\\n" "%s" "$*" >> "${TOOL_LOG}"\n' "${tool}" > "${SANDBOX}/bin/${tool}"
         chmod +x "${SANDBOX}/bin/${tool}"
     done
+    printf '#!/bin/sh\nprintf "brew %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "$1" = list ] && exit 1\nexit 0\n' > "${SANDBOX}/bin/brew"
     export PATH="${SANDBOX}/bin:${PATH}"
 }
 
@@ -156,10 +159,12 @@ _tty_components() {
     _has "none"
 }
 
-@test "the command never calls brew or curl" {
+@test "the command never installs: no curl, no brew call except the installed check" {
     sh "${CMD}" tmux herdr-app ghostty
-    sh "${CMD}" none
     [ ! -e "${TOOL_LOG}" ]
+    sh "${CMD}" none
+    # unchecking only asks brew what is installed; nothing is uninstalled
+    ! grep -v '^brew list ' "${TOOL_LOG}" || return 1
 }
 
 @test "picker: space checks rows, enter records them; nothing is checked by default" {
