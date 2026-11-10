@@ -17,7 +17,7 @@ rust = "latest"
 "npm:@colbymchenry/codegraph" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 # Own package; approved past aube's new-package age gate.
-"npm:@jals1212/pi-spaces-cli" = { version = "latest", allow_low_downloads = true }
+"npm:pi-spaces-cli" = { version = "latest", allow_low_downloads = true }
 "npm:gentle-pi" = "latest"
 "npm:neon" = "latest"
 # vercel stays in the Brewfile: since 58.5.1 its npm releases lack SLSA
@@ -28,7 +28,7 @@ idiomatic_version_file_enable_tools = ["node"]
 # Own global CLIs install their newest release at once, without the
 # release-age wait. Needs exact tool names (npm:@jals1212/* does not match),
 # so add each new own global tool here.
-minimum_release_age_excludes = ["npm:@jals1212/pi-spaces-cli"]
+minimum_release_age_excludes = ["npm:pi-spaces-cli"]
 
 [settings.ruby]
 compile = false
