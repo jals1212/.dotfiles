@@ -152,6 +152,20 @@
     stdout: true
     stderr: true
 
+# ── Herdr desktop app (Linux) ──────────────────────────────────────────────────
+# macOS gets it from the herdr-app cask; Homebrew has no Linux package, so Linux
+# uses Herdr's official installer (~/.local/share/herdr-app, herdr-app and hc in
+# ~/.local/bin). Skipped when the app is already installed; a failure only warns.
+- shell:
+  - description: Install Herdr desktop app (Linux, official installer)
+    command: |
+      if [ "$(uname -s)" = Linux ] && [ ! -d "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app" ]; then
+        curl -fsSL https://releases.herdr.dev/app/install.sh | sh || echo "warning: the Herdr app installer failed" >&2
+      fi
+    quiet: true
+    stdout: true
+    stderr: true
+
 # ── Mise ───────────────────────────────────────────────────────────────────────
 # dotbot-mise plugin: runs `mise install`.
 # The plugin ignores YAML data; empty list satisfies the key.

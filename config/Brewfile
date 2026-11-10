@@ -27,7 +27,8 @@ brew "luarocks" # for neovim plugins
 brew "ripgrep"
 brew "ast-grep"
 brew "sd"
-brew "herdr"
+brew "herdr" # Herdr TUI
+cask "herdr-app" if OS.mac? # Herdr desktop app (Apple silicon); separate from the TUI, agents not shared
 brew "tmux"
 brew "gitmux" # tmux status-line git module
 brew "zoxide"

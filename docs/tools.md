@@ -26,7 +26,7 @@ Polyglot runtime/version manager (Node, Python, Go, etc.). Activated in zsh. Com
 
 ### Ghostty — [docs](https://ghostty.org/docs)
 
-Terminal emulator (macOS cask; `./dots doctor` skips its checks on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`.
+Terminal emulator (macOS cask; `./dots doctor` skips its checks on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`. Font chosen with `./dots font` (`jetbrains-mono` by default, or `iosevka`), written to `~/.config/ghostty/font.conf`.
 
 ### tmux — [docs](https://github.com/tmux/tmux/wiki)
 
@@ -34,7 +34,7 @@ Multiplexer. Prefix `Ctrl-a`. Use `tx` to attach to or create the main session. 
 
 ### Herdr
 
-Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctrl-a`; agent panel sorted by spaces. Theme follows `./dots theme` through the fenced `theme.name` setting.
+Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctrl-a`; agent panel sorted by spaces. Theme follows `./dots theme` through the fenced `theme.name` setting. The Herdr desktop app (`herdr-app` cask, macOS Apple silicon only) is installed alongside; it is a separate program built on herdr-core and does not share agents with the TUI. On Linux the app is not installed by the Brewfile (Homebrew has no Linux package; herdr.dev only offers a `curl | sh` installer).
 
 ### AeroSpace — [docs](https://nikitabobko.github.io/AeroSpace/guide)
 
