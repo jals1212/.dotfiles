@@ -63,9 +63,11 @@ brew "mosh"
 brew "rjyo/moshi/moshi-hook" if OS.mac? # see moshi-pair in zsh/functions.zsh
 
 # ── Cloud CLIs ───────────────────────────────────────
-brew "azure-cli"
+# azure-cli and vercel moved from homebrew-core to casks (tap_migrations.json);
+# a `brew` entry fails with "No available formula". Casks are macOS-only.
+cask "azure-cli" if OS.mac?
 brew "cloudflare-wrangler"
-brew "vercel"
+cask "vercel" if OS.mac?
 
 # ── Misc ─────────────────────────────────────────────
 brew "cbonsai"
