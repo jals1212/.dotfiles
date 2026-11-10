@@ -14,6 +14,15 @@ tap "nikitabobko/tap", trusted: { casks: ["aerospace"] } if OS.mac?
 # trusted: the open-pencil cask below comes from this third-party tap
 tap "open-pencil/tap", trusted: { casks: ["open-pencil"] } if OS.mac?
 
+# ── Machine-local choices ────────────────────────────
+# Read from ~/.config/zsh/local.zsh, not from the environment: brew strips
+# non-HOMEBREW_ variables. DOTS_COMPONENTS (./dots components) lists the terminal
+# components to install: tmux, herdr-tui, herdr-core, herdr-app, ghostty. A
+# selection that was never recorded, or `none`, installs none of them.
+dots_local_zsh = File.join(Dir.home, ".config/zsh/local.zsh")
+dots_local = File.exist?(dots_local_zsh) ? File.read(dots_local_zsh) : ""
+dots_components = dots_local[/^export DOTS_COMPONENTS="\$\{DOTS_COMPONENTS:-(.*)\}"$/, 1].to_s.split
+
 # ── Core CLI ─────────────────────────────────────────
 brew "bat"
 brew "eza"
@@ -27,11 +36,18 @@ brew "luarocks" # for neovim plugins
 brew "ripgrep"
 brew "ast-grep"
 brew "sd"
-brew "herdr" # Herdr TUI
-cask "herdr-app" if OS.mac? # Herdr desktop app (Apple silicon); separate from the TUI, agents not shared
-brew "tmux"
-brew "gitmux" # tmux status-line git module
 brew "zoxide"
+
+# ── Terminal components (chosen with ./dots components) ─
+# Herdr core has no Homebrew package: the official installer runs from
+# config/install.conf.yaml (the app installer brings the core too).
+if dots_components.include?("tmux")
+  brew "tmux"
+  brew "gitmux" # tmux status-line git module
+end
+brew "herdr" if dots_components.include?("herdr-tui") # Herdr TUI
+cask "herdr-app" if OS.mac? && dots_components.include?("herdr-app") # Herdr desktop app (Apple silicon); separate from the TUI, agents not shared
+cask "ghostty" if OS.mac? && dots_components.include?("ghostty")
 
 # ── Shell enhancements ───────────────────────────────
 brew "starship"
@@ -84,12 +100,11 @@ brew "bats-core"
 # ~/.config/zsh/local.zsh; jetbrains-mono by default), so `brew bundle cleanup`
 # keeps the active font and drops the other one. Read from the file: brew
 # strips non-HOMEBREW_ variables from the environment.
-dots_local_zsh = File.join(Dir.home, ".config/zsh/local.zsh")
-dots_font = File.exist?(dots_local_zsh) ? File.read(dots_local_zsh)[/^export DOTS_FONT="\$\{DOTS_FONT:-(.*)\}"$/, 1] : nil
+# The font cask stays declared whatever the components are: starship, tmux and
+# Neovim glyphs need a Nerd Font in any terminal, `./dots font` installs it
+# without Ghostty, and `brew bundle cleanup` must not drop it.
+dots_font = dots_local[/^export DOTS_FONT="\$\{DOTS_FONT:-(.*)\}"$/, 1]
 cask(dots_font == "iosevka" ? "font-iosevka-term-nerd-font" : "font-jetbrains-mono-nerd-font") if OS.mac?
-
-# ── Terminal ─────────────────────────────────────────
-cask "ghostty" if OS.mac?
 
 # ── Window manager ───────────────────────────────────
 cask "nikitabobko/tap/aerospace" if OS.mac?

@@ -26,15 +26,15 @@ Polyglot runtime/version manager (Node, Python, Go, etc.). Activated in zsh. Com
 
 ### Ghostty — [docs](https://ghostty.org/docs)
 
-Terminal emulator (macOS cask; `./dots doctor` skips its checks on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`. Font chosen with `./dots font` (`jetbrains-mono` by default, or `iosevka`), written to `~/.config/ghostty/font.conf`.
+Terminal emulator, installed only when `ghostty` is selected with `./dots components` (macOS cask; the config is linked on any OS once selected, and `./dots doctor` skips its checks when unselected or on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`. Font chosen with `./dots font` (`jetbrains-mono` by default, or `iosevka`), written to `~/.config/ghostty/font.conf`.
 
 ### tmux — [docs](https://github.com/tmux/tmux/wiki)
 
-Multiplexer. Prefix `Ctrl-a`. Use `tx` to attach to or create the main session. Plugin inventory in [plugins.md](plugins.md#tmux-plugins). Full key table: [keymaps.md](keymaps.md#tmux). Aliases for session management: `tx`, `txa`, `txl`, `txk` (see [aliases.md](aliases.md)).
+Multiplexer, installed with gitmux only when `tmux` is selected with `./dots components` (config linked, theme reloaded and doctor checks run only then). Prefix `Ctrl-a`. Use `tx` to attach to or create the main session. Plugin inventory in [plugins.md](plugins.md#tmux-plugins). Full key table: [keymaps.md](keymaps.md#tmux). Aliases for session management: `tx`, `txa`, `txl`, `txk` (see [aliases.md](aliases.md)).
 
 ### Herdr
 
-Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctrl-a`; agent panel sorted by spaces. Theme follows `./dots theme` through the fenced `theme.name` setting. The Herdr desktop app (`herdr-app` cask, macOS Apple silicon only) is installed alongside; it is a separate program built on herdr-core and does not share agents with the TUI. On Linux the app is not installed by the Brewfile (Homebrew has no Linux package; herdr.dev only offers a `curl | sh` installer).
+Agent workspace multiplexer. Config: `~/.config/herdr/config.toml`. Prefix: `Ctrl-a`; agent panel sorted by spaces. Theme follows `./dots theme` through the fenced `theme.name` setting. Each Herdr piece is opt-in with `./dots components`: `herdr-tui` (the `herdr` formula), `herdr-core` (Herdr's official core installer, `https://releases.herdr.dev/core/install.sh`, macOS and Linux; skipped when `herdr-core` is already installed or when the app is selected) and `herdr-app` (the `herdr-app` cask on macOS Apple silicon; on Linux the official app installer `https://releases.herdr.dev/app/install.sh`, which brings the core). The app is a separate program built on herdr-core and does not share agents with the TUI. The config is linked and the theme fence applied when any Herdr component is selected. The installers are unpinned and a failure only warns.
 
 ### AeroSpace — [docs](https://nikitabobko.github.io/AeroSpace/guide)
 

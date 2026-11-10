@@ -10,6 +10,13 @@ if ! command -v path_manifest >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v components_has >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/components.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/components.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # dotbot_managed_dirs
 #   Print unique $HOME directories managed by the repository's Dotbot configs.
@@ -434,5 +441,21 @@ dotbot_theme_apply() {
     fi
 
     log_step "Applying theme config: content/themes/${_dta_theme}-${_dta_flavor}.yaml"
-    "$(path_install_wrapper)" "${_dta_config}"
+
+    # The Ghostty theme link is made only when Ghostty is selected
+    # (./dots components): run a copy of the config without that one link.
+    # Fail open: without the components lib the config runs as it is.
+    _dta_run="${_dta_config}"
+    _dta_tmp=""
+    if command -v components_has >/dev/null 2>&1 && command -v dots_local_get >/dev/null 2>&1 \
+        && ! components_has ghostty; then
+        _dta_tmp="$(mktemp)" || return 1
+        grep -v '^[[:space:]]*~/\.config/ghostty/themes/dots:' "${_dta_config}" > "${_dta_tmp}" || true
+        _dta_run="${_dta_tmp}"
+    fi
+
+    "$(path_install_wrapper)" "${_dta_run}"
+    _dta_rc=$?
+    [ -z "${_dta_tmp}" ] || rm -f "${_dta_tmp}"
+    return "${_dta_rc}"
 }

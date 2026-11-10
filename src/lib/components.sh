@@ -87,6 +87,14 @@ components_has() {
     return 1
 }
 
+# components_has_any <id>... — succeed when at least one of the ids is selected.
+components_has_any() {
+    for _cha_id in "$@"; do
+        components_has "${_cha_id}" && return 0
+    done
+    return 1
+}
+
 # components_apply [id...] — validate every id, then record the normalized
 # selection (`none` for no ids). Nothing is written when an id is unknown.
 components_apply() {

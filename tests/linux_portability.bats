@@ -242,8 +242,16 @@ _sysbin() {
     done
 }
 
+# _select_all — every terminal component selected, so the doctor runs the
+# tmux/herdr/ghostty checks (it skips the unselected ones).
+_select_all() {
+    mkdir -p "${HOME}/.config/zsh"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux herdr-tui herdr-core herdr-app ghostty}"\n' > "${HOME}/.config/zsh/local.zsh"
+}
+
 _doctor() {
     _sysbin
+    _select_all
     run env -i HOME="${HOME}" PATH="${SHIMS}:${BATS_TEST_TMPDIR}/sysbin" NO_COLOR=1 REPO_ROOT="${REPO_ROOT_REAL}" \
         sh -c ". '${REPO_ROOT_REAL}/src/lib/log.sh'; . '${REPO_ROOT_REAL}/src/lib/doctor.sh'; $1"
 }
@@ -297,6 +305,7 @@ _doctor() {
         'DOCTOR_CHECKS="check_dotbot_submodule check_orbstack check_docker check_ghostty_link check_ghostty_theme_marker"' \
         'export DOCTOR_CHECKS' >> "${REPO}/src/lib/doctor.sh"
     printf '{}\n' > "${REPO}/manifest.json"
+    _select_all
     _uname Linux
 
     run env PATH="${SHIMS}:${PATH}" sh "${REPO}/dots" doctor

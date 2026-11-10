@@ -17,6 +17,20 @@ if ! command -v detect_os >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v theme_apply >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/theme.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/theme.sh"
+    fi
+fi
+
+if ! command -v components_has >/dev/null 2>&1; then
+    if [ -n "${REPO_ROOT:-}" ] && [ -f "${REPO_ROOT}/src/lib/components.sh" ]; then
+        # shellcheck disable=SC1091
+        . "${REPO_ROOT}/src/lib/components.sh"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -41,6 +55,21 @@ _doc_macos_only() {
     _dmo_os="$(detect_os 2>/dev/null)" || return 1
     [ "${_dmo_os}" = linux ] || return 1
     _doc_skip "${1}" "macOS only"
+    return 0
+}
+
+# _doc_unselected <label> <id>...
+#   Returns 0 after reporting [SKIP] when none of the components is selected
+#   (./dots components; nothing recorded or `none` selects nothing), so the
+#   caller returns 0 without running its check; returns 1 when one is selected.
+#   Fail closed like _doc_macos_only: without the components library the check
+#   runs instead of being skipped.
+_doc_unselected() {
+    command -v components_has_any >/dev/null 2>&1 || return 1
+    _du_label="${1}"
+    shift
+    components_has_any "$@" && return 1
+    _doc_skip "${_du_label}" "not selected"
     return 0
 }
 
@@ -129,8 +158,8 @@ check_contains() {
 # ---------------------------------------------------------------------------
 check_brew()    { check_command "Homebrew" brew; }
 check_zsh()     { check_command "zsh" zsh; }
-check_tmux()    { check_command "tmux" tmux; }
-check_herdr()   { check_command "herdr" herdr; }
+check_tmux()    { _doc_unselected "tmux present" tmux || check_command "tmux" tmux; }
+check_herdr()   { _doc_unselected "herdr present" herdr-tui || check_command "herdr" herdr; }
 # OrbStack provides Docker here (macOS cask), so these four are macOS-only.
 check_orbstack() { _doc_macos_only "OrbStack CLI" || check_command "OrbStack CLI" orb; }
 check_docker()  { _doc_macos_only "Docker CLI" || check_command "Docker CLI" docker; }
@@ -181,10 +210,10 @@ check_zsh_tools_link(){ check_symlink_into_repo "zsh tools"          "$(path_hom
 check_zsh_prompt_link(){ check_symlink_into_repo "zsh prompt"        "$(path_home_zsh_prompt)"; }
 check_zsh_plugins_link(){ check_symlink_into_repo "zsh plugins"      "$(path_home_zsh_plugins)"; }
 check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
-check_tmux_link()     { check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
-check_tmux_theme_link() { check_symlink_into_repo "tmux theme"       "$(path_home_tmux_theme)"; }
-check_ghostty_link()  { _doc_macos_only "ghostty config" || check_symlink_into_repo "ghostty config" "$(path_home_ghostty_config)"; }
-check_herdr_link()    { check_symlink_into_repo "herdr config"      "$(path_home_herdr_config)"; }
+check_tmux_link()     { _doc_unselected "tmux config" tmux || check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
+check_tmux_theme_link() { _doc_unselected "tmux theme" tmux || check_symlink_into_repo "tmux theme"       "$(path_home_tmux_theme)"; }
+check_ghostty_link()  { _doc_unselected "ghostty config" ghostty || _doc_macos_only "ghostty config" || check_symlink_into_repo "ghostty config" "$(path_home_ghostty_config)"; }
+check_herdr_link()    { _doc_unselected "herdr config" herdr-tui herdr-core herdr-app || check_symlink_into_repo "herdr config"      "$(path_home_herdr_config)"; }
 check_mise_link()     { check_symlink_into_repo "mise config"       "$(path_home_mise_config)"; }
 check_starship_link() { check_symlink_into_repo "starship config"   "$(path_home_starship_config)"; }
 check_bat_config_link() { check_symlink_into_repo "bat config"       "$(path_home_bat_config)"; }
@@ -199,7 +228,7 @@ check_fzf_theme_link()     { check_symlink_into_repo "fzf theme"        "$(path_
 check_eza_theme_link()     { check_symlink_into_repo "eza theme"        "$(path_home_eza_theme)"; }
 check_lazygit_theme_link() { check_symlink_into_repo "lazygit theme"    "$(path_home_lazygit_theme)"; }
 check_bottom_theme_link()  { check_symlink_into_repo "bottom theme"     "$(path_home_bottom_theme)"; }
-check_ghostty_theme_link() { _doc_macos_only "ghostty theme" || check_symlink_into_repo "ghostty theme" "$(path_home_ghostty_theme)"; }
+check_ghostty_theme_link() { _doc_unselected "ghostty theme" ghostty || _doc_macos_only "ghostty theme" || check_symlink_into_repo "ghostty theme" "$(path_home_ghostty_theme)"; }
 
 # ---------------------------------------------------------------------------
 # Neovim theme link (repo-side symlink written by `./dots theme`)
@@ -279,10 +308,10 @@ check_theme_symlinks_agree() {
 # Content markers
 # ---------------------------------------------------------------------------
 check_tmux_prefix() {
-    check_contains "tmux prefix C-a" "$(path_home_tmux_config)" 'set -g prefix C-a'
+    _doc_unselected "tmux prefix C-a" tmux || check_contains "tmux prefix C-a" "$(path_home_tmux_config)" 'set -g prefix C-a'
 }
 check_ghostty_theme_marker() {
-    _doc_macos_only "ghostty theme = dots" || check_contains "ghostty theme = dots" "$(path_home_ghostty_config)" 'theme = dots'
+    _doc_unselected "ghostty theme = dots" ghostty || _doc_macos_only "ghostty theme = dots" || check_contains "ghostty theme = dots" "$(path_home_ghostty_config)" 'theme = dots'
 }
 check_bat_config_theme() {
     check_contains 'bat config theme' "$(path_home_bat_config)" '--theme=dots'
@@ -302,6 +331,7 @@ check_starship_init() {
 # ---------------------------------------------------------------------------
 check_tmux_theme() {
     _ctf_label="tmux theme from DOTS_THEME + default"
+    _doc_unselected "${_ctf_label}" tmux && return 0
     _ctf_conf="$(path_home_tmux_theme)"
     if [ ! -r "${_ctf_conf}" ]; then
         _doc_fail "${_ctf_label}" "unreadable: ${_ctf_conf}"
@@ -395,6 +425,7 @@ check_starship_fence() {
 }
 check_herdr_theme_fence() {
     _chtf_label="herdr theme fence"
+    _doc_unselected "${_chtf_label}" herdr-tui herdr-core herdr-app && return 0
     _chtf_conf="$(path_home_herdr_config)"
     if [ ! -r "${_chtf_conf}" ]; then
         _doc_fail "${_chtf_label}" "unreadable: ${_chtf_conf}"

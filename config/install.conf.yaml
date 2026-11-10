@@ -101,18 +101,35 @@
       glob: true
       path: content/home/.config/nvim/.*
 
-    # Tmux
-    ~/.config/tmux/tmux.conf: content/home/.config/tmux/tmux.conf
-    ~/.config/tmux/theme.conf: content/home/.config/tmux/theme.conf
-    ~/.config/tmux/scripts/session-picker.sh: content/home/.config/tmux/scripts/session-picker.sh
-    ~/.config/tmux/scripts/pin-plugins.sh: content/home/.config/tmux/scripts/pin-plugins.sh
+    # Tmux, Herdr and Ghostty — linked only for the components chosen with
+    # ./dots components (DOTS_COMPONENTS in ~/.config/zsh/local.zsh). The if:
+    # predicate runs from the repo root; nothing recorded or `none` links none.
+    # herdr-core and herdr-app share the Herdr config with the TUI.
+    ~/.config/tmux/tmux.conf:
+      path: content/home/.config/tmux/tmux.conf
+      if: &if_tmux 'sh content/home/.config/dots/component-selected.sh tmux'
+    ~/.config/tmux/theme.conf:
+      path: content/home/.config/tmux/theme.conf
+      if: *if_tmux
+    ~/.config/tmux/scripts/session-picker.sh:
+      path: content/home/.config/tmux/scripts/session-picker.sh
+      if: *if_tmux
+    ~/.config/tmux/scripts/pin-plugins.sh:
+      path: content/home/.config/tmux/scripts/pin-plugins.sh
+      if: *if_tmux
 
-    # Herdr
-    ~/.config/herdr/config.toml: content/home/.config/herdr/config.toml
+    ~/.config/herdr/config.toml:
+      path: content/home/.config/herdr/config.toml
+      if: 'sh content/home/.config/dots/component-selected.sh herdr-tui herdr-core herdr-app'
 
-    # Ghostty — config file + shaders directory link
-    ~/.config/ghostty/config: content/home/.config/ghostty/config
-    ~/.config/ghostty/shaders: content/home/.config/ghostty/shaders
+    # Ghostty — config file + shaders directory link (the config is useful on
+    # Linux too when Ghostty comes from the distro; only the cask is macOS-only)
+    ~/.config/ghostty/config:
+      path: content/home/.config/ghostty/config
+      if: &if_ghostty 'sh content/home/.config/dots/component-selected.sh ghostty'
+    ~/.config/ghostty/shaders:
+      path: content/home/.config/ghostty/shaders
+      if: *if_ghostty
 
 
     # Mise — linked before the mise: directive so mise install reads the XDG path
@@ -152,15 +169,31 @@
     stdout: true
     stderr: true
 
-# ── Herdr desktop app (Linux) ──────────────────────────────────────────────────
-# macOS gets it from the herdr-app cask; Homebrew has no Linux package, so Linux
-# uses Herdr's official installer (~/.local/share/herdr-app, herdr-app and hc in
-# ~/.local/bin). Skipped when the app is already installed; a failure only warns.
+# ── Herdr installers ───────────────────────────────────────────────────────────
+# Herdr's official installers, run only for the selected components (no version
+# pin). Both skip when already installed and only warn on failure, so an offline
+# run still finishes. The predicate is content/home/.config/dots/component-selected.sh.
+#
+# Herdr app, Linux only: macOS gets it from the herdr-app cask (Brewfile); Homebrew
+# has no Linux package. It installs ~/.local/share/herdr-app with herdr-app and hc
+# in ~/.local/bin, and brings the core.
 - shell:
   - description: Install Herdr desktop app (Linux, official installer)
     command: |
-      if [ "$(uname -s)" = Linux ] && [ ! -d "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app" ]; then
-        curl -fsSL https://releases.herdr.dev/app/install.sh | sh || echo "warning: the Herdr app installer failed" >&2
+      if [ "$(uname -s)" = Linux ] && sh content/home/.config/dots/component-selected.sh herdr-app && [ ! -d "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app" ]; then
+        script="$(curl -fsSL https://releases.herdr.dev/app/install.sh)" && printf '%s\n' "$script" | sh || echo "warning: the Herdr app installer failed" >&2
+      fi
+    quiet: true
+    stdout: true
+    stderr: true
+
+# Herdr core, macOS and Linux: skipped when the app is selected (its installer
+# brings the core) and when herdr-core already exists on PATH or in ~/.local/bin.
+- shell:
+  - description: Install Herdr core (official installer)
+    command: |
+      if sh content/home/.config/dots/component-selected.sh herdr-core && ! sh content/home/.config/dots/component-selected.sh herdr-app && ! command -v herdr-core >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/herdr-core" ]; then
+        script="$(curl -fsSL https://releases.herdr.dev/core/install.sh)" && printf '%s\n' "$script" | sh || echo "warning: the Herdr core installer failed" >&2
       fi
     quiet: true
     stdout: true
