@@ -85,7 +85,7 @@
     ~/.config/eza/config.zsh: content/home/.config/eza/config.zsh
     ~/.config/bat/config: content/home/.config/bat/config
     # pi-spaces profiles: how pi-space starts Gentle Shell and prepares its spaces
-    # (found in ~/.config/pi-spaces since @jals1212/pi-spaces 0.9.0 and pi-space 0.10.0).
+    # (found in ~/.config/pi-spaces since pi-spaces (then @jals1212/pi-spaces) 0.9.0 and pi-space 0.10.0).
     ~/.config/pi-spaces/config.toml: content/home/.config/pi-spaces/config.toml
 
     # Starship prompt — static base config; theme palette is switched in place
