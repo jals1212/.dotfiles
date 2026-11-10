@@ -21,6 +21,9 @@ setup() {
         'dotbot_check_submodules() { return 0; }' \
         'dotbot_theme_apply() { echo theme >> "${CALLS}"; return 0; }' \
         >> "${REPO}/src/lib/dotbot.sh"
+    # brew succeeds for everything, so `brew list --cask` reports the font
+    # installed and the host's Homebrew is never touched.
+    printf '#!/bin/sh\nexit 0\n' > "${SANDBOX}/bin/brew"; chmod +x "${SANDBOX}/bin/brew"
     for tool in bat tmux herdr; do printf '#!/bin/sh\nexit 1\n' > "${SANDBOX}/bin/${tool}"; chmod +x "${SANDBOX}/bin/${tool}"; done
     export PATH="${SANDBOX}/bin:${PATH}"
     export NO_COLOR=1
@@ -71,4 +74,15 @@ teardown() {
 
     [ "${status}" -eq 2 ]
     [[ "${stderr}" == *"--tools is not accepted"* ]]
+}
+
+@test "update --yes applies the default font, then keeps a recorded choice" {
+    run --separate-stderr sh "${REPO}/dots" update --yes
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${HOME}/.config/ghostty/font.conf")" = 'font-family = "JetBrainsMono Nerd Font"' ]
+
+    sh "${REPO}/dots" font iosevka >/dev/null
+    run --separate-stderr sh "${REPO}/dots" update --yes
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${HOME}/.config/ghostty/font.conf")" = 'font-family = "IosevkaTerm NF"' ]
 }

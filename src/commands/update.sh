@@ -55,6 +55,8 @@ export REPO_ROOT
 . "$(path_src_lib select.sh)"
 # shellcheck source=src/lib/detect.sh
 . "$(path_src_lib detect.sh)"
+# shellcheck source=src/lib/font.sh
+. "$(path_src_lib font.sh)"
 
 # ---------------------------------------------------------------------------
 # Parse flags
@@ -166,6 +168,15 @@ if [ "${_yes}" -eq 0 ] && [ -z "${_arg_theme}" ] && [ -z "${_arg_flavor}" ] && [
 fi
 
 # ---------------------------------------------------------------------------
+# Font: the recorded machine-local choice; asked once on a TTY when none is
+# recorded yet (first install). Change it later with ./dots font.
+# ---------------------------------------------------------------------------
+_active_font="$(font_current)"
+if [ "${_yes}" -eq 0 ] && [ -z "$(font_recorded)" ] && [ -t 0 ] && [ -t 1 ]; then
+    _active_font="$(select_font "${_active_font}")"
+fi
+
+# ---------------------------------------------------------------------------
 # Base dotbot run
 # ---------------------------------------------------------------------------
 log_step "Running base dotbot config..."
@@ -180,6 +191,15 @@ dotbot_base_apply || {
 log_step "Applying theme: ${_active_theme}/${_active_flavor}..."
 theme_apply "${_active_theme}" "${_active_flavor}" || {
     log_error "Theme apply failed"
+    exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Font apply
+# ---------------------------------------------------------------------------
+log_step "Applying font: ${_active_font}..."
+font_apply "${_active_font}" || {
+    log_error "Font apply failed"
     exit 1
 }
 

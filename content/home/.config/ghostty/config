@@ -1,10 +1,12 @@
 # Dotfiles — Ghostty Terminal
 # Theme: linked via ~/.config/ghostty/themes/dots (managed by ./dots theme)
-# Font: IosevkaTerm NF
+# Font: machine-local, written to ~/.config/ghostty/font.conf by ./dots font
 
 # ── Font ──────────────────────────────────────────────
-font-family = IosevkaTerm NF
 font-size = 14
+# font-family comes from font.conf (jetbrains-mono | iosevka; see ./dots font).
+# Included files load after this whole file, so font.conf wins.
+config-file = ?font.conf
 
 # ── Window ────────────────────────────────────────────
 background-blur-radius = 20

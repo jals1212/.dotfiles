@@ -252,7 +252,7 @@ _menu() {
     grep -qx "  doctor     Health checks that change nothing" "${SANDBOX}/menu.err"
     grep -qx "  uninstall  ⚠ Remove managed symlinks and manifest" "${SANDBOX}/menu.err"
     grep -qx "↑↓/jk move · enter run · q quit" "${SANDBOX}/menu.err"
-    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor theme prompt uninstall help quit " ]
+    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor theme prompt font uninstall help quit " ]
 }
 
 # --- confirm ---------------------------------------------------------------

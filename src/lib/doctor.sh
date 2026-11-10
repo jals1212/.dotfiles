@@ -429,6 +429,11 @@ check_local_state() {
         starship|p10k) ;;
         *) _doc_fail "${_cls_label}" "DOTS_PROMPT not whitelisted: ${_cls_prompt}"; return 1 ;;
     esac
+    _cls_font="$(sed -n 's/^export DOTS_FONT="\${DOTS_FONT:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
+    case "${_cls_font:-jetbrains-mono}" in
+        jetbrains-mono|iosevka) ;;
+        *) _doc_fail "${_cls_label}" "DOTS_FONT not whitelisted: ${_cls_font}"; return 1 ;;
+    esac
     _doc_pass "${_cls_label}"
     return 0
 }

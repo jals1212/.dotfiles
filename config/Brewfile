@@ -77,7 +77,13 @@ brew "mole" if OS.mac?
 brew "bats-core"
 
 # ── Fonts ────────────────────────────────────────────
-cask "font-iosevka-term-nerd-font" if OS.mac?
+# Only the font chosen with ./dots font (DOTS_FONT, machine-local in
+# ~/.config/zsh/local.zsh; jetbrains-mono by default), so `brew bundle cleanup`
+# keeps the active font and drops the other one. Read from the file: brew
+# strips non-HOMEBREW_ variables from the environment.
+dots_local_zsh = File.join(Dir.home, ".config/zsh/local.zsh")
+dots_font = File.exist?(dots_local_zsh) ? File.read(dots_local_zsh)[/^export DOTS_FONT="\$\{DOTS_FONT:-(.*)\}"$/, 1] : nil
+cask(dots_font == "iosevka" ? "font-iosevka-term-nerd-font" : "font-jetbrains-mono-nerd-font") if OS.mac?
 
 # ── Terminal ─────────────────────────────────────────
 cask "ghostty" if OS.mac?

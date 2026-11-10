@@ -120,6 +120,18 @@ select_prompt() {
 }
 
 # ---------------------------------------------------------------------------
+# select_font [current_font]
+#   Presents a tui_choose picker over the supported terminal fonts.
+#   Pre-focuses current_font when provided.
+# ---------------------------------------------------------------------------
+select_font() {
+    _sfo_current="${1:-}"
+
+    _sfo_chosen="$(tui_choose "Select terminal font:" "${_sfo_current}" jetbrains-mono iosevka)" || exit 130
+    printf '%s' "${_sfo_chosen}"
+}
+
+# ---------------------------------------------------------------------------
 # confirm_apply <theme> <flavor>
 #   Presents a summary card listing theme + flavor and prompts
 #   the operator to confirm. Returns 0 on yes, 1 on no/cancel.

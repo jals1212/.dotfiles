@@ -119,6 +119,7 @@ Maintain|clean|Remove dead symlinks and stale backups
 Maintain|doctor|Health checks that change nothing
 Appearance|theme|Switch theme or flavor
 Appearance|prompt|Switch prompt engine: starship or p10k
+Appearance|font|Switch terminal font: jetbrains-mono or iosevka
 Danger|uninstall|⚠ Remove managed symlinks and manifest
 General|help|Show usage
 General|quit|Exit'

@@ -38,6 +38,7 @@ _dots_help() {
     printf '  update      Run ./install (base dotbot) then apply active theme.\n'
     printf '  theme       Switch the active theme/flavor.\n'
     printf '  prompt      Switch the active prompt engine (starship | p10k).\n'
+    printf '  font        Switch the terminal font (jetbrains-mono | iosevka).\n'
     printf '  doctor      Non-mutating health checks.\n'
     printf '  clean       Remove dead symlinks + stale dotbot-backup files.\n'
     printf '  upgrade     Bump vendored deps; brew cleanup; mise prune.\n'
@@ -63,6 +64,7 @@ _dots_run() {
         update)    sh "$(path_command update)"    "$@" ;;
         theme)     sh "$(path_command theme)"     "$@" ;;
         prompt)    sh "$(path_command prompt)"    "$@" ;;
+        font)      sh "$(path_command font)"      "$@" ;;
         doctor)    sh "$(path_command doctor)"    "$@" ;;
         clean)     sh "$(path_command clean)"     "$@" ;;
         upgrade)   sh "$(path_command upgrade)"   "$@" ;;
