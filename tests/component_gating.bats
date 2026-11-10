@@ -284,6 +284,9 @@ _sysbin() {
     mkdir -p "${_sb}"
     for _f in /usr/bin/* /bin/*; do
         _n="${_f##*/}"
+        # The component commands stay out, so the checks see them as missing
+        # even on hosts that have them in /usr/bin (Ubuntu CI runners ship tmux).
+        case "${_n}" in tmux | gitmux | herdr | ghostty) continue ;; esac
         [ -e "${_sb}/${_n}" ] || ln -s "${_f}" "${_sb}/${_n}"
     done
 }
