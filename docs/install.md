@@ -66,7 +66,7 @@ A tap outside Homebrew's official ones needs trust before Homebrew loads its for
 What works on Debian/Ubuntu (and is covered by `tests/linux_portability.bats`):
 
 - **`bat` and `fd`**: Debian installs them as `batcat` and `fdfind`. The zsh files pick the Debian name when the plain one is not on `PATH` (`DOTS_BAT` / `DOTS_FD`, set in `~/.config/zsh/.zshenv`) and use it for `PAGER`, `MANPAGER`, the `cat`/`fp`/suffix aliases, the `find` abbreviation and the fzf commands and previews; `bat` and `fd` are also aliased to the Debian names for interactive use. Homebrew's own `bat`/`fd` keep their plain names.
-- **macOS-only shell functions** (`cdf`, `moshi-pair`) are not defined on Linux, like the macOS-only clipboard alias `C` (Linux gets `wl-copy`/`xclip` when present).
+- **macOS-only shell function** (`cdf`) is not defined on Linux, like the macOS-only clipboard alias `C` (Linux gets `wl-copy`/`xclip` when present).
 - **`dots` in zsh** runs the repo it is linked from, wherever you cloned it (`~/.dotfiles` is no longer required). Export `DOTS_REPO=/path/to/clone` to pin a checkout; `~/.dotfiles` is the last resort when `functions.zsh` was copied instead of linked. The `dotfiles` alias opens the same path.
 - **`./dots doctor`** reports the macOS-only checks as `[SKIP] ... macOS only` instead of failing: OrbStack, the Docker CLI and its buildx/compose plugins (Docker comes from OrbStack here), and the ghostty config, theme link and theme marker (ghostty is a macOS cask in the Brewfile). A skipped check counts as passed in the summary.
 
@@ -74,7 +74,7 @@ Known gaps on Linux:
 
 - The post-link `bat cache --build` step (`config/install.conf.yaml`) and the theme switcher's bat-cache rebuild look for a command named `bat`, so they are skipped when only `batcat` exists (the theme switcher warns). To get them back, put a `bat` on `PATH`: `mkdir -p ~/.local/bin && ln -s "$(command -v batcat)" ~/.local/bin/bat` (and `fd` likewise for `fdfind`), then re-run `./dots theme <theme> <flavor>`.
 - Terminal components are opt-in (`./dots components`): on Linux the Herdr app comes from Herdr's official installer when `herdr-app` is selected, the Herdr core from the core installer when `herdr-core` is selected (not when the app is), and Ghostty is not installed (its cask is macOS-only), though its config is still linked when `ghostty` is selected. Unchecking a recorded component uninstalls it after a confirmation (see `./dots components` below); on Linux that removes the official Herdr app install (`${XDG_DATA_HOME:-~/.local/share}/herdr-app`, `~/.local/bin/herdr-app`, its `.desktop`/icon files).
-- The macOS-only Brewfile entries (casks, AeroSpace, duti, moshi-hook, OrbStack, ghostty), the Finder Quick Action and the VSCodium default-app step are not installed or linked on Linux.
+- The macOS-only Brewfile entries (casks, AeroSpace, duti, OrbStack, ghostty), the Finder Quick Action and the VSCodium default-app step are not installed or linked on Linux.
 - The Homebrew installer needs `curl` and the build dependencies `./dots` installs through `apt-get`, `dnf` or `pacman`.
 
 ## Everyday commands

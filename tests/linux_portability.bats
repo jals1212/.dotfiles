@@ -117,31 +117,22 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 
 # --- 2. macOS-only functions --------------------------------------------------
 
-@test "cdf and moshi-pair are not defined on Linux" {
+@test "cdf is not defined on Linux" {
     _ostype Linux
     _zsh "source '${ZSH_DIR}/functions.zsh'
-          print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
+          print -r -- \"cdf:\${+functions[cdf]}\""
 
     [ "${status}" -eq 0 ]
-    _has "cdf:0 moshi-pair:0"
+    _has "cdf:0"
 }
 
-@test "cdf and moshi-pair stay defined on macOS" {
+@test "cdf stays defined on macOS" {
     _ostype Darwin
     _zsh "source '${ZSH_DIR}/functions.zsh'
-          print -r -- \"cdf:\${+functions[cdf]} moshi-pair:\${+functions[moshi-pair]}\""
+          print -r -- \"cdf:\${+functions[cdf]}\""
 
     [ "${status}" -eq 0 ]
-    _has "cdf:1 moshi-pair:1"
-}
-
-@test "moshi-pair on macOS still refuses to pair without the hardening script" {
-    _ostype Darwin
-    _zsh "source '${ZSH_DIR}/functions.zsh'; moshi-pair"
-
-    [ "${status}" -eq 1 ]
-    _has "moshi-pair: missing or non-executable ${HOME}/.config/remote-agents/harden-authorized-keys.sh"
-    _has "moshi-pair: refusing to pair without the hardening step"
+    _has "cdf:1"
 }
 
 @test "aliases follow \$OSTYPE: open is xdg-open and C is wl-copy on Linux, C is pbcopy on macOS" {
@@ -366,3 +357,15 @@ _doctor_os() {
     _has "rc=0"
 }
 
+
+# --- remote access: Tailscale + Herdr Mobile ----------------------------------
+
+@test "mosh and Moshi are gone; tailscale and the SSH key hardening script stay" {
+    root="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
+    run grep -rniE 'mosh|moshi|easy pair' "${root}/config" "${root}/content/home/.config/zsh" \
+        "${root}/content/home/.config/remote-agents" "${root}/docs"
+    [ "${status}" -ne 0 ]
+    grep -Fxq 'brew "tailscale"' "${root}/config/Brewfile"
+    [ -x "${root}/content/home/.config/remote-agents/harden-authorized-keys.sh" ]
+    grep -Fq '~/.config/remote-agents/harden-authorized-keys.sh:' "${root}/config/install.conf.yaml"
+}

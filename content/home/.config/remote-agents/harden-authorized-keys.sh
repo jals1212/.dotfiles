@@ -1,8 +1,11 @@
 #!/bin/bash
 #
-# Re-apply SSH key hardening after a Moshi Easy Pair re-pairing.
+# Re-apply SSH key hardening after pairing a phone over SSH (Herdr Mobile,
+# which reaches herdr-core on this Mac through Tailscale). Run it by hand
+# after each pairing. Caveat: `restrict` also blocks SSH port forwarding; if
+# the phone app needs forwarding it will fail to connect after this.
 #
-# Easy Pair appends a fresh key to ~/.ssh/authorized_keys with NO restrictions,
+# Pairing appends a fresh key to ~/.ssh/authorized_keys with NO restrictions,
 # so every re-pairing silently reopens the "any tailnet node can log in" hole.
 # This script re-applies the restriction to any unrestricted key.
 #

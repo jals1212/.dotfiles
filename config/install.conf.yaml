@@ -145,7 +145,7 @@
       path: content/home/.config/duti/vscodium.duti
       if: '[ "$(uname)" = Darwin ]'
 
-    # Remote agents — SSH key hardening run by the moshi-pair zsh function, macOS only
+    # Remote agents — SSH key hardening, run by hand after pairing a phone (Herdr Mobile), macOS only
     ~/.config/remote-agents/harden-authorized-keys.sh:
       path: content/home/.config/remote-agents/harden-authorized-keys.sh
       if: '[ "$(uname)" = Darwin ]'

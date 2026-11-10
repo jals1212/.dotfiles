@@ -19,7 +19,7 @@ export ZDOTDIR="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}"
 if (( ! $+commands[bat] && $+commands[batcat] )); then DOTS_BAT=batcat; else DOTS_BAT=bat; fi
 if (( ! $+commands[fd] && $+commands[fdfind] )); then DOTS_FD=fdfind; else DOTS_FD=fd; fi
 
-# Homebrew on PATH for non-login shells too (e.g. `ssh host cmd`, mosh-server)
+# Homebrew on PATH for non-login shells too (e.g. `ssh host cmd`, herdr-core over SSH from Herdr Mobile)
 typeset -U path
 [[ -d /opt/homebrew/bin ]] && path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
 

@@ -7,8 +7,6 @@
 # only the items installed below, not the whole tap.
 # trusted: engram, gentle-ai and gga formulae below come from this third-party tap
 tap "gentleman-programming/tap", trusted: { formulae: ["engram", "gentle-ai", "gga"] }
-# trusted: the moshi-hook formula below comes from this third-party tap
-tap "rjyo/moshi", trusted: { formulae: ["moshi-hook"] }
 # trusted: the aerospace cask below comes from this third-party tap
 tap "nikitabobko/tap", trusted: { casks: ["aerospace"] } if OS.mac?
 # trusted: the open-pencil cask below comes from this third-party tap
@@ -75,10 +73,8 @@ brew "gentleman-programming/tap/gga"
 cask "claude-code@latest" if OS.mac?
 cask "codex" if OS.mac?
 
-# ── Remote access (Tailscale + mosh + Moshi) ─────────
+# ── Remote access (Tailscale + Herdr Mobile) ─────────
 brew "tailscale"
-brew "mosh"
-brew "rjyo/moshi/moshi-hook" if OS.mac? # see moshi-pair in zsh/functions.zsh
 
 # ── Cloud CLIs ───────────────────────────────────────
 # azure-cli and vercel moved from homebrew-core to casks (tap_migrations.json);
