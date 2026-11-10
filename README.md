@@ -76,7 +76,7 @@ On macOS, `./dots update` with `herdr-app` selected moves an official Herdr app 
 
 #### Unchecking
 
-Unchecking uninstalls, but only a component that was **recorded** as selected: the first selection on an existing machine (nothing recorded) removes nothing, and neither does a component you never checked. `./dots components` (picker or `<id>...|none`) lists exactly what will be removed and asks `[y/N]` (default No). Declining or cancelling changes nothing and exits non-zero; `--yes` skips the question; without a TTY and without `--yes` the command exits 2 and changes nothing. Checking `herdr-app` implies `herdr-core` on both sides of the comparison.
+Unchecking uninstalls, but only a component that was **recorded** as selected: the first selection on an existing machine (nothing recorded) removes nothing, and neither does a component you never checked. `./dots components` (picker or `<id>...|none`) lists exactly what will be removed and asks `[y/N]` (default No). Declining or cancelling changes nothing and exits non-zero; `--yes` skips the question; without a TTY and without `--yes` the command exits 2 and changes nothing. Checking `herdr-app` implies `herdr-core` on both sides of the comparison. A running official Herdr app (`~/Applications/Herdr.app`) is never removed: those paths are skipped with a warning to quit it first, and the rest of the removal still runs.
 
 | Unchecked | Removed |
 |-----------|---------|

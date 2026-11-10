@@ -343,13 +343,33 @@ _components_rm() {
     esac
 }
 
+# components_herdr_app_running — succeed when the official Herdr app
+# (~/Applications/Herdr.app) is running, the check shared by the removal on
+# uncheck and the migration to Homebrew. Without pgrep nothing is known to run.
+components_herdr_app_running() {
+    command -v pgrep >/dev/null 2>&1 || return 1
+    pgrep -f "${HOME:?components_herdr_app_running: HOME required}/Applications/Herdr.app/Contents/MacOS/" >/dev/null 2>&1
+}
+
+# _components_official_app_path <path> — succeed when <path> belongs to the
+# macOS official Herdr app install: the app bundle or its herdr-app link.
+_components_official_app_path() {
+    [ "$(detect_os)" = macos ] || return 1
+    case "$1" in
+        "${HOME:?}/Applications/Herdr.app" | "${HOME}/.local/bin/herdr-app") return 0 ;;
+    esac
+    return 1
+}
+
 # components_remove <plan> <id>... — carry out the plan, component by component.
 # A failing step warns and the rest still runs; the status is non-zero when any
-# step failed.
+# step failed. A running official Herdr app (L14) is never removed: its paths
+# are skipped with a warning to quit it first, and that is not a failure.
 components_remove() {
     _cm_plan="$1"
     shift
     _cm_fail=0
+    _cm_running=""
     for _cm_id in "$@"; do
         _cm_formulas=""
         while IFS="${COMPONENT_TAB}" read -r _cm_c _cm_k _cm_v; do
@@ -365,6 +385,16 @@ components_remove() {
                     fi
                     ;;
                 link | file | dir | app)
+                    if _components_official_app_path "${_cm_v}"; then
+                        # asked once, and only when an official app path is in the plan
+                        if [ -z "${_cm_running}" ]; then
+                            if components_herdr_app_running; then _cm_running=1; else _cm_running=0; fi
+                        fi
+                    fi
+                    if [ "${_cm_running:-0}" -eq 1 ] && _components_official_app_path "${_cm_v}"; then
+                        log_warn "Herdr app is running; quit it first. Kept ${_cm_v} (delete it by hand once it is closed)."
+                        continue
+                    fi
                     if _components_rm "${_cm_k}" "${_cm_v}"; then
                         log_ok "removed ${_cm_v}"
                     else
@@ -416,7 +446,7 @@ components_herdr_app_migrate() {
     _cham_paths="$(components_herdr_app_official_paths)"
     [ -n "${_cham_paths}" ] || return 0
     _cham_app="${HOME}/Applications/Herdr.app"
-    if command -v pgrep >/dev/null 2>&1 && pgrep -f "${_cham_app}/Contents/MacOS/" >/dev/null 2>&1; then
+    if components_herdr_app_running; then
         log_warn "Herdr app is running from ${_cham_app}: quit it and run ./dots update again to move it to Homebrew. Nothing removed."
         return 0
     fi

@@ -41,7 +41,9 @@ STUB
 if [ "$1" = "-s" ]; then printf '%s\n' "${FAKE_UNAME:-Darwin}"; exit 0; fi
 exec /usr/bin/uname "$@"
 STUB
-    chmod +x "${SANDBOX}/bin/brew" "${SANDBOX}/bin/curl" "${SANDBOX}/bin/uname"
+    # pgrep (the running-Herdr-app check) succeeds only when FAKE_RUNNING=1.
+    printf '#!/bin/sh\nprintf "pgrep %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "${FAKE_RUNNING:-0}" = 1 ]\n' > "${SANDBOX}/bin/pgrep"
+    chmod +x "${SANDBOX}/bin/brew" "${SANDBOX}/bin/curl" "${SANDBOX}/bin/uname" "${SANDBOX}/bin/pgrep"
     export PATH="${SANDBOX}/bin:${PATH}"
 }
 
@@ -310,6 +312,54 @@ _tty_components() {
     [ ! -L "${HOME}/.local/bin/herdr-app" ]
     [ -f "${HOME}/.local/bin/herdr-core" ]
     [ -d "${HOME}/.local/share/herdr-core" ]
+}
+
+# _official_app — the official installer's macOS app and its herdr-app link.
+_official_app() {
+    mkdir -p "${HOME}/Applications/Herdr.app/Contents/MacOS" "${HOME}/.local/share/herdr-core"
+    printf 'app\n' > "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr"
+    ln -s "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" "${HOME}/.local/bin/herdr-app"
+    printf 'core\n' > "${HOME}/.local/bin/herdr-core"
+}
+
+@test "a running official Herdr app is never removed on uncheck: skipped with a warning, the rest still runs" {
+    _record herdr-app
+    _official_app
+    BREW_INSTALLED="herdr-app" FAKE_RUNNING=1 run sh "${CMD}" --yes herdr-core
+    [ "${status}" -eq 0 ]
+    grep -Fqx "pgrep -f ${HOME}/Applications/Herdr.app/Contents/MacOS/" "${TOOL_LOG}"
+    [ -f "${HOME}/Applications/Herdr.app/Contents/MacOS/Herdr" ]
+    [ -L "${HOME}/.local/bin/herdr-app" ]
+    _has "Herdr app is running; quit it first"
+    _has "${HOME}/Applications/Herdr.app"
+    # the rest of the removal ran: the cask went, the core stays, the selection is recorded
+    [ "$(_brew_calls)" = "brew uninstall --cask herdr-app" ]
+    [ -f "${HOME}/.local/bin/herdr-core" ]
+    grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-herdr-core}"' "${LOCAL_ZSH}"
+}
+
+@test "once the Herdr app is not running the official install is removed (running check is per run)" {
+    _record herdr-app
+    _official_app
+    BREW_INSTALLED="" FAKE_RUNNING=0 run sh "${CMD}" --yes herdr-core
+    [ "${status}" -eq 0 ]
+    [ ! -e "${HOME}/Applications/Herdr.app" ]
+    [ ! -L "${HOME}/.local/bin/herdr-app" ]
+}
+
+@test "unchecking something else never asks whether Herdr app runs, and Linux removal ignores it" {
+    _record tmux
+    BREW_INSTALLED="tmux" FAKE_RUNNING=1 run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    run grep -q '^pgrep' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
+
+    _record herdr-app
+    export FAKE_UNAME=Linux
+    mkdir -p "${HOME}/.local/share/herdr-app"
+    FAKE_RUNNING=1 run sh "${CMD}" --yes herdr-core
+    [ "${status}" -eq 0 ]
+    [ ! -e "${HOME}/.local/share/herdr-app" ]
 }
 
 @test "herdr-app on Linux: the official install dir, launcher and desktop files go; the core stays" {
