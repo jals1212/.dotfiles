@@ -26,7 +26,7 @@ Polyglot runtime/version manager (Node, Python, Go, etc.). Activated in zsh. Com
 
 ### Ghostty — [docs](https://ghostty.org/docs)
 
-Terminal emulator, installed only when `ghostty` is selected with `./dots components` (macOS cask; the config is linked on any OS once selected, and `./dots doctor` skips its checks when unselected or on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`. Font chosen with `./dots font` (`jetbrains-mono` by default, or `iosevka`), written to `~/.config/ghostty/font.conf`.
+Terminal emulator, installed only when `ghostty` is selected with `./dots components` (macOS cask; the config is linked on any OS once selected, and `./dots doctor` skips its checks when unselected or on Linux). Splits and resize bindings documented in [keymaps.md](keymaps.md#ghostty). Theme managed by `./dots update`. Font chosen with `./dots font` (`jetbrains-mono` by default, or `iosevka`), written to `~/.config/ghostty/font.conf`. When `herdr-app` is selected the same choice is also written as `font` in `~/.config/herdr-app/settings.json` (Herdr app reloads it live; other keys are kept; needs `jq` or `python3`).
 
 ### tmux — [docs](https://github.com/tmux/tmux/wiki)
 

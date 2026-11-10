@@ -17,7 +17,11 @@ _font_usage() {
     printf '  Select the Nerd Font Ghostty uses. The choice is machine-local: it is\n'
     printf '  recorded as DOTS_FONT in ~/.config/zsh/local.zsh and rendered into\n'
     printf '  ~/.config/ghostty/font.conf — the repo itself never changes. On macOS\n'
-    printf '  the font'"'"'s Homebrew cask is installed when missing.\n\n'
+    printf '  the font'"'"'s Homebrew cask is installed when missing. When the herdr-app\n'
+    printf '  component is selected (./dots components) the font family is also set as\n'
+    printf '  "font" in ~/.config/herdr-app/settings.json (under XDG_CONFIG_HOME when\n'
+    printf '  set; other keys are kept; needs jq or python3; an invalid file is left\n'
+    printf '  untouched with a warning). Herdr app reloads that file live.\n\n'
     printf 'SUPPORTED FONTS\n'
     printf '  jetbrains-mono : JetBrainsMono Nerd Font (default)\n'
     printf '  iosevka        : IosevkaTerm NF\n\n'
@@ -57,6 +61,8 @@ export REPO_ROOT
 . "$(path_src_lib header.sh)"
 # shellcheck source=src/lib/theme.sh
 . "$(path_src_lib theme.sh)"
+# shellcheck source=src/lib/components.sh
+. "$(path_src_lib components.sh)"
 # shellcheck source=src/lib/font.sh
 . "$(path_src_lib font.sh)"
 # shellcheck source=src/lib/select.sh
