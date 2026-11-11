@@ -27,10 +27,6 @@ shell-integration-features = no-cursor
 mouse-hide-while-typing = true
 scrollback-limit = 1000000
 
-# ── Global hotkeys (open a new window from any app) ──
-keybind = global:cmd+grave_accent=new_window
-keybind = global:cmd+shift+grave_accent=new_window
-
 # ── Theme ────────────────────────────────────────────
 # The active flavor's palette is written to ~/.config/ghostty/themes/dots
 # by `dots install` / `dots update`; this file references it natively.
