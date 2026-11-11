@@ -77,6 +77,16 @@ _ghostty_links() {
     _repo_link .config/ghostty/themes/dots content/assets/palettes/ghostty/kanagawa/dragon.conf
 }
 
+_nvim_links() {
+    _repo_link .config/nvim/init.lua content/home/.config/nvim/init.lua
+    _repo_link .config/nvim/lua content/home/.config/nvim/lua
+}
+
+_vscodium_links() {
+    _repo_link .config/duti/vscodium.duti content/home/.config/duti/vscodium.duti
+    _repo_link "Library/Services/Open in VSCodium.workflow" "content/home/Library/Services/Open in VSCodium.workflow"
+}
+
 _brew_calls() { grep '^brew uninstall' "${TOOL_LOG}" 2>/dev/null || true; }
 
 _require_script() {
@@ -502,6 +512,92 @@ _official_app() {
     [ "${status}" -eq 0 ]
     [ ! -f "${TOOL_LOG}" ] || ! grep -q '^brew uninstall' "${TOOL_LOG}"
     [ ! -L "${HOME}/.config/ghostty/config" ]
+}
+
+# ── Editors: nvim, fresh, vscodium ───────────────────────────────────────────
+
+@test "nvim unchecked uninstalls neovim and luarocks and removes its repo links, not the person's files" {
+    _record nvim
+    _nvim_links
+    printf 'mine\n' > "${HOME}/.config/nvim/local.lua"
+    BREW_INSTALLED="neovim luarocks" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ "$(_brew_calls)" = "brew uninstall neovim luarocks" ]
+    [ ! -L "${HOME}/.config/nvim/init.lua" ]
+    [ ! -L "${HOME}/.config/nvim/lua" ]
+    [ "$(cat "${HOME}/.config/nvim/local.lua")" = "mine" ]
+    [ -f "${REPO_ROOT_REAL}/content/home/.config/nvim/init.lua" ]
+    grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-none}"' "${LOCAL_ZSH}"
+}
+
+@test "nvim removal skips what brew does not have and a link pointing outside the repo" {
+    _record nvim
+    mkdir -p "${HOME}/.config/nvim"
+    ln -s "${SANDBOX}/elsewhere/other.lua" "${HOME}/.config/nvim/init.lua"
+    BREW_INSTALLED="luarocks" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ "$(_brew_calls)" = "brew uninstall luarocks" ]
+    [ "$(readlink "${HOME}/.config/nvim/init.lua")" = "${SANDBOX}/elsewhere/other.lua" ]
+}
+
+@test "the nvim confirmation lists the formulae and the links" {
+    _require_script || skip "PTY script syntax unavailable"
+    _record nvim
+    _nvim_links
+    BREW_INSTALLED="neovim luarocks" run _tty_components 'y' none
+    [ "${status}" -eq 0 ]
+    _has "brew uninstall neovim luarocks"
+    _has "remove symlink ${HOME}/.config/nvim/init.lua"
+}
+
+@test "fresh unchecked uninstalls the fresh-editor formula only" {
+    _record fresh
+    BREW_INSTALLED="fresh-editor neovim" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ "$(_brew_calls)" = "brew uninstall fresh-editor" ]
+}
+
+@test "vscodium unchecked on macOS uninstalls the cask and duti and removes its links" {
+    _record vscodium
+    _vscodium_links
+    printf 'mine\n' > "${HOME}/.config/duti/other.duti"
+    BREW_INSTALLED="vscodium duti" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ "$(_brew_calls)" = "brew uninstall --cask vscodium
+brew uninstall duti" ]
+    [ ! -L "${HOME}/.config/duti/vscodium.duti" ]
+    [ ! -L "${HOME}/Library/Services/Open in VSCodium.workflow" ]
+    [ -f "${HOME}/.config/duti/other.duti" ]
+    [ -d "${REPO_ROOT_REAL}/content/home/Library/Services/Open in VSCodium.workflow" ]
+}
+
+@test "vscodium unchecked on Linux calls no brew and removes nothing macOS-only" {
+    _record vscodium
+    export FAKE_UNAME=Linux
+    _vscodium_links
+    BREW_INSTALLED="vscodium duti" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ -z "$(_brew_calls)" ]
+}
+
+@test "unchecking one editor leaves the other editors and their packages alone" {
+    _record nvim fresh vscodium
+    _nvim_links
+    _vscodium_links
+    BREW_INSTALLED="neovim luarocks fresh-editor vscodium duti" run sh "${CMD}" --yes nvim vscodium
+    [ "${status}" -eq 0 ]
+    [ "$(_brew_calls)" = "brew uninstall fresh-editor" ]
+    [ -L "${HOME}/.config/nvim/init.lua" ]
+    [ -L "${HOME}/.config/duti/vscodium.duti" ]
+}
+
+@test "a recorded selection without editor ids never uninstalls an editor" {
+    _record herdr-core
+    _nvim_links
+    BREW_INSTALLED="neovim luarocks fresh-editor vscodium duti" run sh "${CMD}" --yes none
+    [ "${status}" -eq 0 ]
+    [ -z "$(_brew_calls)" ]
+    [ -L "${HOME}/.config/nvim/init.lua" ]
 }
 
 # ── Failures ─────────────────────────────────────────────────────────────────

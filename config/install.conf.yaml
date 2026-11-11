@@ -93,13 +93,16 @@
     ~/.config/starship.toml: content/home/.config/starship.toml
 
     # Neovim — direct children are linked via glob so new top-level config
-    # files do not need one Dotbot entry each.
+    # files do not need one Dotbot entry each. Linked only when nvim is selected
+    # with ./dots components (Dotbot checks if: before expanding the glob).
     ~/.config/nvim:
       glob: true
       path: content/home/.config/nvim/*
+      if: &if_nvim 'sh content/home/.config/dots/component-selected.sh nvim'
     ~/.config/nvim/:
       glob: true
       path: content/home/.config/nvim/.*
+      if: *if_nvim
 
     # Tmux, Herdr and Ghostty — linked only for the components chosen with
     # ./dots components (DOTS_COMPONENTS in ~/.config/zsh/local.zsh). The if:
@@ -156,31 +159,32 @@
       path: content/home/.config/aerospace/aerospace.toml
       if: '[ "$(uname)" = Darwin ]'
 
-    # duti — VSCodium default-app associations, macOS only
+    # duti — VSCodium default-app associations, macOS only, when vscodium is selected
     ~/.config/duti/vscodium.duti:
       path: content/home/.config/duti/vscodium.duti
-      if: '[ "$(uname)" = Darwin ]'
+      if: &if_vscodium '[ "$(uname)" = Darwin ] && sh content/home/.config/dots/component-selected.sh vscodium'
 
     # Remote agents — SSH key hardening, run by hand after pairing a phone (Herdr Mobile), macOS only
     ~/.config/remote-agents/harden-authorized-keys.sh:
       path: content/home/.config/remote-agents/harden-authorized-keys.sh
       if: '[ "$(uname)" = Darwin ]'
 
-    # Finder Quick Action "Open in VSCodium" (right-click > Quick Actions), macOS only
+    # Finder Quick Action "Open in VSCodium" (right-click > Quick Actions), macOS only,
+    # when vscodium is selected
     "~/Library/Services/Open in VSCodium.workflow":
       path: "content/home/Library/Services/Open in VSCodium.workflow"
-      if: '[ "$(uname)" = Darwin ]'
+      if: *if_vscodium
 
 # ── Default apps (macOS) ───────────────────────────────────────────────────────
 # Register VSCodium as the default GUI app for code/text files via duti.
-# Guarded: no-op off macOS, or when duti or VSCodium.app is missing.
-# Terminal $EDITOR/$VISUAL remain nvim.
+# Only on macOS with vscodium selected (./dots components); a no-op when duti or
+# VSCodium.app is missing. The conditions live in one script, also used by the
+# targeted install of ./dots components: content/home/.config/dots/duti-apply.sh.
+# Terminal $EDITOR/$VISUAL are not touched.
 - shell:
   - description: Set VSCodium as default app for code/text files (macOS, duti)
     command: |
-      if [ "$(uname)" = Darwin ] && command -v duti >/dev/null 2>&1 && open -Ra VSCodium >/dev/null 2>&1; then
-        duti ~/.config/duti/vscodium.duti || echo "warning: duti could not apply ~/.config/duti/vscodium.duti" >&2
-      fi
+      sh content/home/.config/dots/duti-apply.sh || true
     quiet: true
     stdout: true
     stderr: true

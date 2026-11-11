@@ -9,7 +9,7 @@ bats_require_minimum_version 1.5.0
 
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 BREWFILE="${REPO_ROOT_REAL}/config/Brewfile"
-ALL_COMPONENTS="tmux herdr-tui herdr-core herdr-app ghostty"
+ALL_COMPONENTS="tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium"
 
 setup() {
     SANDBOX="$(mktemp -d)"
@@ -29,9 +29,16 @@ _record() {
 
 # --- Brewfile ---------------------------------------------------------------
 
-@test "the Brewfile declares no terminal component unconditionally" {
-    run grep -Eq '^(brew "(tmux|gitmux|herdr)"|cask "(herdr-app|ghostty)")( #.*)?$' "${BREWFILE}"
+@test "the Brewfile declares no terminal component or editor unconditionally" {
+    run grep -Eq '^(brew "(tmux|gitmux|herdr|neovim|luarocks|fresh-editor|duti)"|cask "(herdr-app|ghostty|vscodium)")( #.*)?$' "${BREWFILE}"
     [ "${status}" -ne 0 ]
+}
+
+@test "the Brewfile comment lists every component id" {
+    for id in ${ALL_COMPONENTS}; do
+        grep -E '^# .*components' "${BREWFILE}" >/dev/null
+        sed -n '/DOTS_COMPONENTS (\.\/dots components)/,/^dots_local_zsh/p' "${BREWFILE}" | grep -Fq "${id}"
+    done
 }
 
 @test "the Brewfile gates each terminal component on its DOTS_COMPONENTS id" {
@@ -39,6 +46,11 @@ _record() {
     grep -Eq '^brew "herdr" if dots_components\.include\?\("herdr-tui"\)' "${BREWFILE}"
     grep -Eq '^cask "herdr-app" if OS\.mac\? && dots_components\.include\?\("herdr-app"\)' "${BREWFILE}"
     grep -Eq '^cask "ghostty" if OS\.mac\? && dots_components\.include\?\("ghostty"\)' "${BREWFILE}"
+    grep -Eq '^cask "vscodium" if OS\.mac\? && dots_components\.include\?\("vscodium"\)' "${BREWFILE}"
+    grep -Eq '^brew "duti" if OS\.mac\? && dots_components\.include\?\("vscodium"\)' "${BREWFILE}"
+    grep -Eq '^brew "fresh-editor" if dots_components\.include\?\("fresh"\)' "${BREWFILE}"
+    # neovim and luarocks come together, under the nvim id.
+    grep -Eq '^if dots_components\.include\?\("nvim"\)' "${BREWFILE}"
     # tmux and gitmux come together, under the tmux id.
     grep -Eq '^if dots_components\.include\?\("tmux"\)' "${BREWFILE}"
 }
@@ -49,7 +61,7 @@ _record() {
 _bundle() {
     env HOME="${HOME}" HOMEBREW_NO_AUTO_UPDATE=1 \
         brew bundle list "--$1" --file="${BREWFILE}" |
-        grep -E '^(tmux|gitmux|herdr|herdr-app|ghostty)$' | sort | tr '\n' ' '
+        grep -E '^(tmux|gitmux|herdr|herdr-app|ghostty|neovim|luarocks|fresh-editor|duti|vscodium)$' | sort | tr '\n' ' '
 }
 
 _needs_brew() {
@@ -90,13 +102,29 @@ _needs_brew() {
     _record ghostty
     [ "$(_bundle formula)" = "" ]
     [ "$(_bundle cask)" = "ghostty " ]
+
+    _record nvim
+    [ "$(_bundle formula)" = "luarocks neovim " ]
+    [ "$(_bundle cask)" = "" ]
+
+    _record fresh
+    [ "$(_bundle formula)" = "fresh-editor " ]
+    [ "$(_bundle cask)" = "" ]
+
+    _record vscodium
+    [ "$(_bundle formula)" = "duti " ]
+    [ "$(_bundle cask)" = "vscodium " ]
+
+    _record nvim vscodium
+    [ "$(_bundle formula)" = "duti luarocks neovim " ]
+    [ "$(_bundle cask)" = "vscodium " ]
 }
 
 @test "Brewfile with every component declares what it declared before the picker" {
     _needs_brew
     _record ${ALL_COMPONENTS}
-    [ "$(_bundle formula)" = "gitmux herdr tmux " ]
-    [ "$(_bundle cask)" = "ghostty herdr-app " ]
+    [ "$(_bundle formula)" = "duti fresh-editor gitmux herdr luarocks neovim tmux " ]
+    [ "$(_bundle cask)" = "ghostty herdr-app vscodium " ]
 }
 
 @test "the font cask stays declared whatever the components are" {

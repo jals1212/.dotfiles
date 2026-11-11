@@ -27,7 +27,7 @@ Show active theme:
 
 1. Validates `<theme> <flavor>` against `themes/index.yaml` (whitelist).
 2. Runs the per-theme dotbot config (`content/themes/<theme>-<flavor>.yaml`) which re-links 6 per-app theme files from `content/assets/palettes/<app>/...` to `$HOME`.
-3. Points `content/home/.config/nvim/lua/dots-theme.lua` at `content/assets/palettes/nvim/<theme>-<flavor>.lua` (see [Neovim](#neovim)); a missing palette or a real file in that spot aborts the switch before the manifest is written.
+3. When `nvim` is selected (`./dots components`; otherwise this step and its preflight are skipped), points `content/home/.config/nvim/lua/dots-theme.lua` at `content/assets/palettes/nvim/<theme>-<flavor>.lua` (see [Neovim](#neovim)); a missing palette or a real file in that spot aborts the switch before the manifest is written.
 4. Rewrites fenced theme blocks in `content/home/.config/starship.toml` (`palette`) and `content/home/.config/herdr/config.toml` (`theme.name`), then persists `DOTS_THEME=<theme>_<flavor>` in `~/.config/zsh/local.zsh` — machine-local state read by tmux's `@themux_theme` and the p10k palette.
 5. Runs `bat cache --build` (skipped when bat is absent).
 6. If a tmux server is running, pushes the new `DOTS_THEME` into its global environment (`tmux set-environment -g`) and re-sources the config so themux picks it up.
@@ -60,7 +60,7 @@ Per-flavor accents (Catppuccin/Kanagawa) are baked into each asset variant; ther
 
 ### Neovim
 
-Neovim follows the active dots theme through `lua/dots-theme.lua`, a symlink to the flavor's palette (`{ theme, flavor, plugin, colorscheme }`). Because `~/.config/nvim/lua` is itself a link into `content/home/.config/nvim/lua`, the switcher creates the link inside the repo (it is gitignored, so no dotbot entry and no repo diff). `lua/config/theme.lua` reads it (falling back to `kanagawa-wave` when the link is missing or broken), and `lua/plugins/colorscheme.lua` declares `rebelot/kanagawa.nvim` and `catppuccin/nvim` and sets LazyVim's `colorscheme` from it.
+Neovim (the `nvim` component) follows the active dots theme through `lua/dots-theme.lua`, a symlink to the flavor's palette (`{ theme, flavor, plugin, colorscheme }`). Because `~/.config/nvim/lua` is itself a link into `content/home/.config/nvim/lua`, the switcher creates the link inside the repo (it is gitignored, so no dotbot entry and no repo diff). `lua/config/theme.lua` reads it (falling back to `kanagawa-wave` when the link is missing or broken), and `lua/plugins/colorscheme.lua` declares `rebelot/kanagawa.nvim` and `catppuccin/nvim` and sets LazyVim's `colorscheme` from it.
 
 A running Neovim re-reads the link on `FocusGained` and switches colorscheme in place. Switching theme family needs the other plugin installed: the first launch after this change (or `:Lazy sync`) installs `kanagawa.nvim` and updates `lazy-lock.json`; until then Neovim falls back to `habamax`.
 

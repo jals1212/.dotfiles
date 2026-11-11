@@ -5,10 +5,10 @@
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
 
-@test "Brewfile installs VSCodium and duti, not VS Code" {
+@test "Brewfile installs VSCodium and duti only when vscodium is selected, not VS Code" {
     brewfile="${REPO_ROOT_REAL}/config/Brewfile"
-    grep -Fq 'cask "vscodium"' "${brewfile}"
-    grep -Fq 'brew "duti"' "${brewfile}"
+    grep -Eq '^cask "vscodium" if OS\.mac\? && dots_components\.include\?\("vscodium"\)' "${brewfile}"
+    grep -Eq '^brew "duti" if OS\.mac\? && dots_components\.include\?\("vscodium"\)' "${brewfile}"
     run grep -Fq 'visual-studio-code' "${brewfile}"
     [ "${status}" -ne 0 ]
 }
@@ -27,9 +27,12 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
     [ "${count}" -gt 0 ]
 }
 
-@test "install.conf.yaml links the duti settings file" {
-    grep -A1 -E '^[[:space:]]+~/\.config/duti/vscodium\.duti:[[:space:]]*$' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
+@test "install.conf.yaml links the duti settings file, on macOS with vscodium selected" {
+    conf="${REPO_ROOT_REAL}/config/install.conf.yaml"
+    grep -A1 -E '^[[:space:]]+~/\.config/duti/vscodium\.duti:[[:space:]]*$' "${conf}" \
         | grep -Eq '^[[:space:]]+path:[[:space:]]+content/home/\.config/duti/vscodium\.duti[[:space:]]*$'
+    grep -A3 -E '^[[:space:]]+~/\.config/duti/vscodium\.duti:[[:space:]]*$' "${conf}" \
+        | grep -Fq 'component-selected.sh vscodium'
 }
 
 @test "terminal EDITOR and VISUAL stay nvim" {
@@ -49,4 +52,38 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
     grep -Fq '<string>Open in VSCodium</string>' "${wf}/Info.plist"
     grep -A1 -F '"~/Library/Services/Open in VSCodium.workflow":' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
         | grep -Fq 'path: "content/home/Library/Services/Open in VSCodium.workflow"'
+    # gated like the duti link: it reuses the &if_vscodium predicate (macOS + vscodium selected)
+    grep -A3 -F '"~/Library/Services/Open in VSCodium.workflow":' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
+        | grep -Fq 'if: *if_vscodium'
+    grep -F '&if_vscodium' "${REPO_ROOT_REAL}/config/install.conf.yaml" \
+        | grep -Fq 'component-selected.sh vscodium'
+}
+
+@test "the duti default-app step runs through the shared script and only applies on macOS with vscodium selected" {
+    conf="${REPO_ROOT_REAL}/config/install.conf.yaml"
+    grep -Fq 'sh content/home/.config/dots/duti-apply.sh' "${conf}"
+    script="${REPO_ROOT_REAL}/content/home/.config/dots/duti-apply.sh"
+    [ -f "${script}" ]
+    grep -Fq 'component-selected' "${script}" || grep -Fq 'components_has vscodium' "${script}"
+    grep -Fq 'Darwin' "${script}"
+}
+
+@test "duti-apply.sh does nothing while vscodium is not selected" {
+    sandbox="$(mktemp -d)"
+    mkdir -p "${sandbox}/home/.config/zsh" "${sandbox}/bin"
+    printf '#!/bin/sh\necho duti "$@" >> "%s/calls"\n' "${sandbox}" > "${sandbox}/bin/duti"
+    printf '#!/bin/sh\necho open "$@" >> "%s/calls"\n' "${sandbox}" > "${sandbox}/bin/open"
+    printf '#!/bin/sh\necho Darwin\n' > "${sandbox}/bin/uname"
+    chmod +x "${sandbox}"/bin/*
+    run env HOME="${sandbox}/home" PATH="${sandbox}/bin:/usr/bin:/bin" sh "${REPO_ROOT_REAL}/content/home/.config/dots/duti-apply.sh"
+    status_unselected="${status}"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux nvim fresh}"\n' > "${sandbox}/home/.config/zsh/local.zsh"
+    run env HOME="${sandbox}/home" PATH="${sandbox}/bin:/usr/bin:/bin" sh "${REPO_ROOT_REAL}/content/home/.config/dots/duti-apply.sh"
+    status_other="${status}"
+    calls=0
+    [ ! -e "${sandbox}/calls" ] || calls=1
+    rm -rf "${sandbox}"
+    [ "${status_unselected}" -eq 0 ]
+    [ "${status_other}" -eq 0 ]
+    [ "${calls}" -eq 0 ]
 }

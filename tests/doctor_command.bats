@@ -138,6 +138,8 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 # _nvim_sandbox <active-theme-flavor-link> — repo with two nvim palettes, a
 # manifest naming kanagawa/wave, and the theme link pointing at <link>.
 _nvim_sandbox() {
+    mkdir -p "${HOME}/.config/zsh"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-nvim}"\n' > "${HOME}/.config/zsh/local.zsh"
     mkdir -p "${REPO}/content/assets/palettes/nvim" "${REPO}/content/home/.config/nvim/lua"
     : > "${REPO}/content/assets/palettes/nvim/kanagawa-wave.lua"
     : > "${REPO}/content/assets/palettes/nvim/catppuccin-mocha.lua"

@@ -118,7 +118,7 @@ _tty_components() {
 @test "unknown component exits 1, names the supported ids and records nothing" {
     run sh "${CMD}" vim
     [ "${status}" -eq 1 ]
-    _has "Unknown component 'vim'. Supported: tmux herdr-tui herdr-core herdr-app ghostty"
+    _has "Unknown component 'vim'. Supported: tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium"
     [ ! -e "${LOCAL_ZSH}" ]
 }
 
@@ -151,12 +151,60 @@ _tty_components() {
 @test "--help lists every component, the storage and the non-interactive forms" {
     run sh "${CMD}" --help
     [ "${status}" -eq 0 ]
-    for id in tmux herdr-tui herdr-core herdr-app ghostty; do
+    for id in tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium; do
         _has "${id}"
     done
     _has "DOTS_COMPONENTS"
     _has "--current"
     _has "none"
+}
+
+@test "the editor ids nvim, fresh and vscodium are independent and recorded in the fixed order" {
+    run sh "${CMD}" vscodium nvim
+    [ "${status}" -eq 0 ]
+    grep -Fqx 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-nvim vscodium}"' "${LOCAL_ZSH}"
+    run sh "${CMD}" --current
+    [ "${output}" = "nvim vscodium" ]
+
+    run sh "${CMD}" fresh
+    [ "${status}" -eq 0 ]
+    run sh "${CMD}" --current
+    [ "${output}" = "fresh" ]
+
+    run sh "${CMD}" --yes ghostty fresh nvim vscodium tmux
+    [ "${status}" -eq 0 ]
+    run sh "${CMD}" --current
+    [ "${output}" = "tmux ghostty nvim fresh vscodium" ]
+}
+
+@test "a recorded selection without editor ids is left as it is and selecting an editor never selects another" {
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-herdr-core herdr-app}"\n' > "${LOCAL_ZSH}"
+    run sh "${CMD}" --current
+    [ "${output}" = "herdr-core herdr-app" ]
+    cp "${LOCAL_ZSH}" "${SANDBOX}/local.before"
+    run sh "${CMD}" --help
+    cmp -s "${LOCAL_ZSH}" "${SANDBOX}/local.before"
+
+    . "${REPO_ROOT_REAL}/src/lib/paths.sh"
+    REPO_ROOT="${REPO_ROOT_REAL}"
+    . "${REPO_ROOT_REAL}/src/lib/log.sh"
+    . "${REPO_ROOT_REAL}/src/lib/theme.sh"
+    . "${REPO_ROOT_REAL}/src/lib/components.sh"
+    [ "$(components_normalize nvim)" = "nvim" ]
+    [ "$(components_normalize vscodium)" = "vscodium" ]
+    [ "$(components_normalize fresh)" = "fresh" ]
+}
+
+@test "the editor components have checklist labels" {
+    . "${REPO_ROOT_REAL}/src/lib/paths.sh"
+    REPO_ROOT="${REPO_ROOT_REAL}"
+    . "${REPO_ROOT_REAL}/src/lib/log.sh"
+    . "${REPO_ROOT_REAL}/src/lib/theme.sh"
+    . "${REPO_ROOT_REAL}/src/lib/components.sh"
+    [ "${COMPONENT_IDS}" = "tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium" ]
+    [ "$(component_label nvim)" = "Neovim (+ luarocks)" ]
+    [ "$(component_label fresh)" = "Fresh editor (brew fresh-editor)" ]
+    [ "$(component_label vscodium)" = "VSCodium (macOS cask, default GUI editor)" ]
 }
 
 @test "the command never installs: no curl, no brew call except the installed check" {

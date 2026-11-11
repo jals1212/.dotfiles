@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# lib/components.sh — which terminal components ./dots installs
+# lib/components.sh — which terminal components and editors ./dots installs
 # POSIX sh. Source this file; do not execute directly.
 # Requires: lib/paths.sh, lib/log.sh, lib/theme.sh (local state).
 #
@@ -9,7 +9,9 @@
 # recorded as `none`, so "chose nothing" differs from "never recorded" (no
 # DOTS_COMPONENTS line). The repo itself never changes when choosing.
 
-COMPONENT_IDS="tmux herdr-tui herdr-core herdr-app ghostty"
+# nvim, fresh and vscodium are the editors: independent of each other and of the
+# terminal components, and never selected by default.
+COMPONENT_IDS="tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium"
 COMPONENT_NONE="none"
 # "a>b" rules, newline-separated: selecting a also selects b. The Herdr app
 # installer brings the core, so the core is never installed on its own then.
@@ -23,6 +25,9 @@ component_label() {
         herdr-core) printf 'Herdr core (official installer)\n' ;;
         herdr-app)  printf 'Herdr app (desktop, brings the core)\n' ;;
         ghostty)    printf 'Ghostty (macOS cask)\n' ;;
+        nvim)       printf 'Neovim (+ luarocks)\n' ;;
+        fresh)      printf 'Fresh editor (brew fresh-editor)\n' ;;
+        vscodium)   printf 'VSCodium (macOS cask, default GUI editor)\n' ;;
         *) return 1 ;;
     esac
 }
@@ -257,6 +262,33 @@ components_removal_plan() {
                     _components_plan_add ghostty cask ghostty
                 fi
                 _components_plan_links ghostty "${_crp_home}/.config/ghostty/"
+                ;;
+            nvim)
+                for _crp_p in neovim luarocks; do
+                    if _components_brew_has formula "${_crp_p}"; then
+                        _components_plan_add nvim formula "${_crp_p}"
+                    fi
+                done
+                _components_plan_links nvim "${_crp_home}/.config/nvim/"
+                ;;
+            fresh)
+                if _components_brew_has formula fresh-editor; then
+                    _components_plan_add fresh formula fresh-editor
+                fi
+                ;;
+            vscodium)
+                # macOS only: the cask, duti and the links exist only there.
+                if [ "${_crp_os}" = macos ]; then
+                    if _components_brew_has cask vscodium; then
+                        _components_plan_add vscodium cask vscodium
+                    fi
+                    if _components_brew_has formula duti; then
+                        _components_plan_add vscodium formula duti
+                    fi
+                    _components_plan_links vscodium "${_crp_home}/.config/duti/"
+                    # Not a directory prefix: the link itself ("<prefix>" + ".workflow").
+                    _components_plan_links vscodium "${_crp_home}/Library/Services/Open in VSCodium"
+                fi
                 ;;
         esac
     done
@@ -575,12 +607,17 @@ _components_install_herdr() {
 }
 
 # components_install_links <id>... — make only the config links of these
-# components, declared in config/install.conf.yaml (tmux, Herdr, Ghostty) plus
-# the Ghostty theme link of the active theme (content/themes), through Dotbot.
+# components, declared in config/install.conf.yaml (tmux, Herdr, Ghostty, the
+# nvim config, the duti file and the VSCodium Quick Action) plus the Ghostty
+# and Neovim theme links of the active theme (content/themes, content/assets),
+# through Dotbot. The links of vscodium are macOS-only (their if: predicate),
+# and the duti step then applies the associations (duti-apply.sh).
 components_install_links() {
     _cil_prefixes=""
     _cil_herdr=0
     _cil_ghostty=0
+    _cil_nvim=0
+    _cil_vscodium=0
     for _cil_id in "$@"; do
         case "${_cil_id}" in
             tmux) _cil_prefixes="${_cil_prefixes} ~/.config/tmux/" ;;
@@ -595,20 +632,38 @@ components_install_links() {
                 _cil_ghostty=1
                 _cil_prefixes="${_cil_prefixes} ~/.config/ghostty/"
                 ;;
+            nvim)
+                # No trailing slash: the glob entries are `~/.config/nvim` and
+                # `~/.config/nvim/` (the dotfiles).
+                _cil_nvim=1
+                _cil_prefixes="${_cil_prefixes} ~/.config/nvim"
+                ;;
+            vscodium) _cil_vscodium=1 ;;
         esac
     done
-    [ -n "${_cil_prefixes}" ] || return 0
+    [ -n "${_cil_prefixes}" ] || [ "${_cil_vscodium}" -eq 1 ] || return 0
     if ! command -v dotbot_links_apply >/dev/null 2>&1; then
         log_warn "Dotbot helpers unavailable; config links not made"
         return 1
     fi
     _cil_fail=0
     log_step "Linking the component configs"
-    # shellcheck disable=SC2086
-    dotbot_links_apply "$(path_install_config)" ${_cil_prefixes} || {
-        log_warn "linking the component configs failed"
-        _cil_fail=1
-    }
+    if [ -n "${_cil_prefixes}" ]; then
+        # shellcheck disable=SC2086
+        dotbot_links_apply "$(path_install_config)" ${_cil_prefixes} || {
+            log_warn "linking the component configs failed"
+            _cil_fail=1
+        }
+    fi
+    if [ "${_cil_vscodium}" -eq 1 ]; then
+        # The Quick Action's name has spaces, so it cannot ride in the list above.
+        # shellcheck disable=SC2088
+        dotbot_links_apply "$(path_install_config)" "~/.config/duti/" "~/Library/Services/Open in VSCodium.workflow" || {
+            log_warn "linking the VSCodium configs failed"
+            _cil_fail=1
+        }
+        _components_duti_apply || _cil_fail=1
+    fi
     if [ "${_cil_ghostty}" -eq 1 ]; then
         _cil_pair="$(theme_current 2>/dev/null)" || _cil_pair="kanagawa dragon"
         # shellcheck disable=SC2086
@@ -620,7 +675,30 @@ components_install_links() {
             _cil_fail=1
         }
     fi
+    if [ "${_cil_nvim}" -eq 1 ]; then
+        _cil_pair="$(theme_current 2>/dev/null)" || _cil_pair="kanagawa dragon"
+        # shellcheck disable=SC2086
+        set -- ${_cil_pair}
+        _th_apply_nvim_link "$1" "$2" || {
+            log_warn "linking the Neovim theme failed"
+            _cil_fail=1
+        }
+    fi
     return "${_cil_fail}"
+}
+
+# _components_duti_apply — the duti default-app step, through the script that
+# config/install.conf.yaml also runs (same conditions).
+_components_duti_apply() {
+    _cda_script="${REPO_ROOT:?components install: REPO_ROOT required}/content/home/.config/dots/duti-apply.sh"
+    if [ ! -f "${_cda_script}" ]; then
+        log_warn "${_cda_script} is missing; the duti step did not run"
+        return 1
+    fi
+    sh "${_cda_script}" || {
+        log_warn "the duti step failed"
+        return 1
+    }
 }
 
 # components_install <yes 0|1> <id>... — install the given components and
@@ -658,6 +736,19 @@ components_install() {
             ghostty)
                 if [ "${_cin_os}" = macos ]; then
                     _components_install_brew cask ghostty || _cin_fail=1
+                fi
+                ;;
+            nvim)
+                _components_install_brew formula neovim || _cin_fail=1
+                _components_install_brew formula luarocks || _cin_fail=1
+                ;;
+            fresh)
+                _components_install_brew formula fresh-editor || _cin_fail=1
+                ;;
+            vscodium)
+                if [ "${_cin_os}" = macos ]; then
+                    _components_install_brew cask vscodium || _cin_fail=1
+                    _components_install_brew formula duti || _cin_fail=1
                 fi
                 ;;
         esac

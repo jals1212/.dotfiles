@@ -44,9 +44,9 @@ Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout
 
 ### VSCodium — [docs](https://vscodium.com/)
 
-GUI editor (macOS cask). `./install` uses `duti` to register VSCodium (`com.vscodium`) as the default app for code and text files, from `~/.config/duti/vscodium.duti`; `.html` and `.xml` are left to their existing handlers. Re-apply manually with `duti ~/.config/duti/vscodium.duti`. Terminal `$EDITOR`/`$VISUAL` stay `nvim`.
+GUI editor (macOS cask), installed only when `vscodium` is selected with `./dots components` (with `duti`; the links, the duti step and the doctor check run only then and only on macOS). `./dots update` uses `duti` to register VSCodium (`com.vscodium`) as the default app for code and text files, from `~/.config/duti/vscodium.duti`; `.html` and `.xml` are left to their existing handlers. Re-apply manually with `duti ~/.config/duti/vscodium.duti`. Terminal `$EDITOR`/`$VISUAL` are not touched by this component.
 
-A Finder Quick Action, **Open in VSCodium** (right-click a file or folder → Quick Actions), is linked to `~/Library/Services/Open in VSCodium.workflow`. If it does not show up right away, run `/System/Library/CoreServices/pbs -flush`.
+A Finder Quick Action, **Open in VSCodium** (right-click a file or folder → Quick Actions), is linked to `~/Library/Services/Open in VSCodium.workflow` when `vscodium` is selected. If it does not show up right away, run `/System/Library/CoreServices/pbs -flush`.
 
 ## File viewing and listing
 

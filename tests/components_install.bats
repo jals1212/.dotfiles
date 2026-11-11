@@ -55,18 +55,30 @@ STUB
     printf '#!/bin/sh\nprintf "mise %%s\\n" "$*" >> "${TOOL_LOG}"\n' > "${SANDBOX}/bin/mise"
     cat > "${SANDBOX}/bin/uname" <<'STUB'
 #!/bin/sh
-if [ "$1" = "-s" ]; then printf '%s\n' "${FAKE_UNAME:-Darwin}"; exit 0; fi
+if [ $# -eq 0 ] || [ "$1" = "-s" ]; then printf '%s\n' "${FAKE_UNAME:-Darwin}"; exit 0; fi
 exec /usr/bin/uname "$@"
 STUB
     # pgrep succeeds only when FAKE_RUNNING=1.
     printf '#!/bin/sh\nprintf "pgrep %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "${FAKE_RUNNING:-0}" = 1 ]\n' > "${SANDBOX}/bin/pgrep"
+    # duti logs; open -Ra VSCodium succeeds unless NO_VSCODIUM_APP=1; DUTI_FAIL=1 makes duti fail.
+    printf '#!/bin/sh\nprintf "duti %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "${DUTI_FAIL:-0}" != 1 ]\n' > "${SANDBOX}/bin/duti"
+    printf '#!/bin/sh\nprintf "open %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "${NO_VSCODIUM_APP:-0}" != 1 ]\n' > "${SANDBOX}/bin/open"
     chmod +x "${SANDBOX}"/bin/*
+    # The Neovim theme link lives in the repo (gitignored): put it back after each test.
+    NVIM_THEME_LINK="${REPO_ROOT_REAL}/content/home/.config/nvim/lua/dots-theme.lua"
+    NVIM_LINK_SAVED=""
+    [ ! -L "${NVIM_THEME_LINK}" ] || NVIM_LINK_SAVED="$(readlink "${NVIM_THEME_LINK}")"
     # Restricted PATH: stubs, python3's directory (Dotbot), system tools.
     PY_DIR="$(dirname "$(command -v python3)")"
     export PATH="${SANDBOX}/bin:${PY_DIR}:/usr/bin:/bin:/usr/sbin:/sbin"
 }
 
 teardown() {
+    if [ -n "${NVIM_LINK_SAVED}" ]; then
+        ln -sfn "${NVIM_LINK_SAVED}" "${NVIM_THEME_LINK}"
+    elif [ -L "${NVIM_THEME_LINK}" ]; then
+        rm -f "${NVIM_THEME_LINK}"
+    fi
     rm -rf "${SANDBOX}"
 }
 
@@ -266,6 +278,124 @@ brew install --cask ghostty" ]
     run sh "${CMD}" --yes herdr-app herdr-core
     [ "${status}" -eq 0 ]
     [ "$(_log)" = "" ]
+}
+
+# ── Editors: nvim, fresh, vscodium ───────────────────────────────────────────
+
+# _active_nvim_palette — the Neovim palette of the repo's active theme.
+_active_nvim_palette() {
+    _t="$(sed -n 's/.*"theme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${REPO_ROOT_REAL}/manifest.json" | head -1)"
+    _f="$(sed -n 's/.*"flavor"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${REPO_ROOT_REAL}/manifest.json" | head -1)"
+    printf '%s/content/assets/palettes/nvim/%s-%s.lua' "${REPO_ROOT_REAL}" "${_t:-kanagawa}" "${_f:-dragon}"
+}
+
+@test "--yes with nvim installs neovim and luarocks, links ~/.config/nvim and the theme link of the active theme" {
+    run sh "${CMD}" --yes nvim
+    [ "${status}" -eq 0 ]
+    [ "$(_log)" = "brew list --formula neovim
+brew install neovim
+brew list --formula luarocks
+brew install luarocks" ]
+    _points_into_repo .config/nvim/init.lua
+    _points_into_repo .config/nvim/lua
+    [ -L "${NVIM_THEME_LINK}" ]
+    [ "$(readlink "${NVIM_THEME_LINK}")" = "$(_active_nvim_palette)" ]
+    [ ! -e "${HOME}/.config/tmux" ] && [ ! -e "${HOME}/.config/ghostty" ] && [ ! -e "${HOME}/.config/duti" ]
+    _recorded_is nvim
+    _nothing_else
+}
+
+@test "nvim installs the same on Linux (brew formulae and links)" {
+    FAKE_UNAME=Linux run sh "${CMD}" --yes nvim
+    [ "${status}" -eq 0 ]
+    grep -Fqx "brew install neovim" "${TOOL_LOG}"
+    _points_into_repo .config/nvim/init.lua
+}
+
+@test "--yes with fresh installs the fresh-editor formula and links nothing" {
+    run sh "${CMD}" --yes fresh
+    [ "${status}" -eq 0 ]
+    [ "$(_log)" = "brew list --formula fresh-editor
+brew install fresh-editor" ]
+    [ ! -e "${HOME}/.config/nvim" ] && [ ! -e "${HOME}/.config/duti" ] && [ ! -e "${HOME}/Library" ]
+    _recorded_is fresh
+    _nothing_else
+}
+
+@test "--yes with vscodium on macOS installs the cask and duti, links duti and the Quick Action, applies duti" {
+    run sh "${CMD}" --yes vscodium
+    [ "${status}" -eq 0 ]
+    [ "$(_log)" = "brew list --cask vscodium
+brew install --cask vscodium
+brew list --formula duti
+brew install duti
+open -Ra VSCodium
+duti ${HOME}/.config/duti/vscodium.duti" ]
+    _points_into_repo .config/duti/vscodium.duti
+    _points_into_repo "Library/Services/Open in VSCodium.workflow"
+    [ ! -e "${HOME}/.config/nvim" ]
+    _recorded_is vscodium
+    _nothing_else
+}
+
+@test "vscodium on Linux installs and links nothing" {
+    FAKE_UNAME=Linux run sh "${CMD}" --yes vscodium
+    [ "${status}" -eq 0 ]
+    [ "$(_log)" = "" ]
+    [ ! -e "${HOME}/.config/duti" ] && [ ! -e "${HOME}/Library" ]
+    _recorded_is vscodium
+}
+
+@test "the duti step is skipped without duti or without VSCodium.app, and a failing duti warns and fails" {
+    rm -f "${SANDBOX}/bin/duti"
+    run sh "${CMD}" --yes vscodium
+    [ "${status}" -eq 0 ]
+    run grep -E '^(duti|open) ' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
+
+    printf '#!/bin/sh\nprintf "duti %%s\\n" "$*" >> "${TOOL_LOG}"\n[ "${DUTI_FAIL:-0}" != 1 ]\n' > "${SANDBOX}/bin/duti"
+    chmod +x "${SANDBOX}/bin/duti"
+    : > "${TOOL_LOG}"
+    _record none
+    NO_VSCODIUM_APP=1 run sh "${CMD}" --yes vscodium
+    [ "${status}" -eq 0 ]
+    run grep -E '^duti ' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
+
+    : > "${TOOL_LOG}"
+    _record none
+    DUTI_FAIL=1 run sh "${CMD}" --yes vscodium
+    [ "${status}" -ne 0 ]
+    _has "duti"
+    _recorded_is vscodium
+}
+
+@test "the editors are independent: adding one installs only it" {
+    _record nvim
+    run sh "${CMD}" --yes nvim fresh vscodium
+    [ "${status}" -eq 0 ]
+    run grep -E 'neovim|luarocks' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
+    grep -Fqx "brew install fresh-editor" "${TOOL_LOG}"
+    grep -Fqx "brew install --cask vscodium" "${TOOL_LOG}"
+    _recorded_is "nvim fresh vscodium"
+}
+
+@test "a recorded selection without editors installs no editor and the never-recorded case installs none" {
+    run sh "${CMD}" --yes tmux
+    [ "${status}" -eq 0 ]
+    run grep -E 'neovim|luarocks|fresh-editor|vscodium|duti' "${TOOL_LOG}"
+    [ "${status}" -ne 0 ]
+    [ ! -e "${HOME}/.config/nvim" ] && [ ! -e "${HOME}/.config/duti" ]
+}
+
+@test "the duti step is one script shared by install.conf.yaml and the components install" {
+    script="content/home/.config/dots/duti-apply.sh"
+    [ -f "${REPO_ROOT_REAL}/${script}" ]
+    grep -Fq "${script}" "${REPO_ROOT_REAL}/config/install.conf.yaml"
+    grep -Fq "duti-apply.sh" "${REPO_ROOT_REAL}/src/lib/components.sh"
+    run grep -v '^[[:space:]]*#' "${REPO_ROOT_REAL}/config/install.conf.yaml"
+    [[ "${output}" != *"duti ~/.config/duti"* ]] || return 1
 }
 
 # ── Asking ───────────────────────────────────────────────────────────────────

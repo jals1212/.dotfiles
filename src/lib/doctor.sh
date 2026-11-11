@@ -165,7 +165,8 @@ check_orbstack() { _doc_macos_only "OrbStack CLI" || check_command "OrbStack CLI
 check_docker()  { _doc_macos_only "Docker CLI" || check_command "Docker CLI" docker; }
 check_docker_buildx() { _doc_macos_only "Docker Buildx" || check_docker_plugin "Docker Buildx" buildx; }
 check_docker_compose() { _doc_macos_only "Docker Compose" || check_docker_plugin "Docker Compose" compose; }
-check_nvim()    { check_command "neovim" nvim; }
+check_nvim()    { _doc_unselected "neovim present" nvim || check_command "neovim" nvim; }
+check_fresh()   { _doc_unselected "fresh present" fresh || check_command "fresh" fresh; }
 check_git()     { check_command "git" git; }
 check_jq()      { check_command "jq" jq; }
 check_python3() { check_command "python3" python3; }
@@ -209,7 +210,8 @@ check_zsh_zinit_link(){ check_symlink_into_repo "zsh zinit"          "$(path_hom
 check_zsh_tools_link(){ check_symlink_into_repo "zsh tools"          "$(path_home_zsh_tools)"; }
 check_zsh_prompt_link(){ check_symlink_into_repo "zsh prompt"        "$(path_home_zsh_prompt)"; }
 check_zsh_plugins_link(){ check_symlink_into_repo "zsh plugins"      "$(path_home_zsh_plugins)"; }
-check_nvim_link()     { check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
+check_nvim_link()     { _doc_unselected "nvim init.lua" nvim || check_symlink_into_repo "nvim init.lua"     "$(path_home_nvim_init)"; }
+check_vscodium_link() { _doc_unselected "vscodium duti config" vscodium || _doc_macos_only "vscodium duti config" || check_symlink_into_repo "vscodium duti config" "$(path_home_file ".config/duti/vscodium.duti")"; }
 check_tmux_link()     { _doc_unselected "tmux config" tmux || check_symlink_into_repo "tmux config"       "$(path_home_tmux_config)"; }
 check_tmux_theme_link() { _doc_unselected "tmux theme" tmux || check_symlink_into_repo "tmux theme"       "$(path_home_tmux_theme)"; }
 check_ghostty_link()  { _doc_unselected "ghostty config" ghostty || _doc_macos_only "ghostty config" || check_symlink_into_repo "ghostty config" "$(path_home_ghostty_config)"; }
@@ -235,6 +237,7 @@ check_ghostty_theme_link() { _doc_unselected "ghostty theme" ghostty || _doc_mac
 # ---------------------------------------------------------------------------
 check_nvim_theme_link() {
     _cntl_label="nvim theme link"
+    _doc_unselected "${_cntl_label}" nvim && return 0
     _cntl_manifest="$(path_manifest)"
     _cntl_theme=""
     _cntl_flavor=""
@@ -468,7 +471,7 @@ check_local_state() {
     _cls_components="$(sed -n 's/^export DOTS_COMPONENTS="\${DOTS_COMPONENTS:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
     for _cls_id in ${_cls_components}; do
         case "${_cls_id}" in
-            none|tmux|herdr-tui|herdr-core|herdr-app|ghostty) ;;
+            none|tmux|herdr-tui|herdr-core|herdr-app|ghostty|nvim|fresh|vscodium) ;;
             *) _doc_fail "${_cls_label}" "DOTS_COMPONENTS not whitelisted: ${_cls_id}"; return 1 ;;
         esac
     done
@@ -498,5 +501,5 @@ check_stale_backups() {
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
-DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_orbstack check_docker check_docker_buildx check_docker_compose check_nvim check_git check_jq check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_nvim_theme_link check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
+DOCTOR_CHECKS="check_python3 check_brew check_zsh check_tmux check_herdr check_orbstack check_docker check_docker_buildx check_docker_compose check_nvim check_fresh check_git check_jq check_dotbot_submodule check_dotbot_brew_plugin check_dotbot_mise_plugin check_zshrc_link check_zprofile_link check_zshenv_link check_zdotdir_zshenv_link check_zsh_zinit_link check_zsh_tools_link check_zsh_prompt_link check_zsh_plugins_link check_nvim_link check_vscodium_link check_tmux_link check_tmux_theme_link check_ghostty_link check_herdr_link check_mise_link check_starship_link check_bat_config_link check_fzf_config_link check_eza_config_link check_bat_theme_link check_fzf_theme_link check_eza_theme_link check_lazygit_theme_link check_bottom_theme_link check_ghostty_theme_link check_theme_symlinks_agree check_nvim_theme_link check_tmux_prefix check_ghostty_theme_marker check_bat_config_theme check_fzf_shell_integration check_eza_theme_source check_starship_init check_tmux_theme check_starship_fence check_herdr_theme_fence check_local_state check_manifest_exists check_manifest_slim_schema check_stale_backups"
 export DOCTOR_CHECKS
