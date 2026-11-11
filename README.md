@@ -135,7 +135,7 @@ make -f config/Makefile test   # bats tests/ — fails when bats is not installe
 
 Run both before every push; the suite is written for macOS and runs all of it there.
 
-CI (`.github/workflows/ci.yml`) runs the same two targets on a pull request to `main` and by hand (`workflow_dispatch`), never again after the merge. It skips draft pull requests (open them as drafts, mark ready once local runs are green), pull requests that only change `odd/`, `README.md`, `AGENTS.md` or `CLAUDE.md`, and cancels a run when a newer push supersedes it. It runs on Ubuntu to spend fewer Actions minutes, so the tests that drive a PTY with BSD `script` skip there; start a manual run with the `macos-15` runner to cover them.
+CI (`.github/workflows/ci.yml`) runs the same two targets on a pull request to `main` and by hand (`workflow_dispatch`), never again after the merge. It skips draft pull requests (open them as drafts, mark ready once local runs are green), pull requests that only change `odd/`, `README.md`, `AGENTS.md` or `CLAUDE.md`, and cancels a run when a newer push supersedes it. It runs on Ubuntu by default, so the tests that drive a PTY with BSD `script` skip there; start a manual run with the `macos-15` runner to cover them.
 
 ### Run the CI locally
 
@@ -174,3 +174,8 @@ Then open tmux: the first start installs the tmux plugins at their pinned commit
 ## License
 
 MIT © 2026 Jeffrey León ([@jals1212](https://github.com/jals1212)) — see [LICENSE](LICENSE).
+
+The color palettes in `content/assets/palettes` follow third-party themes, both MIT licensed; their notices are in [`content/assets/palettes/LICENSES`](content/assets/palettes/LICENSES):
+
+- [Catppuccin](https://github.com/catppuccin/catppuccin) © 2021 Catppuccin — the bat themes come from [catppuccin/bat](https://github.com/catppuccin/bat).
+- [Kanagawa](https://github.com/rebelot/kanagawa.nvim) © 2021 Tommaso Laurenzi.

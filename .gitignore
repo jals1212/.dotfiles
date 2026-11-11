@@ -10,8 +10,9 @@ tmp/
 *.bak
 *.local.*
 
-# Local AI runtime state
+# Local AI runtime state and ODD task notes (kept out of the public repo)
 .atl/
+odd/
 
 # Dev tooling (pnpm install)
 node_modules/
