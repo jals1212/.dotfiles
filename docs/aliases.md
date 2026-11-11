@@ -78,7 +78,7 @@ If you need the original tool, prefix with `\`: `\cat`, `\ls`.
 
 Zsh runs [suffix aliases](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.html#Aliasing) when you "execute" a file with that extension. Type `file.ext` (no command) to open it.
 
-- `csv`, `go`, `js`, `py`, `rs`, `ts`, `yaml`, `yml` → `$EDITOR` (Neovim).
+- `csv`, `go`, `js`, `py`, `rs`, `ts`, `yaml`, `yml` → `$EDITOR` (Neovim by default; `./dots editor fresh` switches it).
 - `html` → `open` (macOS default browser).
 - `json` → [`jless`](https://jless.io/).
 - `log`, `txt`, `md` → [`bat`](https://github.com/sharkdp/bat).

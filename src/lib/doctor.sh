@@ -468,6 +468,11 @@ check_local_state() {
         jetbrains-mono|iosevka) ;;
         *) _doc_fail "${_cls_label}" "DOTS_FONT not whitelisted: ${_cls_font}"; return 1 ;;
     esac
+    _cls_editor="$(sed -n 's/^export DOTS_EDITOR="\${DOTS_EDITOR:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
+    case "${_cls_editor:-nvim}" in
+        nvim|fresh) ;;
+        *) _doc_fail "${_cls_label}" "DOTS_EDITOR not whitelisted: ${_cls_editor}"; return 1 ;;
+    esac
     _cls_components="$(sed -n 's/^export DOTS_COMPONENTS="\${DOTS_COMPONENTS:-\(.*\)}"$/\1/p' "${_cls_file}" | head -1)"
     for _cls_id in ${_cls_components}; do
         case "${_cls_id}" in

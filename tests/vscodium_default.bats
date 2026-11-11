@@ -35,10 +35,13 @@ DUTI_FILE="${REPO_ROOT_REAL}/content/home/.config/duti/vscodium.duti"
         | grep -Fq 'component-selected.sh vscodium'
 }
 
-@test "terminal EDITOR and VISUAL stay nvim" {
+@test "terminal EDITOR and VISUAL come from DOTS_EDITOR (nvim by default), set after local.zsh" {
     zshenv="${REPO_ROOT_REAL}/content/home/.config/zsh/.zshenv"
-    grep -Fxq 'export EDITOR="nvim"' "${zshenv}"
-    grep -Fxq 'export VISUAL="nvim"' "${zshenv}"
+    grep -Fxq 'export EDITOR="${DOTS_EDITOR:-nvim}"' "${zshenv}"
+    grep -Fxq 'export VISUAL="$EDITOR"' "${zshenv}"
+    src_n="$(grep -n 'source "$ZDOTDIR/local.zsh"' "${zshenv}" | cut -d: -f1)"
+    ed_n="$(grep -n '^export EDITOR=' "${zshenv}" | cut -d: -f1)"
+    [ "${ed_n}" -gt "${src_n}" ]
 }
 
 @test "Finder Quick Action opens VSCodium and is linked on macOS" {

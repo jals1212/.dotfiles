@@ -121,6 +121,7 @@ Maintain|components|Choose which terminal components get installed
 Appearance|theme|Switch theme or flavor
 Appearance|prompt|Switch prompt engine: starship or p10k
 Appearance|font|Switch terminal font: jetbrains-mono or iosevka
+Appearance|editor|Choose terminal editor: nvim or fresh
 Danger|uninstall|⚠ Remove managed symlinks and manifest
 General|help|Show usage
 General|quit|Exit'

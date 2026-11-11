@@ -256,7 +256,7 @@ _menu() {
     grep -qx "  components Choose which terminal components get installed" "${SANDBOX}/menu.err"
     grep -qx "  uninstall  ⚠ Remove managed symlinks and manifest" "${SANDBOX}/menu.err"
     grep -qx "↑↓/jk move · enter run · q quit" "${SANDBOX}/menu.err"
-    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor components theme prompt font uninstall help quit " ]
+    [ "$(grep -E '^[> ] [a-z]+ ' "${SANDBOX}/menu.err" | awk '{print ($1==">") ? $2 : $1}' | tr '\n' ' ')" = "update upgrade clean doctor components theme prompt font editor uninstall help quit " ]
 }
 
 # --- confirm ---------------------------------------------------------------
@@ -766,8 +766,8 @@ _last_frame() {
     run _menu "" 'jjq'
     [ "${output}" = "quit" ]
     cp "${SANDBOX}/menu.err" "${SANDBOX}/plain.err"
-    # The default menu frame is 20 lines: 21 rows (20 + the prompt line) fit.
-    DOTS_TUI_ROWS=21 run _menu "" 'jjq'
+    # The default menu frame is 21 lines: 22 rows (21 + the prompt line) fit.
+    DOTS_TUI_ROWS=22 run _menu "" 'jjq'
     cmp "${SANDBOX}/plain.err" "${SANDBOX}/menu.err"
     DOTS_TUI_ROWS=60 run _menu "" 'jjq'
     cmp "${SANDBOX}/plain.err" "${SANDBOX}/menu.err"
@@ -804,10 +804,10 @@ _last_frame() {
 }
 
 @test "short terminal: moving down past the window scrolls it and keeps the cursor visible" {
-    DOTS_TUI_ROWS=10 run _menu "" 'jjjjjjjjjjq'
+    DOTS_TUI_ROWS=10 run _menu "" 'jjjjjjjjjjjq'
     [ "${output}" = "quit" ]
-    # 1 first frame + 10 moves + the q key redraws nothing: 11 frames.
-    [ "$(_frames_fit "${SANDBOX}/menu.err" 9)" = "11 11" ]
+    # 1 first frame + 11 moves + the q key redraws nothing: 12 frames.
+    [ "$(_frames_fit "${SANDBOX}/menu.err" 9)" = "12 12" ]
     _last_frame "${SANDBOX}/menu.err" > "${SANDBOX}/last"
     grep -qx "> quit       Exit" "${SANDBOX}/last"
     grep -qx "  ↑ more" "${SANDBOX}/last"
@@ -815,9 +815,9 @@ _last_frame() {
 }
 
 @test "short terminal: moving back up scrolls the window back" {
-    DOTS_TUI_ROWS=10 run _menu "quit" 'kkkkkkkkkkq'
+    DOTS_TUI_ROWS=10 run _menu "quit" 'kkkkkkkkkkkq'
     [ "${output}" = "quit" ]
-    [ "$(_frames_fit "${SANDBOX}/menu.err" 9)" = "11 11" ]
+    [ "$(_frames_fit "${SANDBOX}/menu.err" 9)" = "12 12" ]
     _last_frame "${SANDBOX}/menu.err" > "${SANDBOX}/last"
     grep -qx "> update     Apply dotfiles and the active theme" "${SANDBOX}/last"
     grep -qx "  ↓ more" "${SANDBOX}/last"
@@ -825,7 +825,7 @@ _last_frame() {
 }
 
 @test "short terminal: enter in a windowed menu still runs the row under the cursor" {
-    DOTS_TUI_ROWS=10 run _menu "" 'jjjjjjjj\n'
+    DOTS_TUI_ROWS=10 run _menu "" 'jjjjjjjjj\n'
     [ "${output}" = "uninstall" ]
 }
 
