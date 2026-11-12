@@ -86,6 +86,21 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
     _has "[FAIL] machine-local zsh state: DOTS_FONT not whitelisted: comic"
 }
 
+@test "doctor accepts a whitelisted DOTS_EDITOR and rejects any other" {
+    mkdir -p "${HOME}/.config/zsh"
+    for ed in nvim fresh; do
+        printf 'export DOTS_EDITOR="${DOTS_EDITOR:-%s}"\n' "${ed}" > "${HOME}/.config/zsh/local.zsh"
+        run sh "${REPO}/dots" doctor
+        [ "${status}" -eq 0 ]
+        _has "[PASS] machine-local zsh state"
+    done
+
+    printf 'export DOTS_EDITOR="${DOTS_EDITOR:-emacs}"\n' > "${HOME}/.config/zsh/local.zsh"
+    run sh "${REPO}/dots" doctor
+    [ "${status}" -eq 1 ]
+    _has "[FAIL] machine-local zsh state: DOTS_EDITOR not whitelisted: emacs"
+}
+
 @test "doctor accepts whitelisted DOTS_COMPONENTS ids and none, and rejects any other" {
     mkdir -p "${HOME}/.config/zsh"
     printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-tmux herdr-tui herdr-core herdr-app ghostty}"\n' > "${HOME}/.config/zsh/local.zsh"
@@ -138,6 +153,8 @@ _lacks() { case "${output}" in *"$1"*) echo "unexpected: $1"; return 1 ;; esac; 
 # _nvim_sandbox <active-theme-flavor-link> — repo with two nvim palettes, a
 # manifest naming kanagawa/wave, and the theme link pointing at <link>.
 _nvim_sandbox() {
+    mkdir -p "${HOME}/.config/zsh"
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-nvim}"\n' > "${HOME}/.config/zsh/local.zsh"
     mkdir -p "${REPO}/content/assets/palettes/nvim" "${REPO}/content/home/.config/nvim/lua"
     : > "${REPO}/content/assets/palettes/nvim/kanagawa-wave.lua"
     : > "${REPO}/content/assets/palettes/nvim/catppuccin-mocha.lua"

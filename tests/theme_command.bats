@@ -10,6 +10,8 @@ setup() {
     SANDBOX="$(mktemp -d)"
     export HOME="${SANDBOX}/home"
     mkdir -p "${HOME}/.config/zsh" "${SANDBOX}/bin" "${SANDBOX}/repo"
+    # The Neovim theme link is made only while nvim is selected (./dots components).
+    printf 'export DOTS_COMPONENTS="${DOTS_COMPONENTS:-nvim}"\n' > "${HOME}/.config/zsh/local.zsh"
     cp -R "${REPO_ROOT_REAL}/src" "${REPO_ROOT_REAL}/content" "${SANDBOX}/repo/"
     cp "${REPO_ROOT_REAL}/dots" "${SANDBOX}/repo/dots"
     # The developer's real (gitignored) theme link must not leak into the

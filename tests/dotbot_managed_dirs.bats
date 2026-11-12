@@ -124,6 +124,28 @@ teardown() {
     run ! grep -Fq "~/.config/nvim/lazyvim.json: content/home/.config/nvim/lazyvim.json" "${config}"
 }
 
+@test "the nvim glob links carry the nvim component predicate and survive the filtered links config" {
+    config="${REPO_ROOT_REAL}/config/install.conf.yaml"
+
+    run dotbot_links_config "${config}" "~/.config/nvim"
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"~/.config/nvim:"* ]] || return 1
+    [[ "${output}" == *"~/.config/nvim/:"* ]] || return 1
+    [[ "${output}" == *"path: content/home/.config/nvim/*"* ]] || return 1
+    [[ "${output}" == *"path: content/home/.config/nvim/.*"* ]] || return 1
+    [ "$(printf '%s\n' "${output}" | grep -c 'glob: true')" -eq 2 ]
+    [ "$(printf '%s\n' "${output}" | grep -c 'component-selected.sh nvim')" -ge 1 ]
+    # nothing but the nvim links
+    [[ "${output}" != *"tmux"* ]] || return 1
+}
+
+@test "dotbot_managed_links lists the editor links regardless of the selection" {
+    run dotbot_managed_links
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"${HOME}/.config/duti/vscodium.duti"* ]] || return 1
+    [[ "${output}" == *"${HOME}/Library/Services/Open in VSCodium.workflow"* ]] || return 1
+}
+
 @test "dotbot_managed_links lists declared destinations only" {
     run dotbot_managed_links
 

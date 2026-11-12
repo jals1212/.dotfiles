@@ -8,7 +8,7 @@ bats_require_minimum_version 1.5.0
 # brew, curl or the network.
 
 REPO_ROOT_REAL="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
-ALL_COMPONENTS="tmux herdr-tui herdr-core herdr-app ghostty"
+ALL_COMPONENTS="tmux herdr-tui herdr-core herdr-app ghostty nvim fresh vscodium"
 HELPER="content/home/.config/dots/component-selected.sh"
 
 setup() {
@@ -103,21 +103,31 @@ TMUX_LINKS="~/.config/tmux/tmux.conf ~/.config/tmux/theme.conf ~/.config/tmux/sc
 HERDR_LINKS="~/.config/herdr/config.toml"
 HERDR_APP_LINKS="~/.config/herdr-app/settings.json ~/.config/herdr-app/keys.json ~/.config/herdr-app/layouts/jals1212.json ~/.config/herdr-app/mods/jals1212"
 GHOSTTY_LINKS="~/.config/ghostty/config ~/.config/ghostty/shaders"
+NVIM_LINKS="~/.config/nvim ~/.config/nvim/"
+VSCODIUM_LINKS="~/.config/duti/vscodium.duti ~/Library/Services/Open%in%VSCodium.workflow"  # % stands for a space
 OTHER_LINKS="~/.zshenv ~/.config/zsh/.zshrc ~/.config/starship.toml ~/.config/mise/config.toml ~/.config/bat/config"
 
 # _expect <linked ids...> — assert exactly the links of these groups are made.
-# Groups: tmux herdr herdr-app ghostty.
+# Groups: tmux herdr herdr-app ghostty nvim vscodium. The host is macOS unless
+# a uname shim says otherwise (the vscodium links are macOS-only).
 _expect() {
-    for _g in tmux herdr herdr-app ghostty; do
+    if [ ! -e "${SHIMS}/uname" ]; then
+        printf '#!/bin/sh\necho Darwin\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
+    fi
+    export PATH="${SHIMS}:${PATH}"
+    for _g in tmux herdr herdr-app ghostty nvim vscodium; do
         case "${_g}" in
             tmux) _l="${TMUX_LINKS}" ;;
             herdr) _l="${HERDR_LINKS}" ;;
             herdr-app) _l="${HERDR_APP_LINKS}" ;;
             ghostty) _l="${GHOSTTY_LINKS}" ;;
+            nvim) _l="${NVIM_LINKS}" ;;
+            vscodium) _l="${VSCODIUM_LINKS}" ;;
         esac
         _want=0
         for _w in "$@"; do [ "${_w}" = "${_g}" ] && _want=1; done
         for _d in ${_l}; do
+            _d="$(printf '%s' "${_d}" | sed 's/%/ /g')"
             if _linked "${_d}"; then _got=1; else _got=0; fi
             [ "${_got}" -eq "${_want}" ] || { echo "${_d}: linked=${_got} want=${_want}"; return 1; }
         done
@@ -143,6 +153,29 @@ _expect() {
     _expect herdr herdr-app
 }
 
+@test "the editor components link only their own configs, independently" {
+    _record fresh
+    _expect
+    _record nvim
+    _expect nvim
+    _record vscodium
+    _expect vscodium
+    _record nvim vscodium
+    _expect nvim vscodium
+    _record tmux ghostty fresh
+    _expect tmux ghostty
+}
+
+@test "the vscodium links are macOS-only even when vscodium is selected" {
+    printf '#!/bin/sh\necho Linux\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
+    _record vscodium nvim
+    PATH="${SHIMS}:${PATH}" _expect nvim
+}
+
+@test "the VSCodium duti step is a shell step of install.conf.yaml that goes through the shared script" {
+    grep -Fq 'content/home/.config/dots/duti-apply.sh' "${REPO_ROOT_REAL}/config/install.conf.yaml"
+}
+
 @test "the ghostty configs are linked on Linux too when ghostty is selected" {
     printf '#!/bin/sh\necho Linux\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
     _record ghostty
@@ -151,8 +184,8 @@ _expect() {
 
 @test "with every component, every link is made and unrelated links never depend on the selection" {
     _record ${ALL_COMPONENTS}
-    _expect tmux herdr herdr-app ghostty
-    # Links outside the three components carry no component predicate.
+    _expect tmux herdr herdr-app ghostty nvim vscodium
+    # Links outside the components carry no component predicate.
     for _d in ${OTHER_LINKS}; do
         _cond="$(_links | awk -F'\t' -v d="${_d}" '$1 == d { print $2 }')"
         [[ "${_cond}" != *component-selected* ]] || return 1
@@ -240,6 +273,34 @@ _theme() {
     [ "${status}" -ne 0 ]
 }
 
+@test "theme apply makes no Neovim palette link and ignores a missing palette while nvim is unselected" {
+    _theme_repo
+    rm -f "${REPO}/content/assets/palettes/nvim/catppuccin-latte.lua"
+    printf -- '-- mine\n' > "${REPO}/content/home/.config/nvim/lua/dots-theme.lua"
+    _theme catppuccin latte
+    [ "${status}" -eq 0 ]
+    [ ! -L "${REPO}/content/home/.config/nvim/lua/dots-theme.lua" ]
+    [ "$(cat "${REPO}/content/home/.config/nvim/lua/dots-theme.lua")" = "-- mine" ]
+
+    _record fresh vscodium tmux
+    _theme catppuccin latte
+    [ "${status}" -eq 0 ]
+    [ ! -L "${REPO}/content/home/.config/nvim/lua/dots-theme.lua" ]
+}
+
+@test "theme apply links the Neovim palette when nvim is selected, and still refuses what it refused before" {
+    _theme_repo
+    _record nvim
+    _theme catppuccin latte
+    [ "${status}" -eq 0 ]
+    [ "$(readlink "${REPO}/content/home/.config/nvim/lua/dots-theme.lua")" = "${REPO}/content/assets/palettes/nvim/catppuccin-latte.lua" ]
+
+    rm -f "${REPO}/content/home/.config/nvim/lua/dots-theme.lua" "${REPO}/content/assets/palettes/nvim/kanagawa-wave.lua" "${REPO}/manifest.json"
+    _theme kanagawa wave
+    [ "${status}" -ne 0 ]
+    [ ! -e "${REPO}/manifest.json" ]
+}
+
 # dotbot_theme_apply: a stub wrapper records the per-theme config it is given.
 _dotbot_repo() {
     REPO="${SANDBOX}/repo"
@@ -288,7 +349,7 @@ _sysbin() {
         _n="${_f##*/}"
         # The component commands stay out, so the checks see them as missing
         # even on hosts that have them in /usr/bin (Ubuntu CI runners ship tmux).
-        case "${_n}" in tmux | gitmux | herdr | ghostty) continue ;; esac
+        case "${_n}" in tmux | gitmux | herdr | ghostty | nvim | fresh) continue ;; esac
         [ -e "${_sb}/${_n}" ] || ln -s "${_f}" "${_sb}/${_n}"
     done
 }
@@ -381,6 +442,59 @@ _run_checks() {
     _has "[SKIP] ghostty theme: macOS only"
     _has "[SKIP] ghostty theme = dots: macOS only"
     _lacks "not selected"
+}
+
+NVIM_CHECKS='check_nvim check_nvim_link check_nvim_theme_link'
+EDITOR_EXTRA_CHECKS='check_fresh check_vscodium_link'
+
+@test "doctor skips the nvim, fresh and vscodium checks, passing, when they are not selected" {
+    printf '#!/bin/sh\necho Darwin\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
+    _run_checks "${NVIM_CHECKS} ${EDITOR_EXTRA_CHECKS}"
+    [ "${status}" -eq 0 ]
+    _has "[SKIP] neovim present: not selected"
+    _has "[SKIP] nvim init.lua: not selected"
+    _has "[SKIP] nvim theme link: not selected"
+    _has "[SKIP] fresh present: not selected"
+    _has "[SKIP] vscodium duti config: not selected"
+    _lacks "[FAIL]"
+    _lacks "[PASS]"
+    [ "$(printf '%s\n' "${output}" | grep -c ' rc=0$')" -eq 5 ]
+
+    _record none
+    _run_checks "${NVIM_CHECKS} ${EDITOR_EXTRA_CHECKS}"
+    _lacks "[FAIL]"
+    [ "$(printf '%s\n' "${output}" | grep -c '^\[SKIP\] .*: not selected')" -eq 5 ]
+}
+
+@test "doctor checks each editor only when it is selected" {
+    printf '#!/bin/sh\necho Darwin\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
+    _record nvim
+    _run_checks "${NVIM_CHECKS} ${EDITOR_EXTRA_CHECKS}"
+    _has "[FAIL] neovim present: command not found: nvim"
+    _has "[FAIL] nvim init.lua: missing: ${HOME}/.config/nvim/init.lua"
+    _has "[SKIP] fresh present: not selected"
+    _has "[SKIP] vscodium duti config: not selected"
+
+    _record fresh
+    _run_checks "${NVIM_CHECKS} ${EDITOR_EXTRA_CHECKS}"
+    _has "[SKIP] neovim present: not selected"
+    _has "[FAIL] fresh present: command not found: fresh"
+    _has "[SKIP] vscodium duti config: not selected"
+
+    _record vscodium
+    _run_checks "${NVIM_CHECKS} ${EDITOR_EXTRA_CHECKS}"
+    _has "[SKIP] nvim init.lua: not selected"
+    _has "[FAIL] vscodium duti config: missing: ${HOME}/.config/duti/vscodium.duti"
+}
+
+@test "doctor skips the vscodium duti check on Linux and the editor checks are registered" {
+    printf '#!/bin/sh\necho Linux\n' > "${SHIMS}/uname"; chmod +x "${SHIMS}/uname"
+    _record vscodium
+    _run_checks "check_vscodium_link"
+    _has "[SKIP] vscodium duti config: macOS only"
+    for c in check_fresh check_vscodium_link; do
+        grep -Eq "^DOCTOR_CHECKS=\".* ${c}( .*)?\"$" "${REPO_ROOT_REAL}/src/lib/doctor.sh"
+    done
 }
 
 @test "doctor still reports a passing tmux check when tmux is selected and installed" {

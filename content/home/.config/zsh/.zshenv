@@ -26,11 +26,14 @@ typeset -U path
 # Tools
 export MISE_DATA_DIR="${XDG_DATA_HOME}/mise"
 export MISE_CACHE_DIR="${XDG_CACHE_HOME}/mise"
-export EDITOR="nvim"
-export VISUAL="nvim"
 export PAGER="$DOTS_BAT --paging=always"
 export MANPAGER="sh -c 'col -bx | $DOTS_BAT -l man -p'"
 
 # Machine-local state (DOTS_PROMPT, DOTS_THEME, ...) written by ./dots.
 # A real file in $HOME — never symlinked, never tracked by the repo.
 [[ -f "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"
+
+# Terminal editor: DOTS_EDITOR (nvim | fresh, set by ./dots editor in local.zsh)
+# decides it, so these exports come after local.zsh. The id is the command name.
+export EDITOR="${DOTS_EDITOR:-nvim}"
+export VISUAL="$EDITOR"

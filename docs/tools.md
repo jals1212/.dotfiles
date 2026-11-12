@@ -42,11 +42,15 @@ Tiling window manager (macOS). Owns the `ctrl-alt` namespace. Workspaces, layout
 
 ## Editors
 
+### Terminal editor (`$EDITOR` / `$VISUAL`)
+
+`./dots editor <nvim|fresh>` chooses the editor the terminal opens (`./dots editor` alone opens a picker, `--current` shows it; also a row in the `./dots` menu). It is recorded machine-locally as `DOTS_EDITOR` in `~/.config/zsh/local.zsh`; `~/.config/zsh/.zshenv` exports `EDITOR="${DOTS_EDITOR:-nvim}"` and `VISUAL="$EDITOR"` after sourcing it, so nvim is the default. It installs nothing: select `nvim` and/or `fresh` with `./dots components` (the command warns when the chosen editor is not selected). `fresh` is the Homebrew `fresh-editor` formula and runs as `fresh`. Open a new shell to use the change.
+
 ### VSCodium — [docs](https://vscodium.com/)
 
-GUI editor (macOS cask). `./install` uses `duti` to register VSCodium (`com.vscodium`) as the default app for code and text files, from `~/.config/duti/vscodium.duti`; `.html` and `.xml` are left to their existing handlers. Re-apply manually with `duti ~/.config/duti/vscodium.duti`. Terminal `$EDITOR`/`$VISUAL` stay `nvim`.
+GUI editor (macOS cask), installed only when `vscodium` is selected with `./dots components` (with `duti`; the links, the duti step and the doctor check run only then and only on macOS). `./dots update` uses `duti` to register VSCodium (`com.vscodium`) as the default app for code and text files, from `~/.config/duti/vscodium.duti`; `.html` and `.xml` are left to their existing handlers. Re-apply manually with `duti ~/.config/duti/vscodium.duti`. Terminal `$EDITOR`/`$VISUAL` are not touched by this component (see `./dots editor`).
 
-A Finder Quick Action, **Open in VSCodium** (right-click a file or folder → Quick Actions), is linked to `~/Library/Services/Open in VSCodium.workflow`. If it does not show up right away, run `/System/Library/CoreServices/pbs -flush`.
+A Finder Quick Action, **Open in VSCodium** (right-click a file or folder → Quick Actions), is linked to `~/Library/Services/Open in VSCodium.workflow` when `vscodium` is selected. If it does not show up right away, run `/System/Library/CoreServices/pbs -flush`.
 
 ## File viewing and listing
 

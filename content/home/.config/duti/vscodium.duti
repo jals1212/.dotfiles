@@ -5,7 +5,7 @@
 # Extensions without a system UTI (.vue, .go, .rs, .cs, .jsx, ...) are claimed by
 # VSCodium's own Info.plist. .ts is omitted: macOS maps it to MPEG-2 video.
 # .html and .xml are intentionally omitted to keep browser/plist handling intact.
-# Terminal $EDITOR/$VISUAL stay nvim (see ~/.config/zsh/.zshenv).
+# Terminal $EDITOR/$VISUAL are not set by this file (see ./dots editor).
 
 # Generic text and code
 com.vscodium public.plain-text all

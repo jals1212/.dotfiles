@@ -438,8 +438,8 @@ theme_current() {
 # theme_apply <theme> <flavor>
 #   Full theme apply: validate → nvim link preflight → dotbot → nvim link →
 #   starship fence → local state → bat cache → tmux reload → manifest.
-#   The Herdr fence, the tmux reload and the Herdr reload only run for the
-#   components selected with ./dots components; the rest always runs.
+#   The Herdr fence, the tmux reload, the Herdr reload and the Neovim link only
+#   run for the components selected with ./dots components; the rest always runs.
 #   Returns 0 on success, non-zero on any failure.
 # ---------------------------------------------------------------------------
 theme_apply() {
@@ -451,8 +451,11 @@ theme_apply() {
 
     # --- Step 1b: Neovim link preflight ---
     # The nvim link step runs after dotbot; checking its failure modes here
-    # means they surface while nothing has changed yet.
-    _th_check_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
+    # means they surface while nothing has changed yet. Only when nvim is
+    # selected (./dots components).
+    if components_has nvim; then
+        _th_check_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
+    fi
 
     # --- Step 2: Dotbot per-theme run ---
     dotbot_theme_apply "${_ta_theme}" "${_ta_flavor}" || return 1
@@ -461,7 +464,10 @@ theme_apply() {
     # nvim reads lua/dots-theme.lua (a repo-side, gitignored symlink) to pick
     # its colorscheme; no dotbot entry is needed because ~/.config/nvim/lua is
     # itself a link to that directory.
-    _th_apply_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
+    # Skipped unless nvim is selected (./dots components).
+    if components_has nvim; then
+        _th_apply_nvim_link "${_ta_theme}" "${_ta_flavor}" || return 1
+    fi
 
     # --- Step 3: starship fence (active palette selected in place) ---
     # Starship has no external-theme include, so the active palette is chosen by

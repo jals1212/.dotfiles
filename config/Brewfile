@@ -15,8 +15,9 @@ tap "open-pencil/tap", trusted: { casks: ["open-pencil"] } if OS.mac?
 # ── Machine-local choices ────────────────────────────
 # Read from ~/.config/zsh/local.zsh, not from the environment: brew strips
 # non-HOMEBREW_ variables. DOTS_COMPONENTS (./dots components) lists the terminal
-# components to install: tmux, herdr-tui, herdr-core, herdr-app, ghostty. A
-# selection that was never recorded, or `none`, installs none of them.
+# components and editors to install: tmux, herdr-tui, herdr-core, herdr-app,
+# ghostty, nvim, fresh, vscodium. A selection that was never recorded, or
+# `none`, installs none of them.
 dots_local_zsh = File.join(Dir.home, ".config/zsh/local.zsh")
 dots_local = File.exist?(dots_local_zsh) ? File.read(dots_local_zsh) : ""
 dots_components = dots_local[/^export DOTS_COMPONENTS="\$\{DOTS_COMPONENTS:-(.*)\}"$/, 1].to_s.split
@@ -29,8 +30,6 @@ brew "fzf"
 brew "gh"
 brew "git"
 brew "mise"
-brew "neovim"
-brew "luarocks" # for neovim plugins
 brew "ripgrep"
 brew "ast-grep"
 brew "sd"
@@ -47,6 +46,15 @@ end
 brew "herdr" if dots_components.include?("herdr-tui") # Herdr TUI
 cask "herdr-app" if OS.mac? && dots_components.include?("herdr-app") # Herdr desktop app (Apple silicon); separate from the TUI, agents not shared
 cask "ghostty" if OS.mac? && dots_components.include?("ghostty")
+
+# ── Editors (chosen with ./dots components; independent of each other) ─
+if dots_components.include?("nvim")
+  brew "neovim"
+  brew "luarocks" # for neovim plugins
+end
+brew "fresh-editor" if dots_components.include?("fresh") # Fresh terminal editor
+cask "vscodium" if OS.mac? && dots_components.include?("vscodium") # default GUI editor
+brew "duti" if OS.mac? && dots_components.include?("vscodium") # sets VSCodium as default app for code/text files
 
 # ── Shell enhancements ───────────────────────────────
 brew "starship"
@@ -106,14 +114,10 @@ cask(dots_font == "iosevka" ? "font-iosevka-term-nerd-font" : "font-jetbrains-mo
 # ── Window manager ───────────────────────────────────
 cask "nikitabobko/tap/aerospace" if OS.mac?
 
-# ── File associations ────────────────────────────────
-brew "duti" if OS.mac? # sets VSCodium as default app for code/text files
-
 # ── GUI Apps (casks are macOS-only) ──────────────────
 cask "brave-browser" if OS.mac?
 cask "keka" if OS.mac?
 cask "microsoft-teams" if OS.mac?
 cask "open-pencil/tap/open-pencil" if OS.mac?
 cask "orbstack" if OS.mac?
-cask "vscodium" if OS.mac?
 cask "windows-app" if OS.mac?

@@ -140,6 +140,18 @@ select_font() {
 }
 
 # ---------------------------------------------------------------------------
+# select_editor [current_editor]
+#   Presents a tui_choose picker over the supported terminal editors.
+#   Pre-focuses current_editor when provided.
+# ---------------------------------------------------------------------------
+select_editor() {
+    _sed_current="${1:-}"
+
+    _sed_chosen="$(tui_choose "Select terminal editor:" "${_sed_current}" nvim fresh)" || exit 130
+    printf '%s' "${_sed_chosen}"
+}
+
+# ---------------------------------------------------------------------------
 # select_components [current_ids]
 #   Presents a tui_checklist over the terminal components (lib/components.sh);
 #   [current_ids] (space-separated) start checked, none by default. Prints the
